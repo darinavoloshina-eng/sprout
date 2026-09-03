@@ -277,11 +277,11 @@ export default function CalendarScreen({
   }
 
   function categoriesForDay(day: number): TaskCategory[] {
-    const cats = new Set(getTasksForDate(profile, new Date(year, month, day)).map((t) => t.category));
+    const cats = new Set(getTasksForDate(profile, new Date(year, month, day), today).map((t) => t.category));
     return Array.from(cats);
   }
 
-  const selectedTasks = useMemo(() => getTasksForDate(profile, selected), [profile, selected]);
+  const selectedTasks = useMemo(() => getTasksForDate(profile, selected, today), [profile, selected, today]);
   const dayHeader = `${selected.toLocaleDateString(undefined, { weekday: 'short' })} ${selected.getDate()} · ${
     selectedTasks.length
   } ${selectedTasks.length === 1 ? 'task' : 'tasks'}`;

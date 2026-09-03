@@ -88,12 +88,18 @@ function scheduleFor(profile: GardenProfile): ScheduleResult {
 }
 
 /** Any date's task list — watering pattern, reminders explicitly scheduled
- * for that date, and (for Pro) any not-yet-planted crop whose calculated
- * planting date (see plantingGuide.ts) falls on this date. Read-only; used
- * by the Calendar, so this is what makes "plant the broccoli around Sep 13"
- * (already shown on Home once due, and on My Garden always) also show up
- * when Sep 13 itself is tapped or browsed to on the calendar grid. */
-export function getTasksForDate(profile: GardenProfile, date: Date): DailyTask[] {
+ * for that date, and (for Pro) crop guidance. Read-only; used by the
+ * Calendar. Today's cell mirrors Home's task list exactly (the same
+ * severity='soon' alerts — "Plant Broccoli now" for a not-yet-planted crop
+ * whose window is open, or "Water frequently, celery stays thirsty" for an
+ * already-planted one), since that's the live, currently-true state Home
+ * itself shows — it isn't tied to a single fixed calendar day, and it
+ * keeps showing there, unchanged, for as many days as it takes until the
+ * user checks it off or the crop's stage moves on. Other days only show a
+ * not-yet-planted crop's own single calculated target date, if it falls on
+ * that day — useful for browsing ahead to when a window opens, but there's
+ * no fixed date to hang an already-planted crop's ongoing care alert on. */
+export function getTasksForDate(profile: GardenProfile, date: Date, today: Date = new Date()): DailyTask[] {
   const tasks: DailyTask[] = [];
   const result = scheduleFor(profile);
   if (wateringDaysOfWeek(result.sessionsPerWeek).includes(date.getDay())) {
@@ -119,12 +125,30 @@ export function getTasksForDate(profile: GardenProfile, date: Date): DailyTask[]
       });
     }
   }
-  if (profile.isPro) {
+  if (profile.isPro && sameDay(date, today)) {
+    const alerts = getAlerts(
+      profile.crops,
+      profile.plantedWeeks as Partial<Record<CropKey, PlantedBucket>>,
+      profile.weather,
+      profile.frostDates
+    );
+    for (const a of alerts) {
+      if (a.severity !== 'soon') continue;
+      tasks.push({
+        id: `alert-${a.crop}-${a.headline}-${dateKey(today)}`,
+        icon: cropIcon(a.crop),
+        iconBg: cropIconBg(a.crop),
+        title: a.headline,
+        detail: a.detail,
+        category: categorize(a.headline + ' ' + a.detail),
+      });
+    }
+  } else if (profile.isPro) {
     for (const crop of profile.crops) {
       if (crop === 'other') continue;
       const bucket = (profile.plantedWeeks[crop] ?? 'w2') as PlantedBucket;
       if (bucket !== 'w0') continue;
-      const guidance = plantingGuidanceFor(crop, profile.frostDates);
+      const guidance = plantingGuidanceFor(crop, profile.frostDates, today);
       if (!guidance.date || !sameDay(guidance.date, date)) continue;
       tasks.push({
         id: `plant-${crop}-${dateKey(date)}`,

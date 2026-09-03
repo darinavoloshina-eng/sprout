@@ -176,6 +176,56 @@ describe('getTasksForDate', () => {
       expect(getTasksForDate(profile, target).some((t) => t.id.startsWith('plant-'))).toBe(false);
     });
   });
+
+  describe("today's calendar cell mirrors Home's task list", () => {
+    const FIXED_NOW = new Date(2024, 8, 3); // Sep 3
+    const frostDates = {
+      lastFrostMonthDay: '04-15',
+      firstFrostMonthDay: '11-15',
+      isNorthernHemisphere: true,
+      fetchedAt: new Date().toISOString(),
+    };
+
+    it("shows a not-yet-planted crop's 'plant now' alert on today, not just its original target day", () => {
+      // Broccoli's fall target (12 weeks before Nov 15) is Aug 23 — already
+      // past by Sep 3. Home shows this as due *today* regardless; Calendar's
+      // today cell should match, not just show it back on Aug 23.
+      const profile = makeProfile({
+        crops: ['broccoli'],
+        plantedWeeks: { broccoli: 'w0' },
+        frostDates,
+        isPro: true,
+      });
+      const todayTasks = getTasksForDate(profile, FIXED_NOW, FIXED_NOW);
+      expect(todayTasks.some((t) => t.title.includes('Broccoli'))).toBe(true);
+    });
+
+    it("shows an already-planted crop's soon-severity stage alert on today", () => {
+      // This is the gap the calendar previously had entirely: stage alerts
+      // for crops already in the ground never appeared there at all, only
+      // the watering task did.
+      const profile = makeProfile({
+        crops: ['celery'],
+        plantedWeeks: { celery: 'w2' },
+        frostDates,
+        isPro: true,
+      });
+      const todayTasks = getTasksForDate(profile, FIXED_NOW, FIXED_NOW);
+      expect(todayTasks.some((t) => t.title.toLowerCase().includes('celery stays thirsty'))).toBe(true);
+    });
+
+    it('does not show an ongoing stage alert on a non-today day being browsed', () => {
+      const profile = makeProfile({
+        crops: ['celery'],
+        plantedWeeks: { celery: 'w2' },
+        frostDates,
+        isPro: true,
+      });
+      const otherDay = new Date(2024, 8, 10);
+      const tasks = getTasksForDate(profile, otherDay, FIXED_NOW);
+      expect(tasks.some((t) => t.title.toLowerCase().includes('celery stays thirsty'))).toBe(false);
+    });
+  });
 });
 
 describe('getTodayTasks', () => {
