@@ -133,4 +133,31 @@ describe('estimateFrostDates', () => {
 
     expect(result?.lastFrostMonthDay).toBe('03-10');
   });
+
+  it('finds a first frost that lands in January of the following year (mild coastal climate)', async () => {
+    // Real archive data for a Sonoma County, CA location never dipped to
+    // 32°F within Sep-Dec in any recent year — the first sub-freezing
+    // reading actually landed in mid-January. The old Sep1-Dec31 search
+    // window would report this as no frost at all.
+    global.fetch = jest.fn(async (url: string) => {
+      const match = url.match(/start_date=(\d+)-01-01/);
+      const year = Number(match?.[1]);
+      // Jan 20 of the year AFTER the sampled year — well past Dec 31.
+      return {
+        ok: true,
+        json: async () => ({
+          daily: {
+            time: [`${year}-03-10`, `${year + 1}-01-20`],
+            temperature_2m_min: [20, 20],
+          },
+        }),
+      } as Response;
+    }) as unknown as typeof fetch;
+
+    const result = await estimateFrostDates(38.47, -122.91);
+
+    expect(result).not.toBeNull();
+    expect(result?.lastFrostMonthDay).toBe('03-10');
+    expect(result?.firstFrostMonthDay).toBe('01-20');
+  });
 });

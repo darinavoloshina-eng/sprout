@@ -116,13 +116,73 @@ describe('getTasksForDate', () => {
     });
     expect(getTasksForDate(profile, TUE)).toEqual([]);
   });
+
+  describe('not-yet-planted crop guidance', () => {
+    const FIXED_NOW = new Date(2024, 3, 1); // April 1 — well before tomatoes' May 8 target
+    const frostDates = {
+      lastFrostMonthDay: '05-01',
+      firstFrostMonthDay: null,
+      isNorthernHemisphere: true,
+      fetchedAt: new Date().toISOString(),
+    };
+    const target = new Date(2024, 4, 8); // tomatoes: 1 week after last frost
+
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(FIXED_NOW);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('surfaces a not-yet-planted crop on its calculated planting date, for Pro', () => {
+      const profile = makeProfile({
+        crops: ['tomatoes'],
+        plantedWeeks: { tomatoes: 'w0' },
+        frostDates,
+        isPro: true,
+      });
+      const tasks = getTasksForDate(profile, target);
+      expect(tasks.some((t) => t.title.includes('Tomatoes'))).toBe(true);
+    });
+
+    it('omits it on a date other than the calculated target', () => {
+      const profile = makeProfile({
+        crops: ['tomatoes'],
+        plantedWeeks: { tomatoes: 'w0' },
+        frostDates,
+        isPro: true,
+      });
+      expect(getTasksForDate(profile, new Date(2024, 4, 9))).toEqual([]);
+    });
+
+    it('is Pro-gated: free users see nothing even on the target date', () => {
+      const profile = makeProfile({
+        crops: ['tomatoes'],
+        plantedWeeks: { tomatoes: 'w0' },
+        frostDates,
+        isPro: false,
+      });
+      expect(getTasksForDate(profile, target).some((t) => t.id.startsWith('plant-'))).toBe(false);
+    });
+
+    it('excludes crops that are already planted', () => {
+      const profile = makeProfile({
+        crops: ['tomatoes'],
+        plantedWeeks: { tomatoes: 'w2' },
+        frostDates,
+        isPro: true,
+      });
+      expect(getTasksForDate(profile, target).some((t) => t.id.startsWith('plant-'))).toBe(false);
+    });
+  });
 });
 
 describe('getTodayTasks', () => {
   it('includes soon-severity crop-stage alerts for Pro', () => {
     const profile = makeProfile({ plantedWeeks: { tomatoes: 'w4' }, isPro: true });
     const tasks = getTodayTasks(profile, TUE);
-    expect(tasks.some((t) => t.id === `alert-tomatoes-Flowering & fruit set approaching-${dateKey(TUE)}`)).toBe(
+    expect(tasks.some((t) => t.id === `alert-tomatoes-Water on a consistent schedule-${dateKey(TUE)}`)).toBe(
       true
     );
   });

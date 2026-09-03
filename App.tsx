@@ -13,6 +13,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import TriageScreen from './src/screens/TriageScreen';
 import MyGardenScreen from './src/screens/MyGardenScreen';
 import EditCropsScreen from './src/screens/EditCropsScreen';
+import EditLocationScreen from './src/screens/EditLocationScreen';
 import PlantDetailScreen from './src/screens/PlantDetailScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import DeleteAccountScreen from './src/screens/DeleteAccountScreen';
@@ -30,6 +31,7 @@ import { colors } from './src/theme';
 import { cropLabel, cropIcon as getCropIcon } from './src/cropMeta';
 import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/plantStageContent';
 import { plantingGuidanceFor } from './src/engines/plantingGuide';
+import { useFrostDates } from './src/hooks/useFrostDates';
 import { TabKey } from './src/components/ui';
 
 type Screen =
@@ -39,6 +41,7 @@ type Screen =
   | 'triage'
   | 'garden'
   | 'editCrops'
+  | 'editLocation'
   | 'plant'
   | 'settings'
   | 'deleteAccount'
@@ -142,6 +145,10 @@ export default function App() {
   }, [profileLoaded, fontsLoaded, screen, profile]);
 
   const handleProfileChange = useCallback((p: GardenProfile) => setProfile(p), []);
+
+  // Lives here (not inside HomeScreen) so the estimate arrives regardless of
+  // which screen is showing — see useFrostDates.ts.
+  useFrostDates(profile, handleProfileChange);
 
   async function handleAddPhoto(crop: CropKey) {
     const uri = await pickPlantPhoto();
@@ -252,6 +259,16 @@ export default function App() {
         />
       )}
 
+      {screen === 'editLocation' && profile && (
+        <EditLocationScreen
+          profile={profile}
+          onProfileChange={handleProfileChange}
+          onBack={() => setScreen('settings')}
+          activeTab="settings"
+          onTabPress={handleTabPress}
+        />
+      )}
+
       {screen === 'plant' && profile && selectedCrop && (
         <PlantDetailScreen
           {...plantDetailProps(profile, selectedCrop)}
@@ -266,7 +283,7 @@ export default function App() {
         <SettingsScreen
           profile={profile}
           onProfileChange={handleProfileChange}
-          onEditGarden={() => setScreen('onboarding')}
+          onEditGarden={() => setScreen('editLocation')}
           onEditCrops={() => {
             setEditCropsFrom('settings');
             setScreen('editCrops');

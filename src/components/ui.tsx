@@ -12,6 +12,29 @@ import {
   ViewStyle,
 } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
+import { CropKey } from '../engines/scheduleEngine';
+import { CROP_BADGE, cropIcon } from '../cropMeta';
+
+/** A crop's visual identity, wherever it's more than decorative (grids,
+ * cards, pickers). Most crops just render their real emoji; the handful
+ * with no real emoji of their own (see CROP_BADGE in cropMeta.ts) get a
+ * colored two-letter monogram instead of a generic, indistinguishable dot. */
+export function CropIcon({ crop, size = 22 }: { crop: CropKey | string; size?: number }) {
+  const badge = CROP_BADGE[crop as CropKey];
+  if (!badge) {
+    return <Text style={{ fontSize: size }}>{cropIcon(crop)}</Text>;
+  }
+  return (
+    <View
+      style={[
+        styles.cropBadge,
+        { width: size * 1.3, height: size * 1.3, borderRadius: (size * 1.3) / 2, backgroundColor: badge.color },
+      ]}
+    >
+      <Text style={[styles.cropBadgeText, { fontSize: size * 0.4 }]}>{badge.letters}</Text>
+    </View>
+  );
+}
 
 export type TabKey = 'home' | 'garden' | 'calendar' | 'log' | 'settings';
 
@@ -241,4 +264,6 @@ const styles = StyleSheet.create({
   tabIcon: { fontSize: 18 },
   tabLabel: { fontFamily: fonts.bodySemiBold, fontSize: 10, color: colors.inkSoft },
   tabLabelActive: { fontFamily: fonts.bodyBold, fontSize: 10, color: colors.pine },
+  cropBadge: { alignItems: 'center', justifyContent: 'center' },
+  cropBadgeText: { fontFamily: fonts.monoSemiBold, color: colors.onPine, letterSpacing: 0.3 },
 });

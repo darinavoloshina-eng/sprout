@@ -9,7 +9,8 @@ import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 
 import { CropKey } from '../engines/scheduleEngine';
 import { GardenProfile, HarvestEntry } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { cropIcon, cropLabel } from '../cropMeta';
+import { cropLabel } from '../cropMeta';
+import { CropIcon } from '../components/ui';
 import { parseWeightToLbs, UnitSystem } from '../utils/units';
 
 export interface AddHarvestScreenProps {
@@ -58,7 +59,7 @@ export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarve
               accessibilityRole="radio"
               accessibilityState={{ selected: crop === c }}
             >
-              <Text style={styles.pillIcon}>{cropIcon(c)}</Text>
+              <CropIcon crop={c} size={14} />
               <Text style={crop === c ? styles.pillTextSelected : styles.pillText}>
                 {cropLabel(c)}
               </Text>
@@ -141,7 +142,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   pillSelected: { backgroundColor: colors.pine, borderColor: colors.pine },
-  pillIcon: { fontSize: 14 },
   pillText: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.ink },
   pillTextSelected: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.onPine },
   input: {

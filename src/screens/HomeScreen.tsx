@@ -37,7 +37,6 @@ import {
 } from '../engines/taskEngine';
 import { useLiveWeather } from '../hooks/useLiveWeather';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-import { useFrostDates } from '../hooks/useFrostDates';
 import { formatTemp, formatWeightLbs, UnitSystem } from '../utils/units';
 import { saveProfile } from '../api/storage';
 import { GardenProfile } from '../types';
@@ -143,7 +142,6 @@ export default function HomeScreen({
 }) {
   const { refreshing, error, refresh } = useLiveWeather(profile, onProfileChange);
   const { isOnline } = useNetworkStatus();
-  useFrostDates(profile, onProfileChange);
 
   useEffect(() => {
     Notifications.requestPermissionsAsync().catch(() => {});
@@ -256,6 +254,20 @@ export default function HomeScreen({
             </View>
           ) : null}
         </View>
+
+        {profile.weather ? (
+          <View style={styles.currentWeatherRow}>
+            <Text style={styles.currentWeatherIcon}>{weatherEmoji(profile.weather.weatherCode)}</Text>
+            {profile.weather.tempF != null ? (
+              <Text style={styles.currentWeatherTemp}>{formatTemp(profile.weather.tempF, units)}</Text>
+            ) : null}
+            {profile.weather.todayHighF != null && profile.weather.todayLowF != null ? (
+              <Text style={styles.currentWeatherHL}>
+                H:{formatTemp(profile.weather.todayHighF, units)} L:{formatTemp(profile.weather.todayLowF, units)}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {!isOnline ? (
           <View style={styles.offlineBanner}>
@@ -428,6 +440,23 @@ export default function HomeScreen({
   );
 }
 
+// WMO weather interpretation codes (what Open-Meteo's `weather_code` returns)
+// grouped into the handful of icons that actually read as distinct at a
+// glance — see https://open-meteo.com/en/docs for the full code list.
+function weatherEmoji(code: number | null): string {
+  if (code == null) return '🌡️';
+  if (code === 0) return '☀️';
+  if (code === 1) return '🌤️';
+  if (code === 2) return '⛅';
+  if (code === 3) return '☁️';
+  if (code === 45 || code === 48) return '🌫️';
+  if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return '🌨️';
+  if ([95, 96, 99].includes(code)) return '⛈️';
+  return '🌡️';
+}
+
 function weatherAgeLabel(weatherFetchedAt: string | null): string {
   if (!weatherFetchedAt) return 'weather hasn\'t loaded yet';
   const ageMs = Date.now() - new Date(weatherFetchedAt).getTime();
@@ -506,6 +535,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
   },
   streakText: { fontFamily: fonts.bodyBold, fontSize: 11.5, color: colors.sevFyiText },
+  currentWeatherRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  currentWeatherIcon: { fontSize: 13 },
+  currentWeatherTemp: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
+  currentWeatherHL: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft },
   errorText: { fontFamily: fonts.body, fontSize: 12, color: colors.clay },
   offlineBanner: {
     flexDirection: 'row',

@@ -9,6 +9,7 @@
 
 import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { getAlerts, PlantedBucket } from './alertsEngine';
+import { plantingGuidanceFor } from './plantingGuide';
 import { GardenProfile } from '../types';
 import { colors } from '../theme';
 import { cropIcon, cropIconBg } from '../cropMeta';
@@ -86,8 +87,12 @@ function scheduleFor(profile: GardenProfile): ScheduleResult {
   });
 }
 
-/** Any date's task list — watering pattern + reminders explicitly scheduled
- * for that date. Read-only; used by the Calendar. */
+/** Any date's task list — watering pattern, reminders explicitly scheduled
+ * for that date, and (for Pro) any not-yet-planted crop whose calculated
+ * planting date (see plantingGuide.ts) falls on this date. Read-only; used
+ * by the Calendar, so this is what makes "plant the broccoli around Sep 13"
+ * (already shown on Home once due, and on My Garden always) also show up
+ * when Sep 13 itself is tapped or browsed to on the calendar grid. */
 export function getTasksForDate(profile: GardenProfile, date: Date): DailyTask[] {
   const tasks: DailyTask[] = [];
   const result = scheduleFor(profile);
@@ -111,6 +116,23 @@ export function getTasksForDate(profile: GardenProfile, date: Date): DailyTask[]
         title: r.title,
         detail: r.body,
         category: categorize(r.title || r.body),
+      });
+    }
+  }
+  if (profile.isPro) {
+    for (const crop of profile.crops) {
+      if (crop === 'other') continue;
+      const bucket = (profile.plantedWeeks[crop] ?? 'w2') as PlantedBucket;
+      if (bucket !== 'w0') continue;
+      const guidance = plantingGuidanceFor(crop, profile.frostDates);
+      if (!guidance.date || !sameDay(guidance.date, date)) continue;
+      tasks.push({
+        id: `plant-${crop}-${dateKey(date)}`,
+        icon: cropIcon(crop),
+        iconBg: cropIconBg(crop),
+        title: guidance.headline,
+        detail: guidance.detail,
+        category: 'tend',
       });
     }
   }

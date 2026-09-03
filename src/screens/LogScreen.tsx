@@ -16,9 +16,9 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { CropKey } from '../engines/scheduleEngine';
 import { GardenProfile, HarvestEntry } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { cropIcon, cropIconBg, cropLabel } from '../cropMeta';
+import { cropIconBg, cropLabel } from '../cropMeta';
 import { formatWeightLbs, UnitSystem } from '../utils/units';
-import { TabBar, TabKey } from '../components/ui';
+import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 const SPLIT_COLORS = [colors.mustard, colors.pineTag, colors.sevFyiBg, colors.selectedBg];
 
@@ -172,7 +172,7 @@ export default function LogScreen({
             {recent.map((h) => (
               <View key={h.id} style={styles.pickRow}>
                 <View style={[styles.pickIconWrap, { backgroundColor: cropIconBg(h.crop) }]}>
-                  <Text style={styles.pickIconText}>{cropIcon(h.crop)}</Text>
+                  <CropIcon crop={h.crop} size={15} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.pickTitle}>{h.note || cropLabel(h.crop)}</Text>

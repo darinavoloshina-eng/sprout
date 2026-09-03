@@ -40,6 +40,7 @@ export interface PlantPhoto {
 export interface FrostEstimate {
   lastFrostMonthDay: string; // "MM-DD" — see api/frost.ts
   firstFrostMonthDay: string | null;
+  isNorthernHemisphere: boolean;
   fetchedAt: string;
 }
 

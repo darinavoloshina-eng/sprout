@@ -131,6 +131,16 @@ export const STAGE_HEADLINE: Partial<Record<CropKey, Record<PlantedBucket, strin
   cantaloupe: { w0: 'Establishing', w2: 'Vining', w4: 'Flowering', w8: 'Fruiting, ripening' },
   blueberries: { w0: 'Establishing', w2: 'Rooting in', w4: 'Leafing out', w8: 'End of establishment year' },
   raspberries: { w0: 'Establishing', w2: 'Cane growth', w4: 'Cane growth continuing', w8: 'End of establishment year' },
+  blackberries: { w0: 'Establishing', w2: 'Cane growth', w4: 'Cane growth continuing', w8: 'End of establishment year' },
+  grapes: { w0: 'Establishing', w2: 'Vine growth', w4: 'Establishing root system', w8: 'End of establishment year' },
+  rhubarb: { w0: 'Establishing', w2: 'Leafing out', w4: 'Building root reserves', w8: 'End of establishment year' },
+  figs: { w0: 'Establishing', w2: 'Leafing out', w4: 'Building root reserves', w8: 'End of establishment year' },
+  marigold: { w0: 'Establishing', w2: 'Vegetative growth', w4: 'Budding up', w8: 'Full bloom' },
+  zinnia: { w0: 'Establishing', w2: 'Vegetative growth', w4: 'Budding up', w8: 'Full bloom' },
+  sunflower: { w0: 'Establishing', w2: 'Vegetative growth', w4: 'Budding up', w8: 'Full bloom' },
+  cosmos: { w0: 'Establishing', w2: 'Vegetative growth', w4: 'Budding up', w8: 'Full bloom' },
+  nasturtium: { w0: 'Establishing', w2: 'Vining growth', w4: 'Budding up', w8: 'Full bloom' },
+  pansy: { w0: 'Establishing', w2: 'Leafing out', w4: 'Budding up', w8: 'Full bloom' },
 };
 
 export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>> = {
@@ -434,6 +444,66 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
     w4: 'Keep watering consistent as canes continue to develop.',
     w8: 'This first season is mostly about establishing; fuller harvests come next year.',
   },
+  blackberries: {
+    w0: 'Keep soil consistently moist while canes root in.',
+    w2: 'New cane growth is establishing. Keep watering steady.',
+    w4: 'Keep watering consistent as canes continue to develop.',
+    w8: 'This first season is mostly about establishing; fuller harvests come next year.',
+  },
+  grapes: {
+    w0: 'Keep soil consistently moist while roots establish.',
+    w2: 'Train the young vine onto its trellis or support as it grows.',
+    w4: 'This first year is about building roots and a strong trunk, not fruit.',
+    w8: 'Expect little to no fruit this first year; full production typically starts around year three.',
+  },
+  rhubarb: {
+    w0: 'Keep soil consistently moist while roots establish. Do not harvest this first year.',
+    w2: 'Let the plant grow undisturbed. It is building the root system for future years.',
+    w4: 'Keep watering steady. A strong first year means a better harvest starting next year.',
+    w8: 'Leave the plant alone through fall; it is storing energy in the roots for next spring.',
+  },
+  figs: {
+    w0: 'Keep soil consistently moist while roots establish.',
+    w2: 'Let the tree focus on establishing this first year rather than fruiting heavily.',
+    w4: 'Keep watering steady while the root system develops.',
+    w8: 'Expect only a light crop, if any, this first year. Fuller harvests come in future years.',
+  },
+  marigold: {
+    w0: 'Keep soil consistently moist while roots take hold.',
+    w2: 'Pinch growing tips once seedlings have a few sets of leaves to encourage bushier, fuller plants.',
+    w4: 'First flower buds should be forming. Deadhead spent blooms regularly to keep new ones coming.',
+    w8: 'Keep deadheading spent flowers. Regular deadheading is what keeps marigolds blooming until frost.',
+  },
+  zinnia: {
+    w0: 'Keep soil consistently moist while roots take hold.',
+    w2: 'Pinch the center stem once it has a few sets of leaves to encourage branching and more blooms.',
+    w4: 'Buds are forming now. Keep watering consistent through this stage.',
+    w8: 'Cut flowers regularly for bouquets; frequent cutting is what keeps zinnias blooming.',
+  },
+  sunflower: {
+    w0: 'Keep soil consistently moist while roots take hold.',
+    w2: 'Grows fast once established. Stake tall varieties in windy spots.',
+    w4: 'The bud will start tracking the sun as it forms.',
+    w8: "Leave the head on the stalk if you want to save seeds for birds or next year's planting.",
+  },
+  cosmos: {
+    w0: 'Keep soil consistently moist while roots take hold.',
+    w2: 'Pinch young plants to encourage bushier growth and more flowering stems.',
+    w4: 'Feathery foliage fills in fast. Buds should start appearing soon.',
+    w8: 'Deadhead regularly; cosmos blooms nonstop through frost if spent flowers are kept cut back.',
+  },
+  nasturtium: {
+    w0: 'Keep soil consistently moist while roots take hold.',
+    w2: 'Sprawls or vines quickly. Give it room, or a trellis for climbing types.',
+    w4: 'Poor soil actually produces more flowers; hold off on feeding.',
+    w8: 'Pick flowers and young leaves regularly for salads; that also keeps more blooms coming.',
+  },
+  pansy: {
+    w0: 'Keep soil consistently moist while it establishes.',
+    w2: 'Keep soil consistently moist while it establishes.',
+    w4: 'Cool weather brings on the first flowers.',
+    w8: 'Deadhead spent blooms regularly to keep new flowers coming.',
+  },
 };
 
 export const NEXT_ACTION_ICON: Partial<Record<CropKey, string>> = {
@@ -487,6 +557,16 @@ export const NEXT_ACTION_ICON: Partial<Record<CropKey, string>> = {
   cantaloupe: '🧺',
   blueberries: '💧',
   raspberries: '💧',
+  blackberries: '💧',
+  grapes: '💧',
+  rhubarb: '💧',
+  figs: '🧺',
+  marigold: '✂️',
+  zinnia: '✂️',
+  sunflower: '💐',
+  cosmos: '✂️',
+  nasturtium: '🌿',
+  pansy: '✂️',
 };
 
 // Rough sow/grow/harvest composition of a typical season, and its total
@@ -546,4 +626,14 @@ export const SEASON_SHAPE: Partial<
   cantaloupe: { sow: 12, grow: 48, harvest: 40, weeks: 13 },
   blueberries: { sow: 10, grow: 60, harvest: 30, weeks: 14 },
   raspberries: { sow: 10, grow: 55, harvest: 35, weeks: 14 },
+  blackberries: { sow: 10, grow: 55, harvest: 35, weeks: 14 },
+  grapes: { sow: 10, grow: 65, harvest: 25, weeks: 16 },
+  rhubarb: { sow: 10, grow: 70, harvest: 20, weeks: 14 },
+  figs: { sow: 10, grow: 60, harvest: 30, weeks: 16 },
+  marigold: { sow: 15, grow: 35, harvest: 50, weeks: 14 },
+  zinnia: { sow: 12, grow: 33, harvest: 55, weeks: 12 },
+  sunflower: { sow: 10, grow: 60, harvest: 30, weeks: 12 },
+  cosmos: { sow: 12, grow: 33, harvest: 55, weeks: 11 },
+  nasturtium: { sow: 12, grow: 38, harvest: 50, weeks: 10 },
+  pansy: { sow: 15, grow: 35, harvest: 50, weeks: 10 },
 };

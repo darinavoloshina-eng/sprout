@@ -42,7 +42,8 @@ import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { saveProfile } from '../api/storage';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_META, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
+import { CropIcon } from '../components/ui';
 import { NEXT_ACTION, STAGE_HEADLINE } from '../plantStageContent';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
@@ -93,6 +94,21 @@ const PRO_CROPS: CropKey[] = [
   'cantaloupe',
   'blueberries',
   'raspberries',
+  'blackberries',
+  'grapes',
+  'rhubarb',
+  'figs',
+  'marigold',
+  'zinnia',
+  'sunflower',
+  'cosmos',
+  'nasturtium',
+  'pansy',
+];
+const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
+  { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
+  { key: 'fruit', label: 'Fruit', icon: '🍓' },
+  { key: 'flower', label: 'Flowers', icon: '🌻' },
 ];
 const BUCKETS: { key: PlantedBucket; label: string }[] = [
   { key: 'w0', label: 'Not planted' },
@@ -143,6 +159,8 @@ export default function OnboardingScreen({
 }) {
   const [step, setStep] = useState<Step>('crops');
   const [crops, setCrops] = useState<Set<CropKey>>(new Set(existing?.crops ?? []));
+  const [category, setCategory] = useState<CropCategory>('vegetable');
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [plantedWeeks, setPlantedWeeks] = useState<Partial<Record<CropKey, PlantedBucket>>>(
     existing?.plantedWeeks ?? {}
   );
@@ -315,35 +333,98 @@ export default function OnboardingScreen({
               garden to-do list.
             </Text>
 
+            <TouchableOpacity
+              style={styles.categoryDropdown}
+              onPress={() => setCategoryMenuOpen((o) => !o)}
+              accessibilityRole="button"
+              accessibilityLabel={`Category: ${CATEGORY_OPTIONS.find((o) => o.key === category)!.label}`}
+            >
+              <Text style={styles.categoryDropdownIcon}>
+                {CATEGORY_OPTIONS.find((o) => o.key === category)!.icon}
+              </Text>
+              <Text style={styles.categoryDropdownLabel}>
+                {CATEGORY_OPTIONS.find((o) => o.key === category)!.label}
+              </Text>
+              <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
+            </TouchableOpacity>
+
+            {categoryMenuOpen ? (
+              <View style={styles.categoryMenu}>
+                {CATEGORY_OPTIONS.map((opt, i) => {
+                  const sel = opt.key === category;
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      style={[
+                        styles.categoryMenuItem,
+                        i === CATEGORY_OPTIONS.length - 1 && styles.categoryMenuItemLast,
+                        sel && styles.categoryMenuItemSelected,
+                      ]}
+                      onPress={() => {
+                        setCategory(opt.key);
+                        setCategoryMenuOpen(false);
+                      }}
+                      accessibilityRole="menuitem"
+                      accessibilityState={{ selected: sel }}
+                    >
+                      <Text style={styles.categoryMenuIcon}>{opt.icon}</Text>
+                      <Text style={sel ? styles.categoryMenuLabelSelected : styles.categoryMenuLabel}>
+                        {opt.label}
+                      </Text>
+                      {sel ? <Text style={styles.categoryMenuCheck}>✓</Text> : null}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : null}
+
+            {(existing?.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS).filter((c) => CROP_CATEGORY[c] === category)
+              .length === 0 ? (
+              <View style={styles.categoryEmptyCard}>
+                <Text style={styles.categoryEmptyText}>
+                  {CATEGORY_OPTIONS.find((o) => o.key === category)!.label} are part of Sprout Pro. You can add
+                  them after upgrading, later in Settings.
+                </Text>
+              </View>
+            ) : null}
+
             <View style={styles.cropGrid}>
-              {(existing?.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS).map((c) => {
+              {(existing?.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS)
+                .filter((c) => CROP_CATEGORY[c] === category)
+                .map((c) => {
                 const selected = crops.has(c);
+
+                if (!selected) {
+                  return (
+                    <TouchableOpacity
+                      key={c}
+                      style={styles.cropCard}
+                      onPress={() => toggleCrop(c)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: false }}
+                    >
+                      <CropIcon crop={c} size={23} />
+                      <Text style={styles.cropLabel}>{cropLabel(c)}</Text>
+                    </TouchableOpacity>
+                  );
+                }
+
                 return (
-                  <TouchableOpacity
-                    key={c}
-                    style={[styles.cropCard, selected && styles.cropCardSelected]}
-                    onPress={() => toggleCrop(c)}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: selected }}
-                  >
-                    {selected ? (
+                  <View key={c} style={styles.cropCardExpanded}>
+                    <TouchableOpacity
+                      style={styles.cropCardExpandedHeader}
+                      onPress={() => toggleCrop(c)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: true }}
+                    >
+                      <CropIcon crop={c} size={22} />
+                      <Text style={styles.cropLabelExpanded}>{cropLabel(c)}</Text>
                       <View style={styles.cropCheck}>
                         <Text style={styles.cropCheckText}>✓</Text>
                       </View>
-                    ) : null}
-                    <Text style={styles.cropIcon}>{CROP_META[c].icon}</Text>
-                    <Text style={styles.cropLabel}>{CROP_META[c].label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                    </TouchableOpacity>
 
-            {cropList.length > 0 && (
-              <View style={styles.plantedSection}>
-                <Text style={styles.sectionLabel}>When did you plant these?</Text>
-                {cropList.map((c) => (
-                  <View key={c} style={styles.plantedBlock}>
-                    <Text style={styles.plantedName}>{cropLabel(c)}</Text>
+                    <Text style={styles.bucketPrompt}>When did you plant it?</Text>
                     <View style={styles.pillRow}>
                       {BUCKETS.map((b) => {
                         const sel = (plantedWeeks[c] ?? 'w2') === b.key;
@@ -352,6 +433,8 @@ export default function OnboardingScreen({
                             key={b.key}
                             style={[styles.pill, sel && styles.pillSelected]}
                             onPress={() => setPlantedWeeks({ ...plantedWeeks, [c]: b.key })}
+                            accessibilityRole="radio"
+                            accessibilityState={{ selected: sel }}
                           >
                             <Text style={sel ? styles.pillTextSelected : styles.pillText}>{b.label}</Text>
                           </TouchableOpacity>
@@ -359,9 +442,9 @@ export default function OnboardingScreen({
                       })}
                     </View>
                   </View>
-                ))}
-              </View>
-            )}
+                );
+              })}
+            </View>
 
             {!existing?.isPro && (
               <>
@@ -373,16 +456,16 @@ export default function OnboardingScreen({
                 <View style={styles.proCropRow}>
                   {PRO_CROPS.slice(0, 4).map((c) => (
                     <TouchableOpacity key={c} style={styles.proCropCard} onPress={onOpenPaywall} accessibilityRole="button">
-                      <Text style={styles.proCropIcon}>{CROP_META[c].icon}</Text>
-                      <Text style={styles.proCropLabel}>{CROP_META[c].label}</Text>
+                      <CropIcon crop={c} size={19} />
+                      <Text style={styles.proCropLabel}>{cropLabel(c)}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
                 <View style={styles.proCropRow}>
                   {PRO_CROPS.slice(4, 8).map((c) => (
                     <TouchableOpacity key={c} style={styles.proCropCard} onPress={onOpenPaywall} accessibilityRole="button">
-                      <Text style={styles.proCropIcon}>{CROP_META[c].icon}</Text>
-                      <Text style={styles.proCropLabel}>{CROP_META[c].label}</Text>
+                      <CropIcon crop={c} size={19} />
+                      <Text style={styles.proCropLabel}>{cropLabel(c)}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -468,7 +551,7 @@ export default function OnboardingScreen({
                   previewCrops.map((c) => (
                     <View key={c} style={styles.previewRow}>
                       <View style={[styles.previewIconWrap, { backgroundColor: cropIconBg(c) }]}>
-                        <Text style={styles.previewIconText}>{cropIcon(c)}</Text>
+                        <CropIcon crop={c} size={15} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.previewTitle}>{STAGE_HEADLINE[c]?.w2 ?? cropLabel(c)}</Text>
@@ -540,7 +623,7 @@ export default function OnboardingScreen({
 
             {!showManualEntry && !location ? (
               <TouchableOpacity onPress={() => setShowManualEntry(true)} accessibilityRole="button">
-                <Text style={styles.link}>Enter a city instead</Text>
+                <Text style={styles.link}>Enter your address instead</Text>
               </TouchableOpacity>
             ) : null}
 
@@ -550,12 +633,12 @@ export default function OnboardingScreen({
                   style={styles.input}
                   value={manualQuery}
                   onChangeText={setManualQuery}
-                  placeholder="City or ZIP (override)"
+                  placeholder="Street address, city, or ZIP"
                   placeholderTextColor={colors.inkSoft}
                   autoCorrect={false}
                   returnKeyType="search"
                   onSubmitEditing={searchManualLocation}
-                  accessibilityLabel="City name"
+                  accessibilityLabel="Address"
                 />
                 <TouchableOpacity style={styles.findButton} onPress={searchManualLocation} disabled={searching} accessibilityRole="button">
                   {searching ? <ActivityIndicator color={colors.onPine} /> : <Text style={styles.findButtonText}>Find</Text>}
@@ -875,6 +958,55 @@ const styles = StyleSheet.create({
   },
   h1: { fontFamily: fonts.heading, fontSize: 25, lineHeight: 29, color: colors.pine, marginBottom: 6 },
   sub: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 20, color: colors.inkSoft, marginBottom: 15 },
+  categoryDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+  },
+  categoryDropdownIcon: { fontSize: 15 },
+  categoryDropdownLabel: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  categoryDropdownChevron: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.inkSoft },
+  categoryMenu: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    marginTop: -4,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  categoryMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  categoryMenuItemLast: { borderBottomWidth: 0 },
+  categoryMenuItemSelected: { backgroundColor: colors.selectedBg },
+  categoryMenuIcon: { fontSize: 16 },
+  categoryMenuLabel: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13.5, color: colors.ink },
+  categoryMenuLabelSelected: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.mossGreen },
+  categoryMenuCheck: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.mossGreen },
+  categoryEmptyCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    padding: 14,
+    marginBottom: 10,
+  },
+  categoryEmptyText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
   cropGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cropCard: {
     width: '47%',
@@ -886,24 +1018,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     alignItems: 'center',
     gap: 7,
-    position: 'relative',
   },
-  cropCardSelected: { backgroundColor: colors.selectedBg, borderColor: colors.mossGreen },
+  cropLabel: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
+  cropCardExpanded: {
+    width: '100%',
+    backgroundColor: colors.selectedBg,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: 15,
+    padding: 13,
+    gap: 10,
+  },
+  cropCardExpandedHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cropLabelExpanded: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 14, color: colors.ink },
   cropCheck: {
-    position: 'absolute',
-    top: 8,
-    right: 9,
-    width: 17,
-    height: 17,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: colors.mossGreen,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cropCheckText: { color: colors.onPine, fontFamily: fonts.bodyBold, fontSize: 10 },
-  cropIcon: { fontSize: 23 },
-  cropLabel: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
-  plantedSection: { marginTop: 13 },
+  cropCheckText: { color: colors.onPine, fontFamily: fonts.bodyBold, fontSize: 11 },
+  bucketPrompt: { fontFamily: fonts.bodySemiBold, fontSize: 11, letterSpacing: 0.3, color: colors.inkSoft },
   sectionLabel: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 11,
@@ -913,8 +1050,6 @@ const styles = StyleSheet.create({
     marginBottom: 9,
     marginTop: 13,
   },
-  plantedBlock: { marginBottom: space.sm },
-  plantedName: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink, marginBottom: 6 },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
   pill: {
     backgroundColor: colors.card,

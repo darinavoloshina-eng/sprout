@@ -10,14 +10,14 @@
       "bundleIdentifier": "com.yourcompany.sprout",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Sprout uses your location to fetch local rainfall and temperature so your watering schedule matches your yard. You can type a city instead."
+        "NSLocationWhenInUseUsageDescription": "Sprout uses your location to fetch local rainfall and temperature so your watering schedule matches your yard. You can type your address instead."
       }
     },
     "plugins": [
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Sprout uses your location to fetch local rainfall and temperature so your watering schedule matches your yard. You can type a city instead."
+          "locationWhenInUsePermission": "Sprout uses your location to fetch local rainfall and temperature so your watering schedule matches your yard. You can type your address instead."
         }
       ],
       "expo-notifications",

@@ -56,6 +56,16 @@ export type CropKey =
   | 'cantaloupe'
   | 'blueberries'
   | 'raspberries'
+  | 'blackberries'
+  | 'grapes'
+  | 'rhubarb'
+  | 'figs'
+  | 'marigold'
+  | 'zinnia'
+  | 'sunflower'
+  | 'cosmos'
+  | 'nasturtium'
+  | 'pansy'
   | 'other';
 
 export interface WeatherSnapshot {
@@ -63,6 +73,9 @@ export interface WeatherSnapshot {
   upcomingRainIn: number; // rain forecast in the next few days
   tempF: number | null; // current temperature
   forecastMaxTempF: number | null; // max forecast high, next few days
+  todayHighF: number | null; // today's forecast high
+  todayLowF: number | null; // today's forecast low
+  weatherCode: number | null; // current WMO weather interpretation code
 }
 
 export interface GardenSetup {
@@ -140,6 +153,16 @@ const CROP_WEEKLY_NEED_IN: Record<CropKey, number> = {
   sage: 0.75,
   blueberries: 1.25,
   raspberries: 1.25,
+  blackberries: 1.25,
+  grapes: 1.0,
+  rhubarb: 1.25,
+  figs: 1.0,
+  marigold: 1.0,
+  zinnia: 1.0,
+  sunflower: 1.25,
+  cosmos: 1.0,
+  nasturtium: 1.0,
+  pansy: 1.0,
   other: 1.25,
 };
 
@@ -199,6 +222,16 @@ const CROP_HEAT_THRESHOLD_F: Record<CropKey, number> = {
   sage: 95,
   blueberries: 88,
   raspberries: 88,
+  blackberries: 88,
+  grapes: 90,
+  rhubarb: 78,
+  figs: 95,
+  marigold: 90,
+  zinnia: 90,
+  sunflower: 92,
+  cosmos: 92,
+  nasturtium: 88,
+  pansy: 75,
   other: 85,
 };
 

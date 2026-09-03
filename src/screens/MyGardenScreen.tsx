@@ -16,11 +16,11 @@ import { CropKey } from '../engines/scheduleEngine';
 import { PlantedBucket } from '../engines/alertsEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_META, cropIconBg, cropLabel } from '../cropMeta';
+import { cropIconBg, cropLabel } from '../cropMeta';
 import { BUCKET_LABEL, NEXT_ACTION, NEXT_ACTION_ICON, SEASON_SHAPE, STAGE_HEADLINE } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
 import { formatBedSize, formatWeightLbs, UnitSystem } from '../utils/units';
-import { TabBar, TabKey } from '../components/ui';
+import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
 const PRO_CROPS: CropKey[] = [
@@ -155,7 +155,7 @@ export default function MyGardenScreen({
 
               <View style={styles.cropHeadRow}>
                 <View style={[styles.cropIconWrap, { backgroundColor: cropIconBg(crop) }]}>
-                  <Text style={styles.cropIconText}>{CROP_META[crop].icon}</Text>
+                  <CropIcon crop={crop} size={20} />
                 </View>
                 <View style={styles.cropHeadText}>
                   <Text style={styles.cropName}>{cropLabel(crop)}</Text>
