@@ -178,9 +178,9 @@ export default function EditCropsScreen({
     saveTimer.current = setTimeout(onBack, 700);
   }
 
-  const visibleCrops = (profile.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS).filter(
-    (c) => CROP_CATEGORY[c] === category
-  );
+  const visibleCrops = (profile.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS)
+    .filter((c) => CROP_CATEGORY[c] === category)
+    .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
 
   return (
     <View style={styles.screen}>
