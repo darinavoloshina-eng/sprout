@@ -25,6 +25,7 @@ import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { CROP_CATEGORY, CropCategory, cropLabel } from '../cropMeta';
 import { saveProfile } from '../api/storage';
+import { effectiveBucket, markPlanted } from '../engines/taskEngine';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
@@ -85,12 +86,22 @@ const PRO_CROPS: CropKey[] = [
   'cosmos',
   'nasturtium',
   'pansy',
+  'dahlias',
+  'lemon',
+  'lime',
+  'orange',
+  'kumquat',
+  'olive',
+  'avocado',
+  'pomegranate',
 ];
 
 const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
   { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
   { key: 'fruit', label: 'Fruit', icon: '🍓' },
+  { key: 'herb', label: 'Herbs', icon: '🌿' },
   { key: 'flower', label: 'Flowers', icon: '🌻' },
+  { key: 'tree', label: 'Trees', icon: '🌳' },
 ];
 
 const BUCKETS: { key: PlantedBucket; label: string }[] = [
@@ -107,6 +118,10 @@ export interface EditCropsScreenProps {
   onOpenPaywall: () => void;
   activeTab: TabKey;
   onTabPress?: (tab: TabKey) => void;
+  /** Which category tab to open on, e.g. when arriving from My Garden with
+   * a specific category already being browsed there. Defaults to
+   * Vegetables (first-run / Settings entry has no category context). */
+  initialCategory?: CropCategory;
 }
 
 export default function EditCropsScreen({
@@ -116,6 +131,7 @@ export default function EditCropsScreen({
   onOpenPaywall,
   activeTab,
   onTabPress,
+  initialCategory,
 }: EditCropsScreenProps) {
   function updateProfile(patch: Partial<GardenProfile>) {
     const updated: GardenProfile = { ...profile, ...patch };
@@ -136,10 +152,21 @@ export default function EditCropsScreen({
   }
 
   function setPlantedWeek(c: CropKey, bucket: PlantedBucket) {
-    updateProfile({ plantedWeeks: { ...profile.plantedWeeks, [c]: bucket } });
+    // A manual backdate pill is a deliberate correction — it should win
+    // over (and clear) any previously tracked exact planted date, or the
+    // next render would just recompute the old bucket from that date and
+    // silently override the pick.
+    const { [c]: _clearedDate, ...plantedDates } = profile.plantedDates ?? {};
+    updateProfile({ plantedWeeks: { ...profile.plantedWeeks, [c]: bucket }, plantedDates });
   }
 
-  const [category, setCategory] = useState<CropCategory>('vegetable');
+  function handleMarkPlanted(c: CropKey) {
+    const updated = markPlanted(profile, c);
+    onProfileChange(updated);
+    saveProfile(updated).catch(() => {});
+  }
+
+  const [category, setCategory] = useState<CropCategory>(initialCategory ?? 'vegetable');
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
 
@@ -254,7 +281,7 @@ export default function EditCropsScreen({
                 <Text style={styles.bucketPrompt}>When did you plant it?</Text>
                 <View style={styles.pillRow}>
                   {BUCKETS.map((b) => {
-                    const sel = (profile.plantedWeeks[c] ?? 'w2') === b.key;
+                    const sel = effectiveBucket(profile, c) === b.key;
                     return (
                       <TouchableOpacity
                         key={b.key}
@@ -268,6 +295,17 @@ export default function EditCropsScreen({
                     );
                   })}
                 </View>
+
+                {effectiveBucket(profile, c) === 'w0' ? (
+                  <TouchableOpacity
+                    style={styles.markPlantedButton}
+                    onPress={() => handleMarkPlanted(c)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mark ${cropLabel(c)} as planted today`}
+                  >
+                    <Text style={styles.markPlantedButtonText}>Just planted it? ✓ Mark as planted today</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             );
           })}
@@ -415,6 +453,15 @@ const styles = StyleSheet.create({
   pillSelected: { backgroundColor: colors.pine, borderColor: colors.pine },
   pillText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.ink },
   pillTextSelected: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.onPine },
+  markPlantedButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  markPlantedButtonText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.mossGreen },
   proBanner: {
     flexDirection: 'row',
     alignItems: 'center',

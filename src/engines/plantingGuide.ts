@@ -561,6 +561,55 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
       note: 'A perennial that fruits best in warm climates. In colder zones, grow it in a large container you can move to shelter for winter.',
     },
   },
+  lemon: {
+    spring: {
+      method: 'Plant a potted tree',
+      outdoorWeeksFromFrost: 1,
+      note: 'Very frost-tender. In climates with real winters, keep it in a container you can bring indoors near a sunny window before the first frost.',
+    },
+  },
+  lime: {
+    spring: {
+      method: 'Plant a potted tree',
+      outdoorWeeksFromFrost: 1,
+      note: 'Even more cold-sensitive than lemon. Grow it in a container you can move indoors well before frost.',
+    },
+  },
+  orange: {
+    spring: {
+      method: 'Plant a potted tree',
+      outdoorWeeksFromFrost: 1,
+      note: 'Frost-tender like other citrus. A container you can bring in for winter is the safest bet outside warm climates.',
+    },
+  },
+  kumquat: {
+    spring: {
+      method: 'Plant a potted tree',
+      outdoorWeeksFromFrost: 0,
+      note: 'The most cold-hardy citrus, tolerating a brief light frost — but still safest overwintered indoors or in a sheltered spot outside true citrus climates.',
+    },
+  },
+  olive: {
+    spring: {
+      method: 'Plant a potted or bare-root tree',
+      outdoorWeeksFromFrost: 0,
+      note: 'More cold-tolerant than citrus once established, but young trees and containers still benefit from winter shelter outside mild climates.',
+    },
+  },
+  avocado: {
+    spring: {
+      method: 'Plant a potted tree',
+      outdoorWeeksFromFrost: 2,
+      note: 'Very frost-tender, especially while young. Grow it in a container you can bring indoors, and expect it to take several years to fruit.',
+    },
+  },
+  pomegranate: {
+    spring: {
+      method: 'Plant a potted or bare-root tree',
+      outdoorWeeksFromFrost: -1,
+      note: 'More cold-hardy than citrus, but a container still lets you shelter it through hard freezes outside its favored warm, dry climates.',
+    },
+  },
   marigold: {
     spring: {
       method: 'Direct sow, or start indoors for a head start',
@@ -608,6 +657,13 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
       note: 'A classic fall planting in mild climates, where it often blooms right through a light winter.',
     },
   },
+  dahlias: {
+    spring: {
+      method: 'Plant tubers directly in the ground',
+      outdoorWeeksFromFrost: 2,
+      note: 'Tubers rot in cold, wet soil, so wait until it has truly warmed up. In freezing climates, dig up and store the tubers indoors after the first fall frost.',
+    },
+  },
   other: {
     spring: {
       method: 'Check the seed packet or plant tag',
@@ -617,12 +673,12 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
 };
 
-function parseMonthDay(monthDay: string, year: number): Date {
+export function parseMonthDay(monthDay: string, year: number): Date {
   const [m, d] = monthDay.split('-').map(Number);
   return new Date(year, m - 1, d);
 }
 
-function addWeeks(date: Date, weeks: number): Date {
+export function addWeeks(date: Date, weeks: number): Date {
   return new Date(date.getTime() + weeks * 7 * 86400000);
 }
 
@@ -671,6 +727,21 @@ function isAnomalouslyLateFrost(monthDay: string, isNorthern: boolean): boolean 
   return daysFromFallAnchor(monthDay, isNorthern) > ORIGINAL_FALL_SEARCH_DAYS;
 }
 
+/** The first-frost month-day to actually trust for "weeks until frost"
+ * timing — the real measured estimate, unless it's anomalously late (see
+ * isAnomalouslyLateFrost above), in which case the generic FALL_FROST_CAP
+ * reference substitutes for it. Exported so anything else that needs a
+ * reliable frost reference — taskEngine.ts's succession-planting season
+ * bound, for one — uses the exact same rule this file already applies to
+ * fall planting windows, rather than a second, possibly-diverging one. */
+export function effectiveFirstFrostMonthDay(frostDates: FrostEstimate | null | undefined): string | null {
+  if (!frostDates) return null;
+  const isNorthern = frostDates.isNorthernHemisphere !== false;
+  const cap = FALL_FROST_CAP[isNorthern ? 'north' : 'south'];
+  const measured = frostDates.firstFrostMonthDay;
+  return measured && !isAnomalouslyLateFrost(measured, isNorthern) ? measured : cap;
+}
+
 /** What to do about a crop the user hasn't planted yet: when (relative to
  * their real frost-date estimates) and how (seed vs. seedling, container vs.
  * direct in the ground, spring vs. fall). Falls back to generic, date-free
@@ -696,17 +767,7 @@ export function plantingGuidanceFor(
   }
 
   addCandidates('spring', info.spring, frostDates?.lastFrostMonthDay);
-
-  if (frostDates) {
-    // Defaults to north for profiles saved before this field existed —
-    // most users are northern-hemisphere, and this only affects which
-    // generic reference substitutes for an anomalously late measured frost.
-    const isNorthern = frostDates.isNorthernHemisphere !== false;
-    const cap = FALL_FROST_CAP[isNorthern ? 'north' : 'south'];
-    const measured = frostDates.firstFrostMonthDay;
-    const effectiveFirstFrost = measured && !isAnomalouslyLateFrost(measured, isNorthern) ? measured : cap;
-    addCandidates('fall', info.fall, effectiveFirstFrost);
-  }
+  addCandidates('fall', info.fall, effectiveFirstFrostMonthDay(frostDates));
 
   if (candidates.length === 0) {
     const fallback = (info.spring ?? info.fall) as SeasonWindow;

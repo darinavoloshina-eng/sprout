@@ -26,9 +26,9 @@ import { clearProfile, loadProfile, saveProfile } from './src/api/storage';
 import { pickPlantPhoto } from './src/api/photos';
 import { GardenProfile, PlantPhoto } from './src/types';
 import { CropKey } from './src/engines/scheduleEngine';
-import { PlantedBucket } from './src/engines/alertsEngine';
+import { effectiveBucket } from './src/engines/taskEngine';
 import { colors } from './src/theme';
-import { cropLabel, cropIcon as getCropIcon } from './src/cropMeta';
+import { cropLabel, cropIcon as getCropIcon, CropCategory } from './src/cropMeta';
 import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/plantStageContent';
 import { plantingGuidanceFor } from './src/engines/plantingGuide';
 import { useFrostDates } from './src/hooks/useFrostDates';
@@ -54,7 +54,7 @@ function sameDay(a: Date, b: Date) {
 }
 
 function plantDetailProps(profile: GardenProfile, crop: CropKey) {
-  const bucket = (profile.plantedWeeks[crop] ?? 'w2') as PlantedBucket;
+  const bucket = effectiveBucket(profile, crop);
   const notPlanted = bucket === 'w0';
   const guidance = notPlanted ? plantingGuidanceFor(crop, profile.frostDates) : null;
   const stage = notPlanted ? guidance!.headline : STAGE_HEADLINE[crop]?.[bucket] ?? '';
@@ -114,6 +114,10 @@ export default function App() {
   // Which tab "+ Add a crop" was opened from, so EditCropsScreen shows the
   // right tab highlighted and `onBack` returns to the right place.
   const [editCropsFrom, setEditCropsFrom] = useState<TabKey>('garden');
+  // Which category tab EditCropsScreen should open on — set from My
+  // Garden's own active category tab so "+ Add a crop" lands where the
+  // user was already browsing, instead of always defaulting to Vegetables.
+  const [editCropsInitialCategory, setEditCropsInitialCategory] = useState<CropCategory>('vegetable');
   // A boolean overlay rather than a routed screen: routing through `screen`
   // would unmount whatever's underneath (losing onboarding's in-progress
   // wizard state, mid-step) every time it opened.
@@ -233,12 +237,14 @@ export default function App() {
       {screen === 'garden' && profile && (
         <MyGardenScreen
           profile={profile}
+          onProfileChange={handleProfileChange}
           onOpenCrop={(crop) => {
             setSelectedCrop(crop);
             setScreen('plant');
           }}
-          onAddCrop={() => {
+          onAddCrop={(category) => {
             setEditCropsFrom('garden');
+            setEditCropsInitialCategory(category);
             setScreen('editCrops');
           }}
           onOpenLog={() => setScreen('log')}
@@ -256,6 +262,7 @@ export default function App() {
           onOpenPaywall={openPaywall}
           activeTab={editCropsFrom}
           onTabPress={handleTabPress}
+          initialCategory={editCropsInitialCategory}
         />
       )}
 
@@ -286,6 +293,7 @@ export default function App() {
           onEditGarden={() => setScreen('editLocation')}
           onEditCrops={() => {
             setEditCropsFrom('settings');
+            setEditCropsInitialCategory('vegetable');
             setScreen('editCrops');
           }}
           onDeleteAccount={() => setScreen('deleteAccount')}

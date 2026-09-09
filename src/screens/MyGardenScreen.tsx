@@ -3,23 +3,26 @@
 // per selected crop, linking into the plant detail / photo timeline (5a).
 //
 // The design shows exact sown/end calendar dates and a precise "Week 11"
-// label. The current data model only tracks a coarse planted bucket (just
-// planted / 2-4wk / 4-8wk / 8+wk), not an exact sown date, so those labels
-// are adapted to what we actually know rather than inventing precision the
-// app doesn't have. Season-bar proportions (sow/grow/harvest split) and the
-// harvest-log preview are static per crop until a real task/harvest data
-// model exists — same placeholder approach as 5a's stats.
+// label. Bucket-only crops (backdated via a pill — "1-4 wks ago" — rather
+// than marked planted with a real date) still can't support that level of
+// precision, so those labels stay adapted to what's actually known. Once a
+// crop has a real plantedDates entry (see taskEngine.ts's effectiveBucket),
+// its bucket derives from that date and moves forward on its own. Season-bar
+// proportions (sow/grow/harvest split) and the harvest-log preview are
+// static per crop until a real task/harvest data model exists — same
+// placeholder approach as 5a's stats.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CropKey } from '../engines/scheduleEngine';
-import { PlantedBucket } from '../engines/alertsEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { cropIconBg, cropLabel } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel } from '../cropMeta';
 import { BUCKET_LABEL, NEXT_ACTION, NEXT_ACTION_ICON, SEASON_SHAPE, STAGE_HEADLINE } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
+import { effectiveBucket, markPlanted } from '../engines/taskEngine';
 import { formatBedSize, formatWeightLbs, UnitSystem } from '../utils/units';
+import { saveProfile } from '../api/storage';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
@@ -70,6 +73,32 @@ const PRO_CROPS: CropKey[] = [
   'cantaloupe',
   'blueberries',
   'raspberries',
+  'blackberries',
+  'grapes',
+  'rhubarb',
+  'figs',
+  'marigold',
+  'zinnia',
+  'sunflower',
+  'cosmos',
+  'nasturtium',
+  'pansy',
+  'dahlias',
+  'lemon',
+  'lime',
+  'orange',
+  'kumquat',
+  'olive',
+  'avocado',
+  'pomegranate',
+];
+
+const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
+  { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
+  { key: 'fruit', label: 'Fruit', icon: '🍓' },
+  { key: 'herb', label: 'Herbs', icon: '🌿' },
+  { key: 'flower', label: 'Flowers', icon: '🌻' },
+  { key: 'tree', label: 'Trees', icon: '🌳' },
 ];
 
 function joinNames(names: string[]): string {
@@ -81,8 +110,12 @@ function joinNames(names: string[]): string {
 
 export interface MyGardenScreenProps {
   profile: GardenProfile;
+  onProfileChange: (p: GardenProfile) => void;
   onOpenCrop: (crop: CropKey) => void;
-  onAddCrop: () => void;
+  /** Passed the category currently being browsed, so "+ Add a crop" opens
+   * the crop picker to that same category instead of always defaulting
+   * back to Vegetables. */
+  onAddCrop: (category: CropCategory) => void;
   onOpenLog: () => void;
   onRemoveCrop: (crop: CropKey) => void;
   activeTab?: TabKey;
@@ -91,6 +124,7 @@ export interface MyGardenScreenProps {
 
 export default function MyGardenScreen({
   profile,
+  onProfileChange,
   onOpenCrop,
   onAddCrop,
   onOpenLog,
@@ -109,10 +143,24 @@ export default function MyGardenScreen({
     );
   }
 
+  function handleMarkPlanted(crop: CropKey) {
+    const updated = markPlanted(profile, crop);
+    onProfileChange(updated);
+    saveProfile(updated).catch(() => {});
+  }
+
+  const [category, setCategory] = useState<CropCategory>('vegetable');
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
+
   const totalLbs = (profile.harvests ?? []).reduce((sum, h) => sum + h.weightLbs, 0);
   const crops = profile.crops.filter((c): c is CropKey => c !== 'other');
+  const visibleCrops = crops.filter((c) => CROP_CATEGORY[c] === category);
   const availableCrops = profile.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS;
-  const missingCrops = availableCrops.filter((c) => !profile.crops.includes(c));
+  // Scoped to the active category tab — the "+ Add a crop" card opens the
+  // picker to this same category, so its count needs to match what's
+  // actually available there, not the total across every category.
+  const missingCrops = availableCrops.filter((c) => !profile.crops.includes(c) && CROP_CATEGORY[c] === category);
   const units: UnitSystem = profile.units ?? 'imperial';
 
   return (
@@ -128,8 +176,60 @@ export default function MyGardenScreen({
           <Text style={styles.cropCount}>{crops.length} of {availableCrops.length} crops</Text>
         </View>
 
-        {crops.map((crop) => {
-          const bucket = (profile.plantedWeeks[crop] ?? 'w2') as PlantedBucket;
+        {crops.length > 0 ? (
+          <TouchableOpacity
+            style={styles.categoryDropdown}
+            onPress={() => setCategoryMenuOpen((o) => !o)}
+            accessibilityRole="button"
+            accessibilityLabel={`Category: ${activeCategoryOption.label}`}
+          >
+            <Text style={styles.categoryDropdownIcon}>{activeCategoryOption.icon}</Text>
+            <Text style={styles.categoryDropdownLabel}>{activeCategoryOption.label}</Text>
+            <Text style={styles.categoryDropdownCount}>{visibleCrops.length}</Text>
+            <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {categoryMenuOpen ? (
+          <View style={styles.categoryMenu}>
+            {CATEGORY_OPTIONS.map((opt, i) => {
+              const sel = opt.key === category;
+              const count = crops.filter((c) => CROP_CATEGORY[c] === opt.key).length;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[
+                    styles.categoryMenuItem,
+                    i === CATEGORY_OPTIONS.length - 1 && styles.categoryMenuItemLast,
+                    sel && styles.categoryMenuItemSelected,
+                  ]}
+                  onPress={() => {
+                    setCategory(opt.key);
+                    setCategoryMenuOpen(false);
+                  }}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected: sel }}
+                >
+                  <Text style={styles.categoryMenuIcon}>{opt.icon}</Text>
+                  <Text style={sel ? styles.categoryMenuLabelSelected : styles.categoryMenuLabel}>
+                    {opt.label}
+                  </Text>
+                  <Text style={styles.categoryMenuCount}>{count}</Text>
+                  {sel ? <Text style={styles.categoryMenuCheck}>✓</Text> : null}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : null}
+
+        {crops.length > 0 && visibleCrops.length === 0 ? (
+          <View style={styles.categoryEmptyCard}>
+            <Text style={styles.categoryEmptyText}>No {activeCategoryOption.label.toLowerCase()} in your garden yet.</Text>
+          </View>
+        ) : null}
+
+        {visibleCrops.map((crop) => {
+          const bucket = effectiveBucket(profile, crop);
           const notPlanted = bucket === 'w0';
           const guidance = notPlanted ? plantingGuidanceFor(crop, profile.frostDates) : null;
           const shape = SEASON_SHAPE[crop];
@@ -201,12 +301,23 @@ export default function MyGardenScreen({
                   </Text>
                 </View>
               ) : null}
+
+              {notPlanted ? (
+                <TouchableOpacity
+                  style={styles.markPlantedButton}
+                  onPress={() => handleMarkPlanted(crop)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Mark ${cropLabel(crop)} as planted today`}
+                >
+                  <Text style={styles.markPlantedButtonText}>✓ Mark as planted today</Text>
+                </TouchableOpacity>
+              ) : null}
             </TouchableOpacity>
           );
         })}
 
         {missingCrops.length > 0 ? (
-          <TouchableOpacity style={styles.addCard} onPress={onAddCrop} accessibilityRole="button">
+          <TouchableOpacity style={styles.addCard} onPress={() => onAddCrop(category)} accessibilityRole="button">
             <View style={styles.addIconWrap}>
               <Text style={styles.addIconText}>+</Text>
             </View>
@@ -262,6 +373,53 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 26, color: colors.pine },
   cropCount: { fontFamily: fonts.monoSemiBold, fontSize: 11, color: colors.inkSoft },
+  categoryDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
+  categoryDropdownIcon: { fontSize: 15 },
+  categoryDropdownLabel: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  categoryDropdownCount: { fontFamily: fonts.mono, fontSize: 11.5, color: colors.inkSoft },
+  categoryDropdownChevron: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.inkSoft },
+  categoryMenu: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+  categoryMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  categoryMenuItemLast: { borderBottomWidth: 0 },
+  categoryMenuItemSelected: { backgroundColor: colors.selectedBg },
+  categoryMenuIcon: { fontSize: 16 },
+  categoryMenuLabel: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13.5, color: colors.ink },
+  categoryMenuLabelSelected: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.mossGreen },
+  categoryMenuCount: { fontFamily: fonts.mono, fontSize: 11.5, color: colors.inkSoft },
+  categoryMenuCheck: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.mossGreen },
+  categoryEmptyCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    padding: 14,
+  },
+  categoryEmptyText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
   cropCard: {
     backgroundColor: colors.card,
     borderWidth: 1.5,
@@ -323,6 +481,15 @@ const styles = StyleSheet.create({
   nextIcon: { fontSize: 13 },
   nextText: { flex: 1, fontFamily: fonts.body, fontSize: 11.5, lineHeight: 17, color: colors.ink },
   nextBold: { fontFamily: fonts.bodyBold },
+  markPlantedButton: {
+    backgroundColor: colors.selectedBg,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  markPlantedButtonText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.mossGreen },
   addCard: {
     flexDirection: 'row',
     alignItems: 'center',

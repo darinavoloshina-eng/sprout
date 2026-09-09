@@ -60,12 +60,20 @@ export type CropKey =
   | 'grapes'
   | 'rhubarb'
   | 'figs'
+  | 'lemon'
+  | 'lime'
+  | 'orange'
+  | 'kumquat'
+  | 'olive'
+  | 'avocado'
+  | 'pomegranate'
   | 'marigold'
   | 'zinnia'
   | 'sunflower'
   | 'cosmos'
   | 'nasturtium'
   | 'pansy'
+  | 'dahlias'
   | 'other';
 
 export interface WeatherSnapshot {
@@ -157,12 +165,20 @@ const CROP_WEEKLY_NEED_IN: Record<CropKey, number> = {
   grapes: 1.0,
   rhubarb: 1.25,
   figs: 1.0,
+  lemon: 1.25,
+  lime: 1.25,
+  orange: 1.25,
+  kumquat: 1.0,
+  olive: 0.75,
+  avocado: 1.5,
+  pomegranate: 1.0,
   marigold: 1.0,
   zinnia: 1.0,
   sunflower: 1.25,
   cosmos: 1.0,
   nasturtium: 1.0,
   pansy: 1.0,
+  dahlias: 1.0,
   other: 1.25,
 };
 
@@ -226,12 +242,20 @@ const CROP_HEAT_THRESHOLD_F: Record<CropKey, number> = {
   grapes: 90,
   rhubarb: 78,
   figs: 95,
+  lemon: 92,
+  lime: 92,
+  orange: 92,
+  kumquat: 90,
+  olive: 98,
+  avocado: 88,
+  pomegranate: 95,
   marigold: 90,
   zinnia: 90,
   sunflower: 92,
   cosmos: 92,
   nasturtium: 88,
   pansy: 75,
+  dahlias: 88,
   other: 85,
 };
 

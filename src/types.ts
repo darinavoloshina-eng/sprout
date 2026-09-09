@@ -48,6 +48,13 @@ export interface GardenProfile {
   schemaVersion: number;
   crops: CropKey[];
   plantedWeeks: Partial<Record<CropKey, PlantedBucket>>;
+  // Optional — set when the user taps "Mark as planted" instead of
+  // manually backdating a bucket. Once present for a crop, it's the real
+  // source of truth for that crop's planted bucket (see
+  // taskEngine.ts's effectiveBucket) and is what succession-planting
+  // reminders are timed from — a 4-week-wide bucket like "1-4 wks ago"
+  // isn't precise enough to know when 2 weeks have actually passed.
+  plantedDates?: Partial<Record<CropKey, string>>; // ISO date string
   sun: SunExposure;
   bedWidthFt: number;
   bedLengthFt: number;

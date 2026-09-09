@@ -104,11 +104,21 @@ const PRO_CROPS: CropKey[] = [
   'cosmos',
   'nasturtium',
   'pansy',
+  'dahlias',
+  'lemon',
+  'lime',
+  'orange',
+  'kumquat',
+  'olive',
+  'avocado',
+  'pomegranate',
 ];
 const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
   { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
   { key: 'fruit', label: 'Fruit', icon: '🍓' },
+  { key: 'herb', label: 'Herbs', icon: '🌿' },
   { key: 'flower', label: 'Flowers', icon: '🌻' },
+  { key: 'tree', label: 'Trees', icon: '🌳' },
 ];
 const BUCKETS: { key: PlantedBucket; label: string }[] = [
   { key: 'w0', label: 'Not planted' },
@@ -163,6 +173,9 @@ export default function OnboardingScreen({
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [plantedWeeks, setPlantedWeeks] = useState<Partial<Record<CropKey, PlantedBucket>>>(
     existing?.plantedWeeks ?? {}
+  );
+  const [plantedDates, setPlantedDates] = useState<Partial<Record<CropKey, string>>>(
+    existing?.plantedDates ?? {}
   );
   const [sun, setSun] = useState<SunExposure | null>(existing?.sun ?? null);
   const [bedKey, setBedKey] = useState<string | null>(
@@ -261,6 +274,7 @@ export default function OnboardingScreen({
         schemaVersion: CURRENT_SCHEMA_VERSION,
         crops: Array.from(crops),
         plantedWeeks,
+        plantedDates,
         sun: finalSun,
         bedWidthFt: bed.widthFt,
         bedLengthFt: bed.lengthFt,
@@ -432,7 +446,14 @@ export default function OnboardingScreen({
                           <TouchableOpacity
                             key={b.key}
                             style={[styles.pill, sel && styles.pillSelected]}
-                            onPress={() => setPlantedWeeks({ ...plantedWeeks, [c]: b.key })}
+                            onPress={() => {
+                              setPlantedWeeks({ ...plantedWeeks, [c]: b.key });
+                              // A manual backdate pill is a deliberate
+                              // correction — clear any tracked exact date
+                              // so it doesn't silently override the pick.
+                              const { [c]: _cleared, ...rest } = plantedDates;
+                              setPlantedDates(rest);
+                            }}
                             accessibilityRole="radio"
                             accessibilityState={{ selected: sel }}
                           >
@@ -441,6 +462,20 @@ export default function OnboardingScreen({
                         );
                       })}
                     </View>
+
+                    {(plantedWeeks[c] ?? 'w2') === 'w0' ? (
+                      <TouchableOpacity
+                        style={styles.markPlantedButton}
+                        onPress={() => {
+                          setPlantedWeeks({ ...plantedWeeks, [c]: 'w2' });
+                          setPlantedDates({ ...plantedDates, [c]: new Date().toISOString() });
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Mark ${cropLabel(c)} as planted today`}
+                      >
+                        <Text style={styles.markPlantedButtonText}>Just planted it? ✓ Mark as planted today</Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
                 );
               })}
@@ -1062,6 +1097,15 @@ const styles = StyleSheet.create({
   pillSelected: { backgroundColor: colors.pine, borderColor: colors.pine },
   pillText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.ink },
   pillTextSelected: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.onPine },
+  markPlantedButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  markPlantedButtonText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.mossGreen },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 13, marginBottom: 9 },
   dividerLine: { flex: 1, height: 1, backgroundColor: colors.line },
   dividerText: {

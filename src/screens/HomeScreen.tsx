@@ -31,6 +31,7 @@ import {
   DailyTask,
   computeLongestStreak,
   computeStreak,
+  effectiveBucket,
   getTodayTasks,
   isTaskComplete,
   toggleTask,
@@ -196,23 +197,21 @@ export default function HomeScreen({
   // months would get featured as if it were today's business.
   const gardenCrops = profile.crops.filter((c): c is CropKey => c !== 'other');
   const featurableCrops = gardenCrops.filter((c) => {
-    const bucket = (profile.plantedWeeks[c] ?? 'w2') as PlantedBucket;
+    const bucket = effectiveBucket(profile, c, today);
     if (bucket !== 'w0') return true;
     return plantingGuidanceFor(c, profile.frostDates).isPastDue;
   });
   const sortedByStage = [...featurableCrops].sort((a, b) => {
-    const ba = (profile.plantedWeeks[a] ?? 'w2') as PlantedBucket;
-    const bb = (profile.plantedWeeks[b] ?? 'w2') as PlantedBucket;
+    const ba = effectiveBucket(profile, a, today);
+    const bb = effectiveBucket(profile, b, today);
     return BUCKET_RANK[bb] - BUCKET_RANK[ba];
   });
   const topCrop = sortedByStage[0];
-  const topBucket = topCrop ? ((profile.plantedWeeks[topCrop] ?? 'w2') as PlantedBucket) : null;
+  const topBucket = topCrop ? effectiveBucket(profile, topCrop, today) : null;
   const topNotPlanted = topBucket === 'w0';
   const topGuidance =
     topCrop && topNotPlanted ? plantingGuidanceFor(topCrop, profile.frostDates) : null;
-  const readyToPick = gardenCrops.filter(
-    (c) => ((profile.plantedWeeks[c] ?? 'w2') as PlantedBucket) === 'w8'
-  );
+  const readyToPick = gardenCrops.filter((c) => effectiveBucket(profile, c, today) === 'w8');
 
   const nextReminder = [...profile.scheduledReminders]
     .filter((r) => new Date(r.dateISO).getTime() > today.getTime())

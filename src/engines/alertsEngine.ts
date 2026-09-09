@@ -350,6 +350,48 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w4: { headline: 'Building root reserves', detail: 'Keep watering steady while the root system develops.', severity: 'low' },
     w8: { headline: 'End of establishment year', detail: 'Expect only a light crop, if any, this first year. Fuller harvests come in future years.', severity: 'fyi' },
   },
+  lemon: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Citrus likes well-draining, slightly acidic soil.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Let the top inch of soil dry between waterings rather than keeping it soggy.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering steady and hold off on heavy feeding until the tree is more established.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'Expect little to no fruit this first year. Frost-tender, so plan to bring a container tree indoors before frost hits.', severity: 'fyi' },
+  },
+  lime: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Even more cold-sensitive than lemon, so containers are the safer bet outside warm climates.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Let the top inch of soil dry between waterings.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering steady and hold off on heavy feeding until established.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'Expect little to no fruit this first year. Bring container trees indoors well before the first frost.', severity: 'fyi' },
+  },
+  orange: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Citrus likes well-draining, slightly acidic soil.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Let the top inch of soil dry between waterings.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering steady and hold off on heavy feeding until established.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'Expect little to no fruit this first year. Frost-tender, so plan to bring a container tree indoors before frost.', severity: 'fyi' },
+  },
+  kumquat: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. The most cold-hardy citrus, but still benefits from a sheltered spot.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Let the top inch of soil dry between waterings.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering steady and hold off on heavy feeding until established.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'Expect little to no fruit this first year. Tolerates a brief light frost better than other citrus, but a hard freeze still damages it.', severity: 'fyi' },
+  },
+  olive: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish, then let it dry out somewhat between waterings — olives dislike soggy soil.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Water deeply but infrequently; overwatering is a more common problem than underwatering.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering on a steady, moderate schedule while the root system develops.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'More cold-tolerant than citrus once established, but a young tree or container still benefits from winter shelter. Fruiting is still years away.', severity: 'fyi' },
+  },
+  avocado: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist but well-draining while roots establish — avocado roots are shallow and rot easily in soggy soil.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Keep watering consistent; avocado dislikes drying out completely between waterings.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering steady while the root system develops. Very frost-tender, especially at this young stage.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'Avocado is slow to fruit, often taking several years even in ideal conditions — treat this first year as pure establishment.', severity: 'fyi' },
+  },
+  pomegranate: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Keep watering steady.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering steady while the root system develops.', severity: 'low' },
+    w8: { headline: 'End of establishment year', detail: 'More cold-hardy than citrus and fairly drought-tolerant once established, but expect little to no fruit this first year.', severity: 'fyi' },
+  },
   marigold: {
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots take hold.', severity: 'low' },
     w2: { headline: 'Vegetative growth', detail: 'Pinch growing tips once seedlings have a few sets of leaves to encourage bushier, fuller plants.', severity: 'low' },
@@ -385,6 +427,12 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w2: { headline: 'Leafing out', detail: 'Keep soil consistently moist while it establishes.', severity: 'low' },
     w4: { headline: 'Budding up', detail: 'Cool weather brings on the first flowers.', severity: 'fyi' },
     w8: { headline: 'Full bloom', detail: 'Deadhead spent blooms regularly to keep new flowers coming.', severity: 'fyi' },
+  },
+  dahlias: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots take hold.', severity: 'low' },
+    w2: { headline: 'Vegetative growth', detail: 'Pinch the center stem once it has 3-4 sets of leaves to encourage a bushier plant with more blooms.', severity: 'low' },
+    w4: { headline: 'Budding up', detail: 'Buds are forming. Taller varieties may need staking to support the heavy blooms.', severity: 'fyi' },
+    w8: { headline: 'Full bloom', detail: 'Deadhead spent blooms regularly to keep new ones coming. In freezing climates, dig up tubers once the first fall frost blackens the foliage.', severity: 'fyi' },
   },
 };
 
