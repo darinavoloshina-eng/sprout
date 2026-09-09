@@ -1,16 +1,20 @@
 // DeleteAccountScreen.tsx
 // Screen 6a from the design handoff. The mockup's "you will lose" numbers
-// (31 photos, 41 lbs, 86 tasks, a streak) are fabricated example content for
-// data this app doesn't track yet — showing them here would lie to a real
-// user about to delete their real data. Adapted to what's actually saved:
-// crop count, scheduled reminders, and garden setup. The export row and the
-// App-Store-subscription warning are dropped for the same reason — there's
-// no export feature and no subscription system to warn about.
+// (31 photos, 41 lbs, 86 tasks, a streak) were originally fabricated example
+// content — this version only shows real, currently-tracked data: crop
+// count, logged harvest weight, plant photo count, and garden setup.
+// scheduledReminders was dropped from this list (it used to always read "0
+// scheduled reminders" — there's no UI anywhere in the app that actually
+// creates one, so it never had anything real to report). The export row and
+// the App-Store-subscription warning are dropped for the same honesty
+// reason — there's no export feature and no subscription system to warn
+// about.
 
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
+import { formatWeightLbs, UnitSystem } from '../utils/units';
 
 const CONFIRM_WORD = 'DELETE';
 
@@ -29,7 +33,9 @@ export default function DeleteAccountScreen({
   const canDelete = confirmText.trim().toUpperCase() === CONFIRM_WORD;
 
   const cropCount = profile.crops.filter((c) => c !== 'other').length;
-  const reminderCount = profile.scheduledReminders.length;
+  const harvestLbs = (profile.harvests ?? []).reduce((sum, h) => sum + h.weightLbs, 0);
+  const photoCount = (profile.photos ?? []).length;
+  const units: UnitSystem = profile.units ?? 'imperial';
 
   return (
     <View style={styles.screen}>
@@ -55,12 +61,18 @@ export default function DeleteAccountScreen({
                 {cropCount === 1 ? 'crop and its' : 'crops and their'} care schedule
               </Text>
             </View>
-            <View style={styles.loseRow}>
-              <Text style={styles.loseNumber}>{reminderCount}</Text>
-              <Text style={styles.loseText}>
-                scheduled {reminderCount === 1 ? 'reminder' : 'reminders'}
-              </Text>
-            </View>
+            {harvestLbs > 0 ? (
+              <View style={styles.loseRow}>
+                <Text style={styles.loseNumberSmall}>•</Text>
+                <Text style={styles.loseText}>{formatWeightLbs(harvestLbs, units)} of logged harvests</Text>
+              </View>
+            ) : null}
+            {photoCount > 0 ? (
+              <View style={styles.loseRow}>
+                <Text style={styles.loseNumber}>{photoCount}</Text>
+                <Text style={styles.loseText}>plant {photoCount === 1 ? 'photo' : 'photos'}</Text>
+              </View>
+            ) : null}
             <View style={styles.loseRow}>
               <Text style={styles.loseNumberSmall}>•</Text>
               <Text style={styles.loseText}>your saved location and bed setup</Text>

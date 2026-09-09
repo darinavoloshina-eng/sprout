@@ -26,12 +26,14 @@ import { clearProfile, loadProfile, saveProfile } from './src/api/storage';
 import { pickPlantPhoto } from './src/api/photos';
 import { GardenProfile, PlantPhoto } from './src/types';
 import { CropKey } from './src/engines/scheduleEngine';
-import { effectiveBucket } from './src/engines/taskEngine';
+import { effectiveBackdate, effectiveBucket, plantedAgoLabel } from './src/engines/taskEngine';
+import { formatWeightLbs, UnitSystem } from './src/utils/units';
 import { colors } from './src/theme';
 import { cropLabel, cropIcon as getCropIcon, CropCategory } from './src/cropMeta';
 import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/plantStageContent';
 import { plantingGuidanceFor } from './src/engines/plantingGuide';
 import { useFrostDates } from './src/hooks/useFrostDates';
+import { syncDailyReminder } from './src/notifications';
 import { TabKey } from './src/components/ui';
 
 type Screen =
@@ -58,7 +60,24 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
   const notPlanted = bucket === 'w0';
   const guidance = notPlanted ? plantingGuidanceFor(crop, profile.frostDates) : null;
   const stage = notPlanted ? guidance!.headline : STAGE_HEADLINE[crop]?.[bucket] ?? '';
-  const bucketLabel = BUCKET_LABEL[bucket].toUpperCase();
+  // The precise elapsed time (see taskEngine.ts's plantedAgoLabel) when a
+  // real planted date is tracked, same as My Garden — falls back to the
+  // coarse bucket/backdate label otherwise, so this header doesn't show
+  // "8+ WKS AGO" for a crop the rest of the app already knows was planted
+  // years ago.
+  const bucketLabel = (plantedAgoLabel(profile, crop) ?? BUCKET_LABEL[effectiveBackdate(profile, crop)]).toUpperCase();
+  const units: UnitSystem = profile.units ?? 'imperial';
+
+  const cropLbs = (profile.harvests ?? [])
+    .filter((h) => h.crop === crop)
+    .reduce((sum, h) => sum + h.weightLbs, 0);
+  // A task's id is always scoped with the crop it's for (alert-<crop>-...,
+  // succession-<crop>-..., feed-<crop>-..., plant-<crop>-...) — no CropKey
+  // contains a hyphen, so this substring match can't cross-match another
+  // crop sharing a name prefix.
+  const cropTaskCount = Object.keys(profile.taskCompletions ?? {}).filter((id) =>
+    id.includes(`-${crop}-`)
+  ).length;
 
   const cropPhotos = (profile.photos ?? [])
     .filter((p) => p.crop === crop)
@@ -99,8 +118,11 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
     photoCountLabel,
     timeline,
     stats: [
-      { value: '–', label: profile.units === 'metric' ? 'kg picked' : 'lbs picked' },
-      { value: '–', label: 'tasks done' },
+      {
+        value: cropLbs > 0 ? formatWeightLbs(cropLbs, units).split(' ')[0] : '0',
+        label: units === 'metric' ? 'kg picked' : 'lbs picked',
+      },
+      { value: `${cropTaskCount}`, label: 'tasks done' },
       { value: `~${SEASON_SHAPE[crop]?.weeks ?? '–'}`, label: 'wk season' },
     ],
   };
@@ -153,6 +175,13 @@ export default function App() {
   // Lives here (not inside HomeScreen) so the estimate arrives regardless of
   // which screen is showing — see useFrostDates.ts.
   useFrostDates(profile, handleProfileChange);
+
+  // Keeps the actual scheduled notification in sync with the toggle,
+  // regardless of which screen changed it (Settings or onboarding) — see
+  // notifications.ts for why this used to be a no-op flag.
+  useEffect(() => {
+    if (profile) syncDailyReminder(profile.notificationsEnabled);
+  }, [profile?.notificationsEnabled]);
 
   async function handleAddPhoto(crop: CropKey) {
     const uri = await pickPlantPhoto();

@@ -37,12 +37,12 @@ import {
 import * as Location from 'expo-location';
 import { BED_SIZES, CropKey, SunExposure } from '../engines/scheduleEngine';
 import { formatBedArea, formatBedSize, UnitSystem } from '../utils/units';
-import { PlantedBucket } from '../engines/alertsEngine';
+import { PlantedBackdate } from '../engines/alertsEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { saveProfile } from '../api/storage';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, plantedBucketsFor } from '../cropMeta';
 import { CropIcon } from '../components/ui';
 import { NEXT_ACTION, STAGE_HEADLINE } from '../plantStageContent';
 
@@ -120,12 +120,6 @@ const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
   { key: 'flower', label: 'Flowers', icon: '🌻' },
   { key: 'tree', label: 'Trees', icon: '🌳' },
 ];
-const BUCKETS: { key: PlantedBucket; label: string }[] = [
-  { key: 'w0', label: 'Not planted' },
-  { key: 'w2', label: '1–4 wks' },
-  { key: 'w4', label: '4–8 wks' },
-  { key: 'w8', label: '8+ wks' },
-];
 const SUN_OPTIONS: { key: SunExposure; icon: string; label: string; description: string }[] = [
   { key: 'full', icon: '☀️', label: 'Full sun all day', description: '6+ hours, no real shade' },
   { key: 'morning', icon: '🌤️', label: 'Morning sun, afternoon shade', description: 'Common in coastal fog areas' },
@@ -171,7 +165,7 @@ export default function OnboardingScreen({
   const [crops, setCrops] = useState<Set<CropKey>>(new Set(existing?.crops ?? []));
   const [category, setCategory] = useState<CropCategory>('vegetable');
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
-  const [plantedWeeks, setPlantedWeeks] = useState<Partial<Record<CropKey, PlantedBucket>>>(
+  const [plantedWeeks, setPlantedWeeks] = useState<Partial<Record<CropKey, PlantedBackdate>>>(
     existing?.plantedWeeks ?? {}
   );
   const [plantedDates, setPlantedDates] = useState<Partial<Record<CropKey, string>>>(
@@ -251,12 +245,7 @@ export default function OnboardingScreen({
   const step1Valid = !!location && !!sun;
   const emailValid = /\S+@\S+\.\S+/.test(email.trim());
 
-  async function finish(
-    finalSun: SunExposure,
-    finalLocation: LocationInfo | null,
-    finalEmail?: string,
-    persist = true
-  ) {
+  async function finish(finalSun: SunExposure, finalLocation: LocationInfo | null, finalEmail?: string) {
     setSaving(true);
     try {
       let weather = null;
@@ -303,9 +292,7 @@ export default function OnboardingScreen({
         savedAt: new Date().toISOString(),
       };
 
-      if (persist) {
-        await saveProfile(profile);
-      }
+      await saveProfile(profile);
       onDone(profile);
     } catch {
       Alert.alert('Could not save your garden', 'Something went wrong writing to this device. Try again.');
@@ -440,7 +427,7 @@ export default function OnboardingScreen({
 
                     <Text style={styles.bucketPrompt}>When did you plant it?</Text>
                     <View style={styles.pillRow}>
-                      {BUCKETS.map((b) => {
+                      {plantedBucketsFor(c).map((b) => {
                         const sel = (plantedWeeks[c] ?? 'w2') === b.key;
                         return (
                           <TouchableOpacity
@@ -828,7 +815,7 @@ export default function OnboardingScreen({
             <Text style={styles.sub}>
               {existing
                 ? 'Your plan is ready. This updates the garden already saved on your phone.'
-                : "Your plan is ready. Add your email next to save it, otherwise it won't survive a restart."}
+                : 'Your plan is ready and saves to your phone from here.'}
             </Text>
 
             <TouchableOpacity
@@ -900,9 +887,9 @@ export default function OnboardingScreen({
               </TouchableOpacity>
             </View>
             <Text style={styles.eyebrow}>Almost there</Text>
-            <Text style={styles.h1}>Create your account</Text>
+            <Text style={styles.h1}>Add your email</Text>
             <Text style={styles.sub}>
-              Your email is what saves this garden to your phone for good. We don't send
+              Optional — your garden is already saved on this phone either way. We don't send
               anything to it: no digest, no marketing.
             </Text>
 
@@ -929,22 +916,16 @@ export default function OnboardingScreen({
               {saving ? (
                 <ActivityIndicator color={colors.onPine} />
               ) : (
-                <Text style={styles.ctaText}>Create my account</Text>
+                <Text style={styles.ctaText}>Save and finish</Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => finish(sun ?? 'full', location, undefined, !!existing)}
+              onPress={() => finish(sun ?? 'full', location)}
               accessibilityRole="button"
               disabled={saving}
             >
               <Text style={styles.skipText}>{saving ? 'Saving…' : 'Skip for now'}</Text>
             </TouchableOpacity>
-            {!existing ? (
-              <Text style={styles.skipWarning}>
-                Without an email, your garden won't be saved. Closing or restarting the app
-                will lose it.
-              </Text>
-            ) : null}
           </>
         )}
       </ScrollView>
@@ -1162,14 +1143,6 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: colors.inkSoft,
     paddingVertical: 11,
-  },
-  skipWarning: {
-    textAlign: 'center',
-    fontFamily: fonts.body,
-    fontSize: 11.5,
-    lineHeight: 16,
-    color: colors.clay,
-    paddingHorizontal: 12,
   },
   payoffCard: {
     backgroundColor: colors.card,

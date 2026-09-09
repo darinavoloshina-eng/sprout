@@ -3,24 +3,27 @@
 // per selected crop, linking into the plant detail / photo timeline (5a).
 //
 // The design shows exact sown/end calendar dates and a precise "Week 11"
-// label. Bucket-only crops (backdated via a pill — "1-4 wks ago" — rather
-// than marked planted with a real date) still can't support that level of
-// precision, so those labels stay adapted to what's actually known. Once a
-// crop has a real plantedDates entry (see taskEngine.ts's effectiveBucket),
-// its bucket derives from that date and moves forward on its own. Season-bar
-// proportions (sow/grow/harvest split) and the harvest-log preview are
-// static per crop until a real task/harvest data model exists — same
-// placeholder approach as 5a's stats.
+// label. A crop with a real plantedDates entry (see taskEngine.ts's
+// effectiveBucket/plantedAgoLabel — set by "Mark as planted today") shows
+// that precise, continuously-updating elapsed time ("13 days ago", "6
+// weeks ago") instead of a static range. Bucket-only crops (backdated via
+// a pill — "1-4 wks ago" — rather than marked planted with a real date)
+// still can't support that level of precision, so those labels stay
+// adapted to what's actually known. Season-bar proportions (sow/grow/
+// harvest split) and the harvest-log preview are static per crop until a
+// real task/harvest data model exists — same placeholder approach as 5a's
+// stats.
 
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CropKey } from '../engines/scheduleEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel, plantedBucketsFor } from '../cropMeta';
+import { PlantedBackdate } from '../engines/alertsEngine';
 import { BUCKET_LABEL, NEXT_ACTION, NEXT_ACTION_ICON, SEASON_SHAPE, STAGE_HEADLINE } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
-import { effectiveBucket, markPlanted } from '../engines/taskEngine';
+import { effectiveBackdate, effectiveBucket, markPlanted, plantedAgoLabel } from '../engines/taskEngine';
 import { formatBedSize, formatWeightLbs, UnitSystem } from '../utils/units';
 import { saveProfile } from '../api/storage';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
@@ -93,12 +96,20 @@ const PRO_CROPS: CropKey[] = [
   'pomegranate',
 ];
 
-const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
+/** 'all' isn't a real CropCategory (see cropMeta.ts) — it's a My Garden-only
+ * view that skips the category filter entirely, so it's typed as an addition
+ * on top of CropCategory here rather than widening that shared type (which
+ * would force EditCropsScreen/OnboardingScreen's crop pickers, where "every
+ * category at once" doesn't make sense, to account for it too). */
+type GardenCategoryFilter = CropCategory | 'all';
+
+const CATEGORY_OPTIONS: { key: GardenCategoryFilter; label: string; icon: string }[] = [
   { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
   { key: 'fruit', label: 'Fruit', icon: '🍓' },
   { key: 'herb', label: 'Herbs', icon: '🌿' },
   { key: 'flower', label: 'Flowers', icon: '🌻' },
   { key: 'tree', label: 'Trees', icon: '🌳' },
+  { key: 'all', label: 'All', icon: '🌱' },
 ];
 
 function joinNames(names: string[]): string {
@@ -149,18 +160,39 @@ export default function MyGardenScreen({
     saveProfile(updated).catch(() => {});
   }
 
-  const [category, setCategory] = useState<CropCategory>('vegetable');
+  // A manual backdate pick is a deliberate correction — it should win over
+  // (and clear) any previously tracked exact planted date, or the next
+  // render would just recompute the old bucket from that date and silently
+  // override the pick. Mirrors EditCropsScreen's setPlantedWeek.
+  function setPlantedWeek(crop: CropKey, bucket: PlantedBackdate) {
+    const { [crop]: _clearedDate, ...plantedDates } = profile.plantedDates ?? {};
+    const updated: GardenProfile = {
+      ...profile,
+      plantedWeeks: { ...profile.plantedWeeks, [crop]: bucket },
+      plantedDates,
+    };
+    onProfileChange(updated);
+    saveProfile(updated).catch(() => {});
+  }
+
+  const [category, setCategory] = useState<GardenCategoryFilter>('vegetable');
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [editingPlantedFor, setEditingPlantedFor] = useState<CropKey | null>(null);
   const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
 
   const totalLbs = (profile.harvests ?? []).reduce((sum, h) => sum + h.weightLbs, 0);
   const crops = profile.crops.filter((c): c is CropKey => c !== 'other');
-  const visibleCrops = crops.filter((c) => CROP_CATEGORY[c] === category);
+  const visibleCrops = (category === 'all' ? crops : crops.filter((c) => CROP_CATEGORY[c] === category))
+    .slice()
+    .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
   const availableCrops = profile.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS;
   // Scoped to the active category tab — the "+ Add a crop" card opens the
   // picker to this same category, so its count needs to match what's
-  // actually available there, not the total across every category.
-  const missingCrops = availableCrops.filter((c) => !profile.crops.includes(c) && CROP_CATEGORY[c] === category);
+  // actually available there, not the total across every category. "All"
+  // is the one exception, matching its own unfiltered crop list above.
+  const missingCrops = availableCrops.filter(
+    (c) => !profile.crops.includes(c) && (category === 'all' || CROP_CATEGORY[c] === category)
+  );
   const units: UnitSystem = profile.units ?? 'imperial';
 
   return (
@@ -194,7 +226,7 @@ export default function MyGardenScreen({
           <View style={styles.categoryMenu}>
             {CATEGORY_OPTIONS.map((opt, i) => {
               const sel = opt.key === category;
-              const count = crops.filter((c) => CROP_CATEGORY[c] === opt.key).length;
+              const count = opt.key === 'all' ? crops.length : crops.filter((c) => CROP_CATEGORY[c] === opt.key).length;
               return (
                 <TouchableOpacity
                   key={opt.key}
@@ -235,6 +267,7 @@ export default function MyGardenScreen({
           const shape = SEASON_SHAPE[crop];
           const stage = notPlanted ? guidance!.headline : STAGE_HEADLINE[crop]?.[bucket] ?? '';
           const next = notPlanted ? guidance!.detail : NEXT_ACTION[crop]?.[bucket] ?? '';
+          const agoLabel = plantedAgoLabel(profile, crop) ?? BUCKET_LABEL[effectiveBackdate(profile, crop)];
 
           return (
             <TouchableOpacity
@@ -286,9 +319,45 @@ export default function MyGardenScreen({
                     />
                   </View>
                   <View style={styles.seasonLabels}>
-                    <Text style={styles.seasonLabel}>PLANTED {BUCKET_LABEL[bucket].toUpperCase()}</Text>
+                    <View style={styles.seasonLabelPlantedRow}>
+                      <Text style={styles.seasonLabel}>PLANTED {agoLabel.toUpperCase()}</Text>
+                      <TouchableOpacity
+                        onPress={() => setEditingPlantedFor(editingPlantedFor === crop ? null : crop)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Edit when ${cropLabel(crop)} was planted`}
+                        hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+                      >
+                        <Text style={styles.editPlantedLink}>
+                          {editingPlantedFor === crop ? 'DONE' : 'EDIT'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                     <Text style={styles.seasonLabel}>~{shape.weeks} WK SEASON</Text>
                   </View>
+
+                  {editingPlantedFor === crop ? (
+                    <View style={styles.editPlantedPanel}>
+                      <Text style={styles.bucketPrompt}>When did you plant it?</Text>
+                      <View style={styles.pillRow}>
+                        {plantedBucketsFor(crop)
+                          .filter((b) => b.key !== 'w0')
+                          .map((b) => {
+                            const sel = effectiveBackdate(profile, crop) === b.key;
+                            return (
+                              <TouchableOpacity
+                                key={b.key}
+                                style={[styles.pill, sel && styles.pillSelected]}
+                                onPress={() => setPlantedWeek(crop, b.key)}
+                                accessibilityRole="radio"
+                                accessibilityState={{ selected: sel }}
+                              >
+                                <Text style={sel ? styles.pillTextSelected : styles.pillText}>{b.label}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                      </View>
+                    </View>
+                  ) : null}
                 </View>
               ) : null}
 
@@ -317,7 +386,11 @@ export default function MyGardenScreen({
         })}
 
         {missingCrops.length > 0 ? (
-          <TouchableOpacity style={styles.addCard} onPress={() => onAddCrop(category)} accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.addCard}
+            onPress={() => onAddCrop(category === 'all' ? 'vegetable' : category)}
+            accessibilityRole="button"
+          >
             <View style={styles.addIconWrap}>
               <Text style={styles.addIconText}>+</Text>
             </View>
@@ -470,6 +543,32 @@ const styles = StyleSheet.create({
   seasonHarvest: { backgroundColor: colors.mustard },
   seasonLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5 },
   seasonLabel: { fontFamily: fonts.mono, fontSize: 10, color: colors.inkSoft },
+  seasonLabelPlantedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  editPlantedLink: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9.5,
+    letterSpacing: 0.3,
+    color: colors.mossGreen,
+  },
+  editPlantedPanel: { marginTop: 10, gap: 7 },
+  bucketPrompt: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    color: colors.inkSoft,
+  },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
+  pill: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+  },
+  pillSelected: { backgroundColor: colors.pine, borderColor: colors.pine },
+  pillText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.ink },
+  pillTextSelected: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.onPine },
   nextStrip: {
     flexDirection: 'row',
     gap: 9,

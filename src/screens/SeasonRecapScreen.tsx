@@ -8,8 +8,11 @@
 // there's no photo capture or task-causality tracking to back them —
 // they're shown only when real data exists to support them (see the
 // conditional sections below), the same pattern used everywhere else in
-// this rebuild. Share/Save use React Native's built-in Share API for a real
-// text summary — there's no image-export pipeline to fake a designed card.
+// this rebuild. Share uses React Native's built-in Share API for a real
+// text summary — there's no image-export pipeline (no media-library/view-
+// shot dependency in this project) to back a real "Save to Photos," so
+// that button was dropped rather than quietly doing the same thing as
+// Share under a different label.
 
 import React from 'react';
 import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -125,9 +128,6 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
           <TouchableOpacity style={styles.shareButton} onPress={share} accessibilityRole="button">
             <Text style={styles.shareButtonText}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton} onPress={share} accessibilityRole="button">
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -190,14 +190,4 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', gap: 9, marginBottom: 14 },
   shareButton: { flex: 1, backgroundColor: colors.mustard, borderRadius: 15, padding: 15, alignItems: 'center' },
   shareButtonText: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.pine },
-  saveButton: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 15,
-    paddingVertical: 15,
-    paddingHorizontal: 18,
-    alignItems: 'center',
-  },
-  saveButtonText: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.onPine },
 });

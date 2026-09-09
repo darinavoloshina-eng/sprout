@@ -3,9 +3,11 @@ import {
   computeLongestStreak,
   computeStreak,
   dateKey,
+  effectiveBackdate,
   effectiveBucket,
   getFeedReminders,
   getSuccessionReminders,
+  plantedAgoLabel,
   getTasksForDate,
   getTodayTasks,
   isTaskComplete,
@@ -406,6 +408,31 @@ describe('effectiveBucket', () => {
     expect(effectiveBucket(profile, 'tomatoes', new Date(2024, 0, 29))).toBe('w4'); // 4 weeks
     expect(effectiveBucket(profile, 'tomatoes', new Date(2024, 1, 26))).toBe('w8'); // 8 weeks
   });
+
+  it('collapses a long-duration tree backdate (e.g. "2+ yrs ago") down to w8 for care content', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'y2' } });
+    expect(effectiveBucket(profile, 'lemon')).toBe('w8');
+  });
+});
+
+describe('effectiveBackdate', () => {
+  it('preserves a long-duration tree backdate instead of collapsing it, unlike effectiveBucket', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'y2' } });
+    expect(effectiveBackdate(profile, 'lemon')).toBe('y2');
+    expect(effectiveBucket(profile, 'lemon')).toBe('w8');
+  });
+
+  it('falls back to w2 when nothing is set, same as effectiveBucket', () => {
+    const profile = makeProfile({ plantedWeeks: {} });
+    expect(effectiveBackdate(profile, 'tomatoes')).toBe('w2');
+  });
+
+  it('matches effectiveBucket for a crop with a real tracked planted date', () => {
+    const plantedDate = new Date(2024, 0, 1);
+    const profile = makeProfile({ plantedDates: { tomatoes: plantedDate.toISOString() } });
+    const today = new Date(2024, 1, 26); // 8 weeks later
+    expect(effectiveBackdate(profile, 'tomatoes', today)).toBe(effectiveBucket(profile, 'tomatoes', today));
+  });
 });
 
 describe('markPlanted', () => {
@@ -415,6 +442,50 @@ describe('markPlanted', () => {
     const updated = markPlanted(profile, 'tomatoes', today);
     expect(updated.plantedWeeks.tomatoes).toBe('w2');
     expect(updated.plantedDates?.tomatoes).toBe(today.toISOString());
+  });
+});
+
+describe('plantedAgoLabel', () => {
+  it('is null for a crop with no tracked planted date (bucket-only)', () => {
+    const profile = makeProfile({ plantedWeeks: { tomatoes: 'w4' } });
+    expect(plantedAgoLabel(profile, 'tomatoes', new Date(2024, 5, 1))).toBeNull();
+  });
+
+  it('says "today" the same day it was marked planted', () => {
+    const today = new Date(2024, 5, 1);
+    const profile = makeProfile({ plantedDates: { tomatoes: today.toISOString() } });
+    expect(plantedAgoLabel(profile, 'tomatoes', today)).toBe('today');
+  });
+
+  it('counts in exact days for the first couple weeks, not a coarse bucket', () => {
+    const planted = new Date(2024, 5, 1);
+    const profile = makeProfile({ plantedDates: { tomatoes: planted.toISOString() } });
+    expect(plantedAgoLabel(profile, 'tomatoes', new Date(2024, 5, 2))).toBe('1 day ago');
+    expect(plantedAgoLabel(profile, 'tomatoes', new Date(2024, 5, 10))).toBe('9 days ago');
+  });
+
+  it('keeps advancing week by week within what used to be a single static "1-4 wks ago" bucket', () => {
+    const planted = new Date(2024, 5, 1);
+    const profile = makeProfile({ plantedDates: { tomatoes: planted.toISOString() } });
+    // Day 14 and day 21 both fall in the coarse w2 bucket, but should read
+    // as genuinely different, advancing text.
+    const twoWeeksLabel = plantedAgoLabel(profile, 'tomatoes', new Date(2024, 5, 15));
+    const threeWeeksLabel = plantedAgoLabel(profile, 'tomatoes', new Date(2024, 5, 22));
+    expect(twoWeeksLabel).toBe('2 weeks ago');
+    expect(threeWeeksLabel).toBe('3 weeks ago');
+    expect(twoWeeksLabel).not.toBe(threeWeeksLabel);
+  });
+
+  it('switches to months for longer-established plantings', () => {
+    const planted = new Date(2024, 0, 1);
+    const profile = makeProfile({ plantedDates: { tomatoes: planted.toISOString() } });
+    expect(plantedAgoLabel(profile, 'tomatoes', new Date(2024, 3, 1))).toBe('3 months ago');
+  });
+
+  it('switches to years for a long-established perennial like a citrus tree', () => {
+    const planted = new Date(2022, 5, 1);
+    const profile = makeProfile({ plantedDates: { lemon: planted.toISOString() } });
+    expect(plantedAgoLabel(profile, 'lemon', new Date(2024, 5, 15))).toBe('2 years ago');
   });
 });
 

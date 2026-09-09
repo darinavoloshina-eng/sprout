@@ -21,7 +21,7 @@
 // scheduled-notification system built for that, and promising proactive
 // pings the app doesn't send would be worse than not mentioning it.
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import * as Notifications from 'expo-notifications';
@@ -143,10 +143,6 @@ export default function HomeScreen({
 }) {
   const { refreshing, error, refresh } = useLiveWeather(profile, onProfileChange);
   const { isOnline } = useNetworkStatus();
-
-  useEffect(() => {
-    Notifications.requestPermissionsAsync().catch(() => {});
-  }, []);
 
   const today = useMemo(() => new Date(), []);
   const tasks = useMemo(() => getTodayTasks(profile, today), [profile, today]);

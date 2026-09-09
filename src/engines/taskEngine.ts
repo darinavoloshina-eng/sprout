@@ -8,7 +8,7 @@
 // instead of drifting out of date the way a stored, editable list would.
 
 import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
-import { getAlerts, PlantedBucket } from './alertsEngine';
+import { CARE_BUCKET_FOR, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
 import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor } from './plantingGuide';
 import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
@@ -97,11 +97,52 @@ function scheduleFor(profile: GardenProfile): ScheduleResult {
  * revisited. */
 export function effectiveBucket(profile: GardenProfile, crop: CropKey, today: Date = new Date()): PlantedBucket {
   const plantedDate = profile.plantedDates?.[crop];
-  if (!plantedDate) return (profile.plantedWeeks[crop] ?? 'w2') as PlantedBucket;
+  if (!plantedDate) return CARE_BUCKET_FOR[profile.plantedWeeks[crop] ?? 'w2'];
   const weeksSince = Math.floor((today.getTime() - new Date(plantedDate).getTime()) / (7 * 86400000));
   if (weeksSince < 4) return 'w2';
   if (weeksSince < 8) return 'w4';
   return 'w8';
+}
+
+/** The actual backdate a user picked for a crop with no tracked exact
+ * date — unlike effectiveBucket, this preserves a long-duration pick
+ * ('m6'/'y1'/'y2') instead of collapsing it to 'w8', since it's meant for
+ * display (the pill that should read as selected, the label shown when
+ * there's no exact date to compute from) rather than for driving care
+ * content. A crop with a real plantedDates entry has no separate "pick"
+ * to preserve, so this just matches effectiveBucket for those. */
+export function effectiveBackdate(profile: GardenProfile, crop: CropKey, today: Date = new Date()): PlantedBackdate {
+  const plantedDate = profile.plantedDates?.[crop];
+  if (!plantedDate) return profile.plantedWeeks[crop] ?? 'w2';
+  return effectiveBucket(profile, crop, today);
+}
+
+/** How long ago a crop with a real plantedDates entry actually went in the
+ * ground — "13 days ago", "6 weeks ago", "4 months ago" — instead of the
+ * coarse w2/w4/w8 bucket label (BUCKET_LABEL in plantStageContent.ts),
+ * which only ever says "1-4 wks ago" for the entire month after planting
+ * and never moves within a bucket. Null for a crop with no tracked date
+ * (backdated via a manual bucket pill instead, not "Mark as planted
+ * today"), since there's no real date to measure from — callers should
+ * fall back to the bucket label in that case, same as effectiveBucket
+ * does internally. */
+export function plantedAgoLabel(profile: GardenProfile, crop: CropKey, today: Date = new Date()): string | null {
+  const plantedDate = profile.plantedDates?.[crop];
+  if (!plantedDate) return null;
+  const days = Math.max(0, Math.floor((today.getTime() - new Date(plantedDate).getTime()) / 86400000));
+  if (days === 0) return 'today';
+  if (days === 1) return '1 day ago';
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) {
+    const weeks = Math.floor(days / 7);
+    return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+  }
+  if (days < 730) {
+    const months = Math.floor(days / 30);
+    return `${months} month${months === 1 ? '' : 's'} ago`;
+  }
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? '' : 's'} ago`;
 }
 
 /** The full plantedWeeks-shaped map, but with every crop's bucket resolved

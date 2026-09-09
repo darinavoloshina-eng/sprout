@@ -5,7 +5,7 @@
 // It is now always derived from the profile + current weather at render time.
 
 import { CropKey, SunExposure, WateringMethod, WeatherSnapshot } from './engines/scheduleEngine';
-import { PlantedBucket } from './engines/alertsEngine';
+import { PlantedBackdate } from './engines/alertsEngine';
 
 export interface LocationInfo {
   lat: number;
@@ -47,7 +47,7 @@ export interface FrostEstimate {
 export interface GardenProfile {
   schemaVersion: number;
   crops: CropKey[];
-  plantedWeeks: Partial<Record<CropKey, PlantedBucket>>;
+  plantedWeeks: Partial<Record<CropKey, PlantedBackdate>>;
   // Optional — set when the user taps "Mark as planted" instead of
   // manually backdating a bucket. Once present for a crop, it's the real
   // source of truth for that crop's planted bucket (see

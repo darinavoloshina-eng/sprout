@@ -3,6 +3,7 @@
 // the way the chip/pill styles did before ui.tsx existed.
 
 import { CropKey } from './engines/scheduleEngine';
+import { PlantedBackdate } from './engines/alertsEngine';
 import { colors } from './theme';
 
 export const CROP_META: Record<CropKey, { label: string; icon: string }> = {
@@ -150,6 +151,30 @@ export const CROP_CATEGORY: Record<CropKey, CropCategory> = {
   dahlias: 'flower',
   other: 'vegetable',
 };
+
+/** What a user can pick when backdating a crop's planting manually (no
+ * tracked exact date) — see PlantedBackdate in alertsEngine.ts for why the
+ * three long-duration rungs exist and why they're tree-only. Shared here
+ * (rather than duplicated per screen) so the crop editor (EditCropsScreen,
+ * OnboardingScreen) and My Garden's own inline editor can't drift apart on
+ * which crops get the longer options. */
+export const BASE_PLANTED_BUCKETS: { key: PlantedBackdate; label: string }[] = [
+  { key: 'w0', label: 'Not planted' },
+  { key: 'w2', label: '1–4 wks' },
+  { key: 'w4', label: '4–8 wks' },
+  { key: 'w8', label: '8+ wks' },
+];
+
+export const TREE_PLANTED_BUCKETS: { key: PlantedBackdate; label: string }[] = [
+  ...BASE_PLANTED_BUCKETS,
+  { key: 'm6', label: '3–6 mo' },
+  { key: 'y1', label: '6mo–2 yrs' },
+  { key: 'y2', label: '2+ yrs' },
+];
+
+export function plantedBucketsFor(crop: CropKey): { key: PlantedBackdate; label: string }[] {
+  return CROP_CATEGORY[crop] === 'tree' ? TREE_PLANTED_BUCKETS : BASE_PLANTED_BUCKETS;
+}
 
 // Icon-chip background per crop — used anywhere a crop gets a small round
 // swatch (My Garden cards, Log entries). Cycles through the same four

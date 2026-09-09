@@ -20,12 +20,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CropKey } from '../engines/scheduleEngine';
-import { PlantedBucket } from '../engines/alertsEngine';
+import { PlantedBackdate } from '../engines/alertsEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropLabel } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropLabel, plantedBucketsFor } from '../cropMeta';
 import { saveProfile } from '../api/storage';
-import { effectiveBucket, markPlanted } from '../engines/taskEngine';
+import { effectiveBackdate, effectiveBucket, markPlanted } from '../engines/taskEngine';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
@@ -104,12 +104,6 @@ const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
   { key: 'tree', label: 'Trees', icon: '🌳' },
 ];
 
-const BUCKETS: { key: PlantedBucket; label: string }[] = [
-  { key: 'w0', label: 'Not planted' },
-  { key: 'w2', label: '1–4 wks' },
-  { key: 'w4', label: '4–8 wks' },
-  { key: 'w8', label: '8+ wks' },
-];
 
 export interface EditCropsScreenProps {
   profile: GardenProfile;
@@ -151,7 +145,7 @@ export default function EditCropsScreen({
     }
   }
 
-  function setPlantedWeek(c: CropKey, bucket: PlantedBucket) {
+  function setPlantedWeek(c: CropKey, bucket: PlantedBackdate) {
     // A manual backdate pill is a deliberate correction — it should win
     // over (and clear) any previously tracked exact planted date, or the
     // next render would just recompute the old bucket from that date and
@@ -280,8 +274,8 @@ export default function EditCropsScreen({
 
                 <Text style={styles.bucketPrompt}>When did you plant it?</Text>
                 <View style={styles.pillRow}>
-                  {BUCKETS.map((b) => {
-                    const sel = effectiveBucket(profile, c) === b.key;
+                  {plantedBucketsFor(c).map((b) => {
+                    const sel = effectiveBackdate(profile, c) === b.key;
                     return (
                       <TouchableOpacity
                         key={b.key}

@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { triageTree, TriageCause } from '../engines/triageEngine';
 import { GardenProfile } from '../types';
 import { colors, radius, space } from '../theme';
-import { cropIcon } from '../cropMeta';
+import { cropIcon, cropLabel } from '../cropMeta';
 import { OptionRow, PrimaryButton } from '../components/ui';
 
 type Step = 'crop' | 'symptom' | 'q1' | 'q2' | 'result';
@@ -53,7 +53,7 @@ export default function TriageScreen({
             <OptionRow
               key={c}
               icon={cropIcon(c)}
-              label={cap(c)}
+              label={cropLabel(c)}
               onPress={() => {
                 setCrop(c);
                 setStep('symptom');
@@ -116,7 +116,7 @@ export default function TriageScreen({
 
       {step === 'result' && cause && (
         <>
-          <Text style={styles.h1}>Likely cause · {cap(crop ?? '')}</Text>
+          <Text style={styles.h1}>Likely cause · {crop ? cropLabel(crop) : ''}</Text>
           <View style={styles.resultCard}>
             <Text
               style={[
@@ -148,10 +148,6 @@ export default function TriageScreen({
       )}
     </ScrollView>
   );
-}
-
-function cap(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 const styles = StyleSheet.create({

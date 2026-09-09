@@ -110,7 +110,7 @@ export default function PlantDetailScreen({
         <View>
           <View style={styles.timelineHeadRow}>
             <Text style={styles.timelineHead}>{photoCountLabel}</Text>
-            {timeline.length > 0 ? (
+            {timeline.length > 0 && onPlayTimeline ? (
               <TouchableOpacity onPress={onPlayTimeline} accessibilityRole="button">
                 <Text style={styles.playLink}>Play ▸</Text>
               </TouchableOpacity>

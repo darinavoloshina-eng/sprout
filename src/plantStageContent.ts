@@ -11,13 +11,16 @@
 // established-plant care tips these tables hold for every other bucket.
 
 import { CropKey } from './engines/scheduleEngine';
-import { PlantedBucket } from './engines/alertsEngine';
+import { PlantedBackdate, PlantedBucket } from './engines/alertsEngine';
 
-export const BUCKET_LABEL: Record<PlantedBucket, string> = {
+export const BUCKET_LABEL: Record<PlantedBackdate, string> = {
   w0: 'not planted yet',
   w2: '1–4 wks ago',
   w4: '4–8 wks ago',
   w8: '8+ wks ago',
+  m6: '3–6 months ago',
+  y1: '6 months–2 yrs ago',
+  y2: '2+ yrs ago',
 };
 
 export const STAGE_HEADLINE: Partial<Record<CropKey, Record<PlantedBucket, string>>> = {

@@ -4,6 +4,36 @@ import { FrostEstimate } from '../types';
 import { plantingGuidanceFor } from './plantingGuide';
 
 export type PlantedBucket = 'w0' | 'w2' | 'w4' | 'w8'; // not planted yet / 1-4wk / 4-8wk / 8+wk since planting
+
+/** What a user can actually pick when backdating a planting manually (no
+ * tracked exact date) — the base PlantedBucket ladder plus three longer
+ * rungs for long-lived perennials like fruit trees, where "8+ wks ago" is
+ * true but uselessly vague for something planted years ago. These extra
+ * rungs are display-only: care/alert content (STAGE_TABLE and friends)
+ * still only ever keys off the base four, since a tree's ongoing care
+ * doesn't meaningfully differ between 8 weeks and 4 years established —
+ * see CARE_BUCKET_FOR, which collapses these down to 'w8' for that
+ * lookup. Only offered in the picker for tree-category crops (see
+ * CROP_CATEGORY in cropMeta.ts) since "planted 2+ years ago" doesn't make
+ * sense for a radish. */
+export type PlantedBackdate = PlantedBucket | 'm6' | 'y1' | 'y2'; // + 3-6mo / 6mo-2yr / 2+yr since planting
+
+/** Collapses any PlantedBackdate down to the PlantedBucket that drives
+ * care/alert content — every extra long-duration rung reads the same as
+ * 'w8' ("established"), since that's genuinely how this app's care advice
+ * is bucketed (there's no different advice for a tree planted 8 weeks ago
+ * vs. 4 years ago; both are just "established, ongoing care"). Display
+ * text for the extra rungs comes from BUCKET_LABEL instead, not this. */
+export const CARE_BUCKET_FOR: Record<PlantedBackdate, PlantedBucket> = {
+  w0: 'w0',
+  w2: 'w2',
+  w4: 'w4',
+  w8: 'w8',
+  m6: 'w8',
+  y1: 'w8',
+  y2: 'w8',
+};
+
 export type Severity = 'soon' | 'fyi' | 'low';
 
 export interface GardenAlert {
