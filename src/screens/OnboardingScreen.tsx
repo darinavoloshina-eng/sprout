@@ -36,7 +36,7 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { BED_SIZES, CropKey, SunExposure } from '../engines/scheduleEngine';
-import { formatBedArea, formatBedSize, UnitSystem } from '../utils/units';
+import { formatBedSize, UnitSystem } from '../utils/units';
 import { PlantedBackdate } from '../engines/alertsEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { saveProfile } from '../api/storage';
@@ -172,9 +172,12 @@ export default function OnboardingScreen({
     existing?.plantedDates ?? {}
   );
   const [sun, setSun] = useState<SunExposure | null>(existing?.sun ?? null);
-  const [bedKey, setBedKey] = useState<string | null>(
-    existing ? `${existing.bedWidthFt}x${existing.bedLengthFt}` : '4x8'
-  );
+  // Bed size used to be asked in this step; no longer surfaced, so this
+  // just carries forward whatever an existing garden already had, or the
+  // same 4x8 default a new one always used to land on anyway (see
+  // BED_SIZES in scheduleEngine.ts — it's still the schedule math's input,
+  // just no longer a question the user answers).
+  const bedKey = existing ? `${existing.bedWidthFt}x${existing.bedLengthFt}` : '4x8';
   const [gardenType, setGardenType] = useState<'raised' | 'ground'>(existing?.gardenType ?? 'raised');
   const [notificationsEnabled, setNotificationsEnabled] = useState(existing?.notificationsEnabled ?? true);
   const [email, setEmail] = useState(existing?.email ?? '');
@@ -718,7 +721,7 @@ export default function OnboardingScreen({
             </View>
             <Text style={styles.eyebrow}>Growing space</Text>
             <Text style={styles.h1}>Your growing space</Text>
-            <Text style={styles.sub}>Tell us how you grow and roughly how big.</Text>
+            <Text style={styles.sub}>Tell us how you grow.</Text>
 
             <View style={styles.typeRow}>
               <TouchableOpacity
@@ -739,33 +742,6 @@ export default function OnboardingScreen({
                 <Text style={styles.typeIcon}>🌍</Text>
                 <Text style={styles.typeLabel}>In ground</Text>
               </TouchableOpacity>
-            </View>
-
-            <View style={styles.bedRow}>
-              {BED_SIZES.map((b) => {
-                const sel = bedKey === b.key;
-                return (
-                  <TouchableOpacity
-                    key={b.key}
-                    style={[styles.bedCard, sel && styles.bedCardSelected]}
-                    onPress={() => setBedKey(b.key)}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: sel }}
-                  >
-                    <View style={styles.bedSwatchWrap}>
-                      <View
-                        style={[
-                          styles.bedSwatch,
-                          sel && styles.bedSwatchSelected,
-                          { width: 14 + b.widthFt * 4, height: 14 + b.lengthFt * 1.6 },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.bedLabel}>{formatBedSize(b.widthFt, b.lengthFt, units)}</Text>
-                    <Text style={styles.bedSqFt}>{formatBedArea(b.widthFt, b.lengthFt, units)}</Text>
-                  </TouchableOpacity>
-                );
-              })}
             </View>
 
             <Text style={styles.sectionLabel}>Your plan so far</Text>
@@ -1285,23 +1261,6 @@ const styles = StyleSheet.create({
   typeCardSelected: { backgroundColor: colors.selectedBg, borderColor: colors.mossGreen },
   typeIcon: { fontSize: 17 },
   typeLabel: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.ink },
-  bedRow: { flexDirection: 'row', gap: 9, marginBottom: 9 },
-  bedCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: 15,
-    padding: 13,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-  },
-  bedCardSelected: { backgroundColor: colors.selectedBg, borderColor: colors.mossGreen },
-  bedSwatchWrap: { width: '100%', height: 26, alignItems: 'center', justifyContent: 'center' },
-  bedSwatch: { borderWidth: 2, borderColor: colors.inkSoft, borderRadius: 4 },
-  bedSwatchSelected: { borderColor: colors.mossGreen, backgroundColor: 'rgba(76,122,82,0.14)' },
-  bedLabel: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.ink, marginTop: 8 },
-  bedSqFt: { fontFamily: fonts.mono, fontSize: 10.5, color: colors.inkSoft, marginTop: 2 },
   recapCard: {
     backgroundColor: colors.card,
     borderWidth: 1.5,
