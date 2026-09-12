@@ -10,6 +10,9 @@ export const colors = {
   mossGreen: '#4C7A52', // accent, selection borders
   mustard: '#D9A62E', // "watering day" highlight
   clay: '#B85C38', // act-soon severity
+  seedBrown: '#8B5E34', // "collect seeds" calendar-dot color
+  seedBrownBg: '#E6DACB', // "likely seed collection window" calendar highlight
+  iconCream: '#F7EFD9', // app icon + splash background — matches the real app icon art
   ink: '#26291F', // body text
   inkSoft: '#5B5F4F', // secondary text
   line: '#D8DCC9', // borders, dividers

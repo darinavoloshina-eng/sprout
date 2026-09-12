@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
   WorkSans_400Regular,
@@ -8,6 +8,7 @@ import {
   WorkSans_700Bold,
 } from '@expo-google-fonts/work-sans';
 import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
+import SplashScreen from './src/screens/SplashScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import TriageScreen from './src/screens/TriageScreen';
@@ -34,10 +35,16 @@ import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/p
 import { plantingGuidanceFor } from './src/engines/plantingGuide';
 import { useFrostDates } from './src/hooks/useFrostDates';
 import { syncDailyReminder } from './src/notifications';
+import {
+  fetchCurrentEntitlement,
+  initPurchases,
+  isConfigured as isPurchasesConfigured,
+  onEntitlementChange,
+} from './src/purchases';
 import { TabKey } from './src/components/ui';
 
 type Screen =
-  | 'loading'
+  | 'splash'
   | 'onboarding'
   | 'home'
   | 'triage'
@@ -129,9 +136,14 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('loading');
+  const [screen, setScreen] = useState<Screen>('splash');
   const [profile, setProfile] = useState<GardenProfile | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  // The splash's own fade-in-and-hold timer, independent of profile/font
+  // loading — see SplashScreen.tsx for why. The transition below waits on
+  // both, so a slow load holds the brand screen a little longer instead of
+  // cutting away mid-animation, and a fast load doesn't skip the beat.
+  const [splashDone, setSplashDone] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState<CropKey | null>(null);
   // Which tab "+ Add a crop" was opened from, so EditCropsScreen shows the
   // right tab highlighted and `onBack` returns to the right place.
@@ -165,16 +177,56 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (profileLoaded && fontsLoaded && screen === 'loading') {
+    if (profileLoaded && fontsLoaded && splashDone && screen === 'splash') {
       setScreen(profile ? 'home' : 'onboarding');
     }
-  }, [profileLoaded, fontsLoaded, screen, profile]);
+  }, [profileLoaded, fontsLoaded, splashDone, screen, profile]);
 
   const handleProfileChange = useCallback((p: GardenProfile) => setProfile(p), []);
 
   // Lives here (not inside HomeScreen) so the estimate arrives regardless of
   // which screen is showing — see useFrostDates.ts.
   useFrostDates(profile, handleProfileChange);
+
+  // Purchases is initialized once, early, regardless of whether a profile
+  // exists yet — see purchases.ts for why this is a safe no-op until a
+  // real RevenueCat API key is in place there.
+  useEffect(() => {
+    initPurchases();
+  }, []);
+
+  // Once there's a real entitlement to check (profile loaded, Purchases
+  // configured), sync profile.isPro to match it — a null result means
+  // "not configured yet" or "the check failed," either of which should
+  // leave the locally saved value alone rather than silently downgrading
+  // someone. The change listener keeps this true going forward too: a
+  // renewal, cancellation, or billing issue updates isPro even if it
+  // happens while the Paywall isn't open.
+  useEffect(() => {
+    if (!profile || !isPurchasesConfigured()) return;
+    let cancelled = false;
+    fetchCurrentEntitlement().then((isPro) => {
+      if (cancelled || isPro === null) return;
+      setProfile((current) => {
+        if (!current || current.isPro === isPro) return current;
+        const updated = { ...current, isPro };
+        saveProfile(updated).catch(() => {});
+        return updated;
+      });
+    });
+    const unsubscribe = onEntitlementChange((isPro) => {
+      setProfile((current) => {
+        if (!current || current.isPro === isPro) return current;
+        const updated = { ...current, isPro };
+        saveProfile(updated).catch(() => {});
+        return updated;
+      });
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [profile !== null]);
 
   // Keeps the actual scheduled notification in sync with the toggle,
   // regardless of which screen changed it (Settings or onboarding) — see
@@ -219,15 +271,25 @@ export default function App() {
     else if (tab === 'calendar') setScreen('calendar');
   }, []);
 
+  // Rendered outside the SafeAreaView below (not just conditionally inside
+  // it) so its background reaches every physical edge of the screen, status
+  // bar and home indicator included — matching the native launch screen it
+  // hands off from. Nesting it inside the safe-area-inset container instead
+  // would leave the app's own paper-colored background showing through in
+  // that inset strip, a seam that only shows up on the one screen where
+  // it's most obvious.
+  if (screen === 'splash') {
+    return (
+      <>
+        <StatusBar barStyle="dark-content" />
+        <SplashScreen onFinish={() => setSplashDone(true)} />
+      </>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
-      {screen === 'loading' && (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.mossGreen} />
-        </View>
-      )}
 
       {screen === 'onboarding' && (
         <OnboardingScreen
@@ -401,5 +463,4 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
