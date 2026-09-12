@@ -52,13 +52,13 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
     : null;
 
   const summaryLines = [
-    totalLbs > 0 ? `I grew ${formatWeightLbs(totalLbs, units)} of food this year with Sprout.` : null,
+    totalLbs > 0 ? `I grew ${formatWeightLbs(totalLbs, units)} of food this year with GardenWise.` : null,
     taskCount > 0 ? `${taskCount} garden tasks done, longest streak ${longestStreak} days.` : null,
   ].filter(Boolean);
 
   async function share() {
     try {
-      await Share.share({ message: summaryLines.join(' ') || 'My garden season with Sprout.' });
+      await Share.share({ message: summaryLines.join(' ') || 'My garden season with GardenWise.' });
     } catch {
       // User cancelled the share sheet — nothing to do.
     }
@@ -77,7 +77,7 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
         <View style={styles.card}>
           <View style={styles.cardHeadRow}>
             <Text style={styles.cardEyebrow}>{profile.location?.label ?? 'Your garden'}</Text>
-            <Text style={styles.cardMark}>SPROUT</Text>
+            <Text style={styles.cardMark}>GARDENWISE</Text>
           </View>
 
           <Text style={styles.headline}>
@@ -122,7 +122,7 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
         </View>
 
         <Text style={styles.footerNote}>
-          Next year starts from these numbers. Sprout already knows what worked.
+          Next year starts from these numbers. GardenWise already knows what worked.
         </Text>
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.shareButton} onPress={share} accessibilityRole="button">

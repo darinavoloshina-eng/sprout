@@ -1,5 +1,5 @@
 {
-  "name": "sprout",
+  "name": "gardenwise",
   "version": "0.1.0",
   "private": true,
   "main": "index.js",
@@ -25,6 +25,7 @@
     "expo-notifications": "~0.32.17",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-purchases": "^10.9.1",
     "react-native-svg": "15.12.1"
   },
   "devDependencies": {

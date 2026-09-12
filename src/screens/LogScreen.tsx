@@ -203,7 +203,7 @@ export default function LogScreen({
               <Text style={styles.proTag}>PRO</Text>
             </View>
             <Text style={styles.compareBody}>
-              Once Sprout has a full season logged, Pro can tell you how this year compares:
+              Once GardenWise has a full season logged, Pro can tell you how this year compares:
               "your first tomato came 12 days earlier than last year."
             </Text>
           </TouchableOpacity>

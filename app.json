@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "Sprout",
-    "slug": "sprout",
+    "name": "GardenWise",
+    "slug": "gardenwise",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourcompany.sprout",
+      "bundleIdentifier": "com.yourcompany.gardenwise",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Sprout uses your location to fetch local rainfall and temperature so your watering schedule matches your yard. You can type your address instead."
+        "NSLocationWhenInUseUsageDescription": "GardenWise uses your location to fetch local rainfall and temperature so your watering schedule matches your garden. You can type your address instead."
       }
     },
     "plugins": [
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Sprout uses your location to fetch local rainfall and temperature so your watering schedule matches your yard. You can type your address instead."
+          "locationWhenInUsePermission": "GardenWise uses your location to fetch local rainfall and temperature so your watering schedule matches your garden. You can type your address instead."
         }
       ],
       "expo-notifications",
@@ -25,8 +25,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Sprout uses your photo library so you can add a picture of your plant to its timeline.",
-          "cameraPermission": "Sprout uses your camera so you can take a picture of your plant for its timeline."
+          "photosPermission": "GardenWise uses your photo library so you can add a picture of your plant to its timeline.",
+          "cameraPermission": "GardenWise uses your camera so you can take a picture of your plant for its timeline."
         }
       ]
     ]

@@ -86,7 +86,7 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
 export async function geocodeSearch(query: string): Promise<LocationInfo | null> {
   const data = await getJson(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1`,
-    { headers: { 'User-Agent': 'Sprout garden app (local-only, no backend) - github.com/darinavoloshina-eng/sprout' } }
+    { headers: { 'User-Agent': 'GardenWise garden app (local-only, no backend) - github.com/darinavoloshina-eng/sprout' } }
   );
   const top = data?.[0];
   if (!top) return null;

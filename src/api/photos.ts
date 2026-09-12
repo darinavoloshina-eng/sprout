@@ -27,7 +27,7 @@ function savePickedPhoto(sourceUri: string): string {
 async function captureFromCamera(): Promise<string | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('Camera access needed', 'Turn on camera access for Sprout in Settings to take a photo.');
+    Alert.alert('Camera access needed', 'Turn on camera access for GardenWise in Settings to take a photo.');
     return null;
   }
   const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 });
@@ -38,7 +38,7 @@ async function captureFromCamera(): Promise<string | null> {
 async function captureFromLibrary(): Promise<string | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('Photo access needed', 'Turn on photo library access for Sprout in Settings to add a photo.');
+    Alert.alert('Photo access needed', 'Turn on photo library access for GardenWise in Settings to add a photo.');
     return null;
   }
   const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });

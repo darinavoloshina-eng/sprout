@@ -17,7 +17,7 @@
 // metric branch; only the labels here and elsewhere convert.
 
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   EMITTER_GPH_OPTIONS,
   EMITTER_SPACING_OPTIONS,
@@ -30,6 +30,7 @@ import { cropLabel } from '../cropMeta';
 import { saveProfile } from '../api/storage';
 import { formatFlowGph, formatLengthIn, UnitSystem } from '../utils/units';
 import { TabBar, TabKey } from '../components/ui';
+import { PRIVACY_POLICY_URL } from '../legal';
 
 const METHOD_OPTIONS: { key: WateringMethod; icon: string; label: string }[] = [
   { key: 'drip', icon: '💧', label: 'Drip' },
@@ -135,7 +136,7 @@ export default function SettingsScreen({
           <View style={styles.divider} />
           <TouchableOpacity style={styles.row} onPress={onOpenPaywall} accessibilityRole="button">
             <Text style={styles.rowLabel}>Subscription</Text>
-            <Text style={styles.rowValue}>{profile.isPro ? 'Sprout Pro (preview) ›' : 'Free plan ›'}</Text>
+            <Text style={styles.rowValue}>{profile.isPro ? 'GardenWise Pro (preview) ›' : 'Free plan ›'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -300,13 +301,21 @@ export default function SettingsScreen({
 
         <Text style={styles.sectionLabel}>Data & privacy</Text>
         <View style={styles.group}>
+          <TouchableOpacity
+            style={[styles.row, styles.rowBordered]}
+            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.rowLabel}>Privacy policy</Text>
+            <Text style={styles.rowValue}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.row} onPress={onDeleteAccount} accessibilityRole="button">
             <Text style={styles.deleteLabel}>Delete account</Text>
             <Text style={styles.deleteChevron}>›</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.footer}>Sprout 0.1.0 · your garden data is never sold</Text>
+        <Text style={styles.footer}>GardenWise 0.1.0 · your garden data is never sold</Text>
       </ScrollView>
 
       <TabBar active={activeTab} onPress={onTabPress} />

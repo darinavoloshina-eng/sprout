@@ -23,7 +23,7 @@ export async function loadProfile(): Promise<GardenProfile | null> {
     }
     return parsed;
   } catch (e) {
-    console.warn('Sprout: could not read saved garden', e);
+    console.warn('GardenWise: could not read saved garden', e);
     return null;
   }
 }

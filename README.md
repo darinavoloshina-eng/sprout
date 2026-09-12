@@ -1,4 +1,4 @@
-# Sprout
+# GardenWise
 
 A watering-schedule and plant-triage app for raised-bed gardeners. React Native
 + Expo, iOS-first. All logic runs on the device; there is no backend.

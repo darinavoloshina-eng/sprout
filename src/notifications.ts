@@ -7,8 +7,8 @@
 // A local notification's content is fixed at schedule time, not
 // recomputed each morning against that day's real task list — there's no
 // background task infra here to do that — so the copy stays deliberately
-// generic ("check Sprout for what's due") rather than promising a specific
-// count it can't actually deliver.
+// generic ("check GardenWise for what's due") rather than promising a
+// specific count it can't actually deliver.
 
 import * as Notifications from 'expo-notifications';
 
@@ -31,7 +31,7 @@ export async function syncDailyReminder(enabled: boolean): Promise<void> {
     identifier: DAILY_REMINDER_ID,
     content: {
       title: 'Your garden today',
-      body: "Check Sprout for what's due today — watering, planting, or a stage alert.",
+      body: "Check GardenWise for what's due today — watering, planting, or a stage alert.",
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
