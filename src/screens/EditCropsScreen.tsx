@@ -16,6 +16,13 @@
 // crop's card now expands in place (still inside the same wrapping grid,
 // it just claims the full row instead of a half-width tile) to show its
 // planted-stage picker immediately, right where it was tapped.
+//
+// Free used to mean four specific named crops (tomatoes, cucumbers,
+// lettuce, carrots) and nothing else was even visible. It's a count now,
+// not a list: every crop in every category is browsable for free, and the
+// FREE_CROP_LIMIT'th + 1 pick is what actually opens the paywall (see
+// atFreeLimit/toggleCrop below). FREE_CROPS/PRO_CROPS below just seed the
+// combined catalog at this point — they no longer gate visibility.
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -23,9 +30,9 @@ import { CropKey } from '../engines/scheduleEngine';
 import { PlantedBackdate } from '../engines/alertsEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropLabel, plantedBucketsFor } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
 import { saveProfile } from '../api/storage';
-import { effectiveBackdate, effectiveBucket, markPlanted } from '../engines/taskEngine';
+import { assumedPlantedDateForBucket, effectiveBackdate, effectiveBucket, markPlanted } from '../engines/taskEngine';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
@@ -94,6 +101,8 @@ const PRO_CROPS: CropKey[] = [
   'olive',
   'avocado',
   'pomegranate',
+  'peach',
+  'cherry',
 ];
 
 const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
@@ -133,24 +142,38 @@ export default function EditCropsScreen({
     saveProfile(updated).catch(() => {});
   }
 
+  const selectedCount = profile.crops.filter((c) => c !== 'other').length;
+  const atFreeLimit = !profile.isPro && selectedCount >= FREE_CROP_LIMIT;
+
   function toggleCrop(c: CropKey) {
     if (profile.crops.includes(c)) {
       const { [c]: _removed, ...plantedWeeks } = profile.plantedWeeks;
       updateProfile({ crops: profile.crops.filter((x) => x !== c), plantedWeeks });
-    } else {
-      updateProfile({
-        crops: [...profile.crops, c],
-        plantedWeeks: { ...profile.plantedWeeks, [c]: 'w2' },
-      });
+      return;
     }
+    // Free is a count, not a fixed list — picking a 5th crop from
+    // anywhere in the catalog is what actually needs Pro, so this is
+    // where that gate lives now instead of on category visibility.
+    if (atFreeLimit) {
+      onOpenPaywall();
+      return;
+    }
+    updateProfile({
+      crops: [...profile.crops, c],
+      plantedWeeks: { ...profile.plantedWeeks, [c]: 'w2' },
+    });
   }
 
   function setPlantedWeek(c: CropKey, bucket: PlantedBackdate) {
-    // A manual backdate pill is a deliberate correction — it should win
-    // over (and clear) any previously tracked exact planted date, or the
-    // next render would just recompute the old bucket from that date and
-    // silently override the pick.
-    const { [c]: _clearedDate, ...plantedDates } = profile.plantedDates ?? {};
+    // A manual backdate pill is a deliberate correction, so it always wins
+    // over whatever exact date was tracked before — but rather than
+    // clearing that date outright, it's replaced with a fresh best-guess
+    // for the new bucket (see assumedPlantedDateForBucket) so succession
+    // and feed reminders still have something to anchor to.
+    const assumedDate = assumedPlantedDateForBucket(bucket);
+    const plantedDates = { ...profile.plantedDates };
+    if (assumedDate) plantedDates[c] = assumedDate;
+    else delete plantedDates[c];
     updateProfile({ plantedWeeks: { ...profile.plantedWeeks, [c]: bucket }, plantedDates });
   }
 
@@ -178,7 +201,10 @@ export default function EditCropsScreen({
     saveTimer.current = setTimeout(onBack, 700);
   }
 
-  const visibleCrops = (profile.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS)
+  // Everyone browses the full catalog now — free is a cap on how many
+  // crops total, not which specific ones are visible. See atFreeLimit
+  // above for where that cap actually bites.
+  const visibleCrops = [...FREE_CROPS, ...PRO_CROPS]
     .filter((c) => CROP_CATEGORY[c] === category)
     .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
 
@@ -190,6 +216,11 @@ export default function EditCropsScreen({
         </TouchableOpacity>
         <Text style={styles.title}>Crops</Text>
         <Text style={styles.sub}>Tap a crop to add it, then set when you planted it right there.</Text>
+        {!profile.isPro ? (
+          <Text style={styles.freeCountText}>
+            {selectedCount} of {FREE_CROP_LIMIT} free crops selected
+          </Text>
+        ) : null}
 
         <TouchableOpacity
           style={styles.categoryDropdown}
@@ -230,14 +261,6 @@ export default function EditCropsScreen({
           </View>
         ) : null}
 
-        {visibleCrops.length === 0 ? (
-          <View style={styles.categoryEmptyCard}>
-            <Text style={styles.categoryEmptyText}>
-              {activeCategoryOption.label} are part of Sprout Pro. Upgrade below to add them.
-            </Text>
-          </View>
-        ) : null}
-
         <View style={styles.cropGrid}>
           {visibleCrops.map((c) => {
             const selected = profile.crops.includes(c);
@@ -246,13 +269,16 @@ export default function EditCropsScreen({
               return (
                 <TouchableOpacity
                   key={c}
-                  style={styles.cropCard}
+                  style={[styles.cropCard, atFreeLimit && styles.cropCardLocked]}
                   onPress={() => toggleCrop(c)}
                   accessibilityRole="checkbox"
-                  accessibilityState={{ checked: false }}
+                  accessibilityState={{ checked: false, disabled: atFreeLimit }}
                 >
                   <CropIcon crop={c} size={23} />
-                  <Text style={styles.cropLabel}>{cropLabel(c)}</Text>
+                  <Text style={styles.cropLabel}>
+                    {cropLabel(c)}
+                    {atFreeLimit ? ' 🔒' : ''}
+                  </Text>
                 </TouchableOpacity>
               );
             }
@@ -311,8 +337,8 @@ export default function EditCropsScreen({
               <Text style={styles.proBannerIcon}>🔒</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.proBannerTitle}>Unlock all crops</Text>
-              <Text style={styles.proBannerSub}>Peppers, basil, potatoes, garlic and more · $3/mo</Text>
+              <Text style={styles.proBannerTitle}>Grow more than {FREE_CROP_LIMIT} crops</Text>
+              <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $3/mo</Text>
             </View>
             <View style={styles.proBannerCta}>
               <Text style={styles.proBannerCtaText}>Try free</Text>
@@ -346,7 +372,14 @@ const styles = StyleSheet.create({
   topRow: { minHeight: 20, marginBottom: space.xs, justifyContent: 'center', alignSelf: 'flex-start' },
   back: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
   title: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 26, color: colors.pine, marginTop: 4 },
-  sub: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 20, color: colors.inkSoft, marginTop: 4, marginBottom: 16 },
+  sub: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 20, color: colors.inkSoft, marginTop: 4, marginBottom: 8 },
+  freeCountText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 11.5,
+    letterSpacing: 0.2,
+    color: colors.mossGreen,
+    marginBottom: 16,
+  },
   categoryDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -387,15 +420,6 @@ const styles = StyleSheet.create({
   categoryMenuLabel: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13.5, color: colors.ink },
   categoryMenuLabelSelected: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.mossGreen },
   categoryMenuCheck: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.mossGreen },
-  categoryEmptyCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: 15,
-    padding: 14,
-    marginBottom: 10,
-  },
-  categoryEmptyText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
   cropGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cropCard: {
     width: '47%',
@@ -408,6 +432,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
   },
+  cropCardLocked: { opacity: 0.55 },
   cropLabel: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
   cropCardExpanded: {
     width: '100%',

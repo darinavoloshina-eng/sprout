@@ -13,18 +13,28 @@
 // harvest split) and the harvest-log preview are static per crop until a
 // real task/harvest data model exists — same placeholder approach as 5a's
 // stats.
+//
+// Free is a count (FREE_CROP_LIMIT), not a fixed crop list, so
+// availableCrops below is always the full catalog — see the matching
+// comment in EditCropsScreen.tsx, which is what actually enforces the cap.
 
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CropKey } from '../engines/scheduleEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel, plantedBucketsFor } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
 import { PlantedBackdate } from '../engines/alertsEngine';
 import { BUCKET_LABEL, NEXT_ACTION, NEXT_ACTION_ICON, SEASON_SHAPE, STAGE_HEADLINE } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
-import { effectiveBackdate, effectiveBucket, markPlanted, plantedAgoLabel } from '../engines/taskEngine';
-import { formatBedSize, formatWeightLbs, UnitSystem } from '../utils/units';
+import {
+  assumedPlantedDateForBucket,
+  effectiveBackdate,
+  effectiveBucket,
+  markPlanted,
+  plantedAgoLabel,
+} from '../engines/taskEngine';
+import { formatWeightLbs, UnitSystem } from '../utils/units';
 import { saveProfile } from '../api/storage';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
 
@@ -94,6 +104,8 @@ const PRO_CROPS: CropKey[] = [
   'olive',
   'avocado',
   'pomegranate',
+  'peach',
+  'cherry',
 ];
 
 /** 'all' isn't a real CropCategory (see cropMeta.ts) — it's a My Garden-only
@@ -160,12 +172,17 @@ export default function MyGardenScreen({
     saveProfile(updated).catch(() => {});
   }
 
-  // A manual backdate pick is a deliberate correction — it should win over
-  // (and clear) any previously tracked exact planted date, or the next
-  // render would just recompute the old bucket from that date and silently
-  // override the pick. Mirrors EditCropsScreen's setPlantedWeek.
+  // A manual backdate pick is a deliberate correction, so it always wins
+  // over whatever exact date was tracked before — but rather than clearing
+  // that date outright, it's replaced with a fresh best-guess for the new
+  // bucket (see assumedPlantedDateForBucket) so succession and feed
+  // reminders still have something to anchor to. Mirrors EditCropsScreen's
+  // setPlantedWeek.
   function setPlantedWeek(crop: CropKey, bucket: PlantedBackdate) {
-    const { [crop]: _clearedDate, ...plantedDates } = profile.plantedDates ?? {};
+    const assumedDate = assumedPlantedDateForBucket(bucket);
+    const plantedDates = { ...profile.plantedDates };
+    if (assumedDate) plantedDates[crop] = assumedDate;
+    else delete plantedDates[crop];
     const updated: GardenProfile = {
       ...profile,
       plantedWeeks: { ...profile.plantedWeeks, [crop]: bucket },
@@ -175,7 +192,7 @@ export default function MyGardenScreen({
     saveProfile(updated).catch(() => {});
   }
 
-  const [category, setCategory] = useState<GardenCategoryFilter>('vegetable');
+  const [category, setCategory] = useState<GardenCategoryFilter>('all');
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [editingPlantedFor, setEditingPlantedFor] = useState<CropKey | null>(null);
   const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
@@ -185,7 +202,11 @@ export default function MyGardenScreen({
   const visibleCrops = (category === 'all' ? crops : crops.filter((c) => CROP_CATEGORY[c] === category))
     .slice()
     .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
-  const availableCrops = profile.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS;
+  // Free is a count, not a fixed crop list, so the full catalog is always
+  // browsable/addable here — EditCropsScreen is what actually opens the
+  // paywall once a free garden hits FREE_CROP_LIMIT (see atFreeLimit).
+  const availableCrops = [...FREE_CROPS, ...PRO_CROPS];
+  const atFreeLimit = !profile.isPro && crops.length >= FREE_CROP_LIMIT;
   // Scoped to the active category tab — the "+ Add a crop" card opens the
   // picker to this same category, so its count needs to match what's
   // actually available there, not the total across every category. "All"
@@ -200,12 +221,12 @@ export default function MyGardenScreen({
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.eyebrow}>
-              Garden · {formatBedSize(profile.bedWidthFt, profile.bedLengthFt, units)}
-            </Text>
+            <Text style={styles.eyebrow}>Garden</Text>
             <Text style={styles.title}>My Garden</Text>
           </View>
-          <Text style={styles.cropCount}>{crops.length} of {availableCrops.length} crops</Text>
+          <Text style={styles.cropCount}>
+            {crops.length} of {profile.isPro ? availableCrops.length : FREE_CROP_LIMIT} crops
+          </Text>
         </View>
 
         {crops.length > 0 ? (
@@ -399,9 +420,11 @@ export default function MyGardenScreen({
               <Text style={styles.addSub}>
                 {profile.isPro
                   ? `${missingCrops.length} more available`
-                  : `${missingCrops.length} free ${missingCrops.length === 1 ? 'slot' : 'slots'} left: ${joinNames(
-                      missingCrops.map(cropLabel).map((l) => l.toLowerCase())
-                    )}`}
+                  : atFreeLimit
+                  ? 'Free limit reached. Upgrade for more.'
+                  : `${FREE_CROP_LIMIT - crops.length} free ${
+                      FREE_CROP_LIMIT - crops.length === 1 ? 'slot' : 'slots'
+                    } left: ${joinNames(missingCrops.map(cropLabel).map((l) => l.toLowerCase()))}`}
               </Text>
             </View>
           </TouchableOpacity>

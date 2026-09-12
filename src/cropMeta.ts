@@ -56,7 +56,7 @@ export const CROP_META: Record<CropKey, { label: string; icon: string }> = {
   chives: { label: 'Chives', icon: '🌿' },
   sage: { label: 'Sage', icon: '🌿' },
   blueberries: { label: 'Blueberries', icon: '🫐' },
-  raspberries: { label: 'Raspberries', icon: '🍒' },
+  raspberries: { label: 'Raspberries', icon: '🌱' },
   blackberries: { label: 'Blackberries', icon: '🌱' },
   grapes: { label: 'Grapes', icon: '🍇' },
   rhubarb: { label: 'Rhubarb', icon: '🌱' },
@@ -68,6 +68,8 @@ export const CROP_META: Record<CropKey, { label: string; icon: string }> = {
   olive: { label: 'Olive tree', icon: '🫒' },
   avocado: { label: 'Avocado tree', icon: '🥑' },
   pomegranate: { label: 'Pomegranate tree', icon: '🌱' },
+  peach: { label: 'Peach tree', icon: '🍑' },
+  cherry: { label: 'Cherry tree', icon: '🍒' },
   marigold: { label: 'Marigold', icon: '🌱' },
   zinnia: { label: 'Zinnia', icon: '🌱' },
   sunflower: { label: 'Sunflower', icon: '🌻' },
@@ -129,8 +131,8 @@ export const CROP_CATEGORY: Record<CropKey, CropCategory> = {
   dill: 'herb',
   chives: 'herb',
   sage: 'herb',
-  blueberries: 'fruit',
-  raspberries: 'fruit',
+  blueberries: 'tree',
+  raspberries: 'tree',
   blackberries: 'fruit',
   grapes: 'fruit',
   rhubarb: 'fruit',
@@ -142,6 +144,8 @@ export const CROP_CATEGORY: Record<CropKey, CropCategory> = {
   olive: 'tree',
   avocado: 'tree',
   pomegranate: 'tree',
+  peach: 'tree',
+  cherry: 'tree',
   marigold: 'flower',
   zinnia: 'flower',
   sunflower: 'flower',
@@ -175,6 +179,31 @@ export const TREE_PLANTED_BUCKETS: { key: PlantedBackdate; label: string }[] = [
 export function plantedBucketsFor(crop: CropKey): { key: PlantedBackdate; label: string }[] {
   return CROP_CATEGORY[crop] === 'tree' ? TREE_PLANTED_BUCKETS : BASE_PLANTED_BUCKETS;
 }
+
+/** The crops that belong in the bed's watering-schedule math — everything
+ * except the "tree" category. Most of these are grown in a container, not
+ * in the bed itself, so folding a citrus or avocado's water need into a
+ * calculation driven by bed square footage and drip-emitter layout never
+ * actually meant anything physically; it just happened to mostly go
+ * unnoticed because the "worst case wins" math rarely picked one as the
+ * driver. Blueberries and raspberries live here too even though they're
+ * usually grown straight in a bed, not a pot — they're perennial bushes on
+ * their own multi-year establishment clock (see TREE_PLANTED_BUCKETS),
+ * which the annual-vegetable bed schedule was never built to represent
+ * either. Filtering here once (rather than at each computeSchedule call
+ * site) is what keeps every caller — Home's weather-alert check, the
+ * watering task itself — from having to remember to do this themselves.
+ * This category gets its own separate watering reminder instead; see
+ * getTreeWateringReminders in taskEngine.ts. */
+export function bedCrops(crops: CropKey[]): CropKey[] {
+  return crops.filter((c) => CROP_CATEGORY[c] !== 'tree');
+}
+
+/** How many crops a free (non-Pro) garden can have, total, picked from
+ * anywhere in the catalog — not four specific named crops anymore. A free
+ * user can browse and pick any four, across any category; the fifth pick
+ * is what actually needs Pro. */
+export const FREE_CROP_LIMIT = 4;
 
 // Icon-chip background per crop — used anywhere a crop gets a small round
 // swatch (My Garden cards, Log entries). Cycles through the same four
@@ -241,6 +270,8 @@ const CROP_ICON_BG: Record<CropKey, string> = {
   olive: colors.sevLowBg,
   avocado: colors.sevFyiBg,
   pomegranate: colors.sevSoonBg,
+  peach: colors.selectedBg,
+  cherry: colors.sevFyiBg,
   marigold: colors.sevSoonBg,
   zinnia: colors.selectedBg,
   sunflower: colors.sevLowBg,
@@ -267,6 +298,7 @@ export const CROP_BADGE: Partial<Record<CropKey, { letters: string; color: strin
   kohlrabi: { letters: 'KB', color: '#8FA83E' },
   pumpkin: { letters: 'PM', color: '#D9822F' },
   blackberries: { letters: 'BK', color: '#4A3352' },
+  raspberries: { letters: 'RA', color: '#A62C52' },
   rhubarb: { letters: 'RB', color: '#C15C6B' },
   figs: { letters: 'FG', color: '#6B4A4E' },
   lime: { letters: 'LM', color: '#7A9A3D' },

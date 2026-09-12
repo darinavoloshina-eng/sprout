@@ -22,11 +22,20 @@
 // first-time setup — editing an already-saved garden via Settings always
 // persists on Skip too, since forcing email again on every edit would
 // punish returning users for a choice they already made once.
+//
+// Free used to mean four specific named crops and nothing else was even
+// visible in the crop step. It's a count now, not a list: every crop in
+// every category is browsable for free, and the FREE_CROP_LIMIT'th + 1
+// pick is what actually opens the paywall (see atFreeLimit/toggleCrop
+// below). FREE_CROPS/PRO_CROPS just seed the combined catalog at this
+// point — they no longer gate visibility. Kept in sync with the same rule
+// in EditCropsScreen.tsx.
 
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -36,15 +45,17 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { BED_SIZES, CropKey, SunExposure } from '../engines/scheduleEngine';
-import { formatBedSize, UnitSystem } from '../utils/units';
+import { UnitSystem } from '../utils/units';
 import { PlantedBackdate } from '../engines/alertsEngine';
+import { assumedPlantedDateForBucket } from '../engines/taskEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { saveProfile } from '../api/storage';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, plantedBucketsFor } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
 import { CropIcon } from '../components/ui';
 import { NEXT_ACTION, STAGE_HEADLINE } from '../plantStageContent';
+import { PRIVACY_POLICY_URL } from '../legal';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
 const PRO_CROPS: CropKey[] = [
@@ -112,6 +123,8 @@ const PRO_CROPS: CropKey[] = [
   'olive',
   'avocado',
   'pomegranate',
+  'peach',
+  'cherry',
 ];
 const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
   { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
@@ -191,10 +204,23 @@ export default function OnboardingScreen({
 
   const [saving, setSaving] = useState(false);
 
+  // Free is a count, not a fixed list of named crops — see EditCropsScreen
+  // for the same rule applied post-onboarding.
+  const atFreeLimit = !existing?.isPro && crops.size >= FREE_CROP_LIMIT;
+
   function toggleCrop(c: CropKey) {
+    if (crops.has(c)) {
+      const next = new Set(crops);
+      next.delete(c);
+      setCrops(next);
+      return;
+    }
+    if (atFreeLimit) {
+      onOpenPaywall();
+      return;
+    }
     const next = new Set(crops);
-    if (next.has(c)) next.delete(c);
-    else next.add(c);
+    next.add(c);
     setCrops(next);
   }
 
@@ -336,6 +362,11 @@ export default function OnboardingScreen({
               Pick what's planted or what you're planning to grow. We'll turn it into a personalized
               garden to-do list.
             </Text>
+            {!existing?.isPro ? (
+              <Text style={styles.freeCountText}>
+                {crops.size} of {FREE_CROP_LIMIT} free crops selected
+              </Text>
+            ) : null}
 
             <TouchableOpacity
               style={styles.categoryDropdown}
@@ -382,19 +413,10 @@ export default function OnboardingScreen({
               </View>
             ) : null}
 
-            {(existing?.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS).filter((c) => CROP_CATEGORY[c] === category)
-              .length === 0 ? (
-              <View style={styles.categoryEmptyCard}>
-                <Text style={styles.categoryEmptyText}>
-                  {CATEGORY_OPTIONS.find((o) => o.key === category)!.label} are part of Sprout Pro. You can add
-                  them after upgrading, later in Settings.
-                </Text>
-              </View>
-            ) : null}
-
             <View style={styles.cropGrid}>
-              {(existing?.isPro ? [...FREE_CROPS, ...PRO_CROPS] : FREE_CROPS)
+              {[...FREE_CROPS, ...PRO_CROPS]
                 .filter((c) => CROP_CATEGORY[c] === category)
+                .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)))
                 .map((c) => {
                 const selected = crops.has(c);
 
@@ -402,13 +424,16 @@ export default function OnboardingScreen({
                   return (
                     <TouchableOpacity
                       key={c}
-                      style={styles.cropCard}
+                      style={[styles.cropCard, atFreeLimit && styles.cropCardLocked]}
                       onPress={() => toggleCrop(c)}
                       accessibilityRole="checkbox"
-                      accessibilityState={{ checked: false }}
+                      accessibilityState={{ checked: false, disabled: atFreeLimit }}
                     >
                       <CropIcon crop={c} size={23} />
-                      <Text style={styles.cropLabel}>{cropLabel(c)}</Text>
+                      <Text style={styles.cropLabel}>
+                        {cropLabel(c)}
+                        {atFreeLimit ? ' 🔒' : ''}
+                      </Text>
                     </TouchableOpacity>
                   );
                 }
@@ -439,10 +464,20 @@ export default function OnboardingScreen({
                             onPress={() => {
                               setPlantedWeeks({ ...plantedWeeks, [c]: b.key });
                               // A manual backdate pill is a deliberate
-                              // correction — clear any tracked exact date
-                              // so it doesn't silently override the pick.
-                              const { [c]: _cleared, ...rest } = plantedDates;
-                              setPlantedDates(rest);
+                              // correction, so it always wins over whatever
+                              // exact date was tracked before — but rather
+                              // than clearing that date outright, it's
+                              // replaced with a fresh best-guess for the
+                              // new bucket (see assumedPlantedDateForBucket
+                              // in taskEngine.ts) so succession and feed
+                              // reminders still have something to anchor to.
+                              const assumedDate = assumedPlantedDateForBucket(b.key);
+                              if (assumedDate) {
+                                setPlantedDates({ ...plantedDates, [c]: assumedDate });
+                              } else {
+                                const { [c]: _cleared, ...rest } = plantedDates;
+                                setPlantedDates(rest);
+                              }
                             }}
                             accessibilityRole="radio"
                             accessibilityState={{ selected: sel }}
@@ -472,39 +507,13 @@ export default function OnboardingScreen({
             </View>
 
             {!existing?.isPro && (
-              <>
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>Unlock more with Pro</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-                <View style={styles.proCropRow}>
-                  {PRO_CROPS.slice(0, 4).map((c) => (
-                    <TouchableOpacity key={c} style={styles.proCropCard} onPress={onOpenPaywall} accessibilityRole="button">
-                      <CropIcon crop={c} size={19} />
-                      <Text style={styles.proCropLabel}>{cropLabel(c)}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <View style={styles.proCropRow}>
-                  {PRO_CROPS.slice(4, 8).map((c) => (
-                    <TouchableOpacity key={c} style={styles.proCropCard} onPress={onOpenPaywall} accessibilityRole="button">
-                      <CropIcon crop={c} size={19} />
-                      <Text style={styles.proCropLabel}>{cropLabel(c)}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {!existing?.isPro && (
               <TouchableOpacity style={styles.proBanner} onPress={onOpenPaywall} accessibilityRole="button">
                 <View style={styles.proBannerIconWrap}>
                   <Text style={styles.proBannerIcon}>🔒</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.proBannerTitle}>Unlock all crops</Text>
-                  <Text style={styles.proBannerSub}>Plus the season view · $3/mo</Text>
+                  <Text style={styles.proBannerTitle}>Grow more than {FREE_CROP_LIMIT} crops</Text>
+                  <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $3/mo</Text>
                 </View>
                 <View style={styles.proBannerCta}>
                   <Text style={styles.proBannerCtaText}>Try free</Text>
@@ -593,7 +602,7 @@ export default function OnboardingScreen({
             <View style={styles.estimateNote}>
               <Text style={styles.estimateIcon}>📍</Text>
               <Text style={styles.estimateText}>
-                These dates are estimates until Sprout knows where you garden.{' '}
+                These dates are estimates until GardenWise knows where you garden.{' '}
                 <Text style={styles.estimateBold}>Your frost date can move them by up to 5 weeks.</Text>
               </Text>
             </View>
@@ -762,10 +771,7 @@ export default function OnboardingScreen({
               </View>
               <View style={[styles.recapRow, styles.recapRowLast]}>
                 <Text style={styles.recapKey}>Space</Text>
-                <Text style={styles.recapValue}>
-                  {gardenType === 'raised' ? 'Raised bed' : 'In ground'} ·{' '}
-                  {formatBedSize(bed.widthFt, bed.lengthFt, units)}
-                </Text>
+                <Text style={styles.recapValue}>{gardenType === 'raised' ? 'Raised bed' : 'In ground'}</Text>
               </View>
             </View>
             <Text style={styles.recapFoot}>
@@ -827,7 +833,7 @@ export default function OnboardingScreen({
 
             <TouchableOpacity style={styles.trialCard} onPress={onOpenPaywall} accessibilityRole="button">
               <View style={styles.trialHeadRow}>
-                <Text style={styles.trialEyebrow}>Sprout Pro</Text>
+                <Text style={styles.trialEyebrow}>GardenWise Pro</Text>
                 <View style={styles.trialRule} />
                 <Text style={styles.trialPrice}>$3/mo</Text>
               </View>
@@ -865,7 +871,7 @@ export default function OnboardingScreen({
             <Text style={styles.eyebrow}>Almost there</Text>
             <Text style={styles.h1}>Add your email</Text>
             <Text style={styles.sub}>
-              Optional — your garden is already saved on this phone either way. We don't send
+              Optional. Your garden is already saved on this phone either way, and we don't send
               anything to it: no digest, no marketing.
             </Text>
 
@@ -901,6 +907,13 @@ export default function OnboardingScreen({
               disabled={saving}
             >
               <Text style={styles.skipText}>{saving ? 'Saving…' : 'Skip for now'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+              accessibilityRole="link"
+              style={{ alignSelf: 'center' }}
+            >
+              <Text style={styles.privacyLink}>Privacy Policy</Text>
             </TouchableOpacity>
           </>
         )}
@@ -990,15 +1003,13 @@ const styles = StyleSheet.create({
   categoryMenuLabel: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13.5, color: colors.ink },
   categoryMenuLabelSelected: { flex: 1, fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.mossGreen },
   categoryMenuCheck: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.mossGreen },
-  categoryEmptyCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderRadius: 15,
-    padding: 14,
-    marginBottom: 10,
+  freeCountText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 11.5,
+    letterSpacing: 0.2,
+    color: colors.mossGreen,
+    marginBottom: 16,
   },
-  categoryEmptyText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
   cropGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cropCard: {
     width: '47%',
@@ -1011,6 +1022,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
   },
+  cropCardLocked: { opacity: 0.55 },
   cropLabel: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
   cropCardExpanded: {
     width: '100%',
@@ -1063,30 +1075,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   markPlantedButtonText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.mossGreen },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 13, marginBottom: 9 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: colors.line },
-  dividerText: {
-    fontFamily: fonts.monoSemiBold,
-    fontSize: 10,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.inkSoft,
-  },
-  proCropRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  proCropCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderStyle: 'dashed',
-    borderRadius: 14,
-    paddingVertical: 11,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-    opacity: 0.75,
-  },
-  proCropIcon: { fontSize: 19 },
-  proCropLabel: { fontFamily: fonts.bodySemiBold, fontSize: 10.5, marginTop: 4, color: colors.ink, textAlign: 'center' },
   proBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1119,6 +1107,13 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: colors.inkSoft,
     paddingVertical: 11,
+  },
+  privacyLink: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 11,
+    color: colors.inkSoft,
+    textDecorationLine: 'underline',
+    paddingVertical: 6,
   },
   payoffCard: {
     backgroundColor: colors.card,
