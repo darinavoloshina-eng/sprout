@@ -22,7 +22,7 @@
 // pings the app doesn't send would be worse than not mentioning it.
 
 import React, { useMemo } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import * as Notifications from 'expo-notifications';
 import { CropKey, computeSchedule } from '../engines/scheduleEngine';
@@ -42,7 +42,7 @@ import { formatTemp, formatWeightLbs, UnitSystem } from '../utils/units';
 import { saveProfile } from '../api/storage';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { cropLabel } from '../cropMeta';
+import { bedCrops, cropLabel } from '../cropMeta';
 import { NEXT_ACTION, STAGE_HEADLINE, BUCKET_LABEL } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
 import { TabBar, TabKey } from '../components/ui';
@@ -216,7 +216,7 @@ export default function HomeScreen({
   const weatherAlert = useMemo(
     () =>
       computeSchedule({
-        crops: profile.crops,
+        crops: bedCrops(profile.crops),
         sun: profile.sun,
         bedWidthFt: profile.bedWidthFt,
         bedLengthFt: profile.bedLengthFt,
@@ -498,6 +498,16 @@ function TaskRow({
         ) : (
           <Text style={styles.taskDetail}>{task.detail}</Text>
         )}
+        {!done && task.buyUrl ? (
+          <TouchableOpacity
+            onPress={() => Linking.openURL(task.buyUrl!)}
+            style={styles.buyNowPill}
+            accessibilityRole="button"
+            accessibilityLabel="Buy now on Amazon"
+          >
+            <Text style={styles.buyNowText}>Buy now →</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
       {!done ? <Text style={styles.taskIcon}>{task.icon}</Text> : null}
     </TouchableOpacity>
@@ -595,6 +605,16 @@ const styles = StyleSheet.create({
   taskDetail: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: 2 },
   taskDone: { fontFamily: fonts.body, fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
   taskIcon: { fontSize: 16 },
+  buyNowPill: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.clay,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  buyNowText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.clay },
   weatherCard: {
     flexDirection: 'row',
     gap: 11,

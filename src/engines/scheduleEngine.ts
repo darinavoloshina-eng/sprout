@@ -67,6 +67,8 @@ export type CropKey =
   | 'olive'
   | 'avocado'
   | 'pomegranate'
+  | 'peach'
+  | 'cherry'
   | 'marigold'
   | 'zinnia'
   | 'sunflower'
@@ -172,6 +174,8 @@ const CROP_WEEKLY_NEED_IN: Record<CropKey, number> = {
   olive: 0.75,
   avocado: 1.5,
   pomegranate: 1.0,
+  peach: 1.5,
+  cherry: 1.25,
   marigold: 1.0,
   zinnia: 1.0,
   sunflower: 1.25,
@@ -249,6 +253,8 @@ const CROP_HEAT_THRESHOLD_F: Record<CropKey, number> = {
   olive: 98,
   avocado: 88,
   pomegranate: 95,
+  peach: 95,
+  cherry: 85,
   marigold: 90,
   zinnia: 90,
   sunflower: 92,
@@ -305,6 +311,15 @@ function timeOfDayFor(setup: GardenSetup): TimeOfDay {
  */
 export function computeSchedule(setup: GardenSetup): ScheduleResult {
   const areaSqFt = setup.bedWidthFt * setup.bedLengthFt;
+
+  // A garden made up entirely of tree-category crops (see bedCrops in
+  // cropMeta.ts) arrives here with an empty crop list — there's nothing in
+  // the bed to water. Without this, the reduce below would fall through to
+  // its initial value (1.0) and produce a fully-formed, entirely made-up
+  // bed watering schedule for a bed that isn't actually growing anything.
+  if (setup.crops.length === 0) {
+    return { areaSqFt, targetInchesPerWeek: 0, sessionsPerWeek: 0, minutesPerSession: 0, timeOfDay: 'morning', weatherAlert: null };
+  }
 
   const baseTarget = setup.crops.reduce(
     (max, crop) => Math.max(max, CROP_WEEKLY_NEED_IN[crop] ?? 1.0),
@@ -374,6 +389,7 @@ export function computeSchedule(setup: GardenSetup): ScheduleResult {
 
 /** Which weekdays (0=Sun..6=Sat) the schedule waters on, for display purposes. */
 export function wateringDaysOfWeek(sessionsPerWeek: number): number[] {
+  if (sessionsPerWeek <= 0) return [];
   return sessionsPerWeek === 3 ? [1, 3, 5] : [1, 4];
 }
 

@@ -28,6 +28,11 @@ export interface HarvestEntry {
   weightLbs: number;
   note: string; // e.g. "4 cucumbers" — free text, no unit-count modeling
   dateISO: string;
+  // Optional — added after harvests already existed, so older saved entries
+  // won't have it. Marks this pick as the last one of the season for this
+  // crop, which is what getSeedCollectionReminders in taskEngine.ts anchors
+  // its reminder to.
+  isFinalHarvest?: boolean;
 }
 
 export interface PlantPhoto {

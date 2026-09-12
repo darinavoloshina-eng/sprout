@@ -610,6 +610,20 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
       note: 'More cold-hardy than citrus, but a container still lets you shelter it through hard freezes outside its favored warm, dry climates.',
     },
   },
+  peach: {
+    spring: {
+      method: 'Plant a bare-root or potted tree while still dormant',
+      outdoorWeeksFromFrost: -2,
+      note: 'Cold-hardy while dormant, so it goes in before your last frost rather than after. Full sun and good drainage matter more than warmth at planting time. Most varieties are self-fruitful, so you do not need a second tree.',
+    },
+  },
+  cherry: {
+    spring: {
+      method: 'Plant a bare-root or potted tree while still dormant',
+      outdoorWeeksFromFrost: -2,
+      note: 'Cold-hardy while dormant, so it goes in before your last frost rather than after. Sweet cherries often need a second tree nearby for cross-pollination; sour (pie) cherries are usually self-fruitful on their own.',
+    },
+  },
   marigold: {
     spring: {
       method: 'Direct sow, or start indoors for a head start',

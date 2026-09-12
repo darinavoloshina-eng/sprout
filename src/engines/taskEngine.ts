@@ -12,15 +12,17 @@ import { CARE_BUCKET_FOR, getAlerts, PlantedBackdate, PlantedBucket } from './al
 import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor } from './plantingGuide';
 import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
-import { cropIcon, cropIconBg, cropLabel } from '../cropMeta';
+import { bedCrops, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
+import { SEASON_SHAPE } from '../plantStageContent';
 
-export type TaskCategory = 'tend' | 'harvest' | 'feed' | 'prune';
+export type TaskCategory = 'tend' | 'harvest' | 'feed' | 'prune' | 'seed';
 
 export const CATEGORY_COLOR: Record<TaskCategory, string> = {
   tend: colors.mossGreen,
   harvest: colors.mustard,
   feed: colors.clay,
   prune: colors.pineDeep,
+  seed: colors.seedBrown,
 };
 
 export const CATEGORY_LABEL: Record<TaskCategory, string> = {
@@ -28,10 +30,12 @@ export const CATEGORY_LABEL: Record<TaskCategory, string> = {
   harvest: 'Harvest',
   feed: 'Feed',
   prune: 'Prune',
+  seed: 'Seeds',
 };
 
 export function categorize(text: string): TaskCategory {
   const t = text.toLowerCase();
+  if (/collect seed|save seed/.test(t)) return 'seed';
   if (/harvest|pick|ripen/.test(t)) return 'harvest';
   if (/feed|fertiliz/.test(t)) return 'feed';
   if (/prune|pinch|sucker/.test(t)) return 'prune';
@@ -45,6 +49,19 @@ export interface DailyTask {
   title: string;
   detail: string;
   category: TaskCategory;
+  // Set only on 'feed' tasks (see getFeedReminders) — a "Buy now" link the
+  // task row can render. Points at a plain Amazon search for now, not a
+  // real affiliate link or a specific product; wiring in an actual
+  // affiliate tag and per-crop product picks is a separate, later step.
+  buyUrl?: string;
+}
+
+/** A generic, unaffiliated Amazon search for the fertilizer a feed task
+ * calls for — a placeholder "Buy now" destination until real affiliate
+ * links and curated per-crop products exist. */
+function placeholderFertilizerBuyUrl(crop: CropKey): string {
+  const query = `${cropLabel(crop)} fertilizer`;
+  return `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
 }
 
 export function dateKey(date: Date): string {
@@ -75,7 +92,7 @@ function mostRecentWateringDay(sessionsPerWeek: number, today: Date): Date {
 
 function scheduleFor(profile: GardenProfile): ScheduleResult {
   return computeSchedule({
-    crops: profile.crops,
+    crops: bedCrops(profile.crops),
     sun: profile.sun,
     bedWidthFt: profile.bedWidthFt,
     bedLengthFt: profile.bedLengthFt,
@@ -104,16 +121,35 @@ export function effectiveBucket(profile: GardenProfile, crop: CropKey, today: Da
   return 'w8';
 }
 
+/** A manual pick of 'm6', 'y1', or 'y2' only ever comes from an explicit
+ * long-duration bucket choice — markPlanted always writes 'w2', and
+ * PlantedBucket (effectiveBucket's return type) has no way to represent
+ * any of the three at all. Before assumedPlantedDateForBucket existed,
+ * that never mattered here: a manual pick left plantedDates empty, so
+ * effectiveBackdate/plantedAgoLabel below would take their "no tracked
+ * date" branch and read the pick straight off plantedWeeks. Now that a
+ * pick also synthesizes a plantedDates entry (so feed/succession
+ * reminders have something to anchor to), both functions would otherwise
+ * see a real date and try to derive a bucket from it — silently
+ * collapsing "2+ yrs" to 'w8' the instant it's picked, which is a
+ * regression, not a refinement: the whole point of picking 'y2' was to
+ * say something effectiveBucket's four buckets can't say. Checking for
+ * these three first keeps that pick intact everywhere it's displayed. */
+function isLongDurationPick(bucket: PlantedBackdate | undefined): bucket is 'm6' | 'y1' | 'y2' {
+  return bucket === 'm6' || bucket === 'y1' || bucket === 'y2';
+}
+
 /** The actual backdate a user picked for a crop with no tracked exact
  * date — unlike effectiveBucket, this preserves a long-duration pick
  * ('m6'/'y1'/'y2') instead of collapsing it to 'w8', since it's meant for
  * display (the pill that should read as selected, the label shown when
  * there's no exact date to compute from) rather than for driving care
- * content. A crop with a real plantedDates entry has no separate "pick"
- * to preserve, so this just matches effectiveBucket for those. */
+ * content. */
 export function effectiveBackdate(profile: GardenProfile, crop: CropKey, today: Date = new Date()): PlantedBackdate {
+  const rawPick = profile.plantedWeeks[crop];
+  if (isLongDurationPick(rawPick)) return rawPick;
   const plantedDate = profile.plantedDates?.[crop];
-  if (!plantedDate) return profile.plantedWeeks[crop] ?? 'w2';
+  if (!plantedDate) return rawPick ?? 'w2';
   return effectiveBucket(profile, crop, today);
 }
 
@@ -121,12 +157,17 @@ export function effectiveBackdate(profile: GardenProfile, crop: CropKey, today: 
  * ground — "13 days ago", "6 weeks ago", "4 months ago" — instead of the
  * coarse w2/w4/w8 bucket label (BUCKET_LABEL in plantStageContent.ts),
  * which only ever says "1-4 wks ago" for the entire month after planting
- * and never moves within a bucket. Null for a crop with no tracked date
- * (backdated via a manual bucket pill instead, not "Mark as planted
+ * and never moves within a bucket. Null for a long-duration pick
+ * ('m6'/'y1'/'y2', see isLongDurationPick) even though it now has a
+ * synthesized plantedDates entry — showing "3 years ago" for a "2+ yrs"
+ * pick would read as falsely precise for something the user only ever
+ * gestured at. Also null for a crop with no tracked date at all
+ * (backdated via a short manual bucket pill, not "Mark as planted
  * today"), since there's no real date to measure from — callers should
- * fall back to the bucket label in that case, same as effectiveBucket
+ * fall back to the bucket label in either case, same as effectiveBucket
  * does internally. */
 export function plantedAgoLabel(profile: GardenProfile, crop: CropKey, today: Date = new Date()): string | null {
+  if (isLongDurationPick(profile.plantedWeeks[crop])) return null;
   const plantedDate = profile.plantedDates?.[crop];
   if (!plantedDate) return null;
   const days = Math.max(0, Math.floor((today.getTime() - new Date(plantedDate).getTime()) / 86400000));
@@ -170,6 +211,38 @@ export function markPlanted(profile: GardenProfile, crop: CropKey, today: Date =
     plantedWeeks: { ...profile.plantedWeeks, [crop]: 'w2' },
     plantedDates: { ...profile.plantedDates, [crop]: today.toISOString() },
   };
+}
+
+// Roughly the midpoint of each bucket's range, in weeks — 'w0' has no
+// entry since "not planted" has no date to guess at. 'w8' and 'y2' are
+// open-ended ranges ("8+ wks", "2+ yrs"), so their number is just a
+// reasonable stand-in rather than a real midpoint.
+const ASSUMED_WEEKS_AGO: Partial<Record<PlantedBackdate, number>> = {
+  w2: 2.5,
+  w4: 6,
+  w8: 10,
+  m6: 19, // ~4.5 months
+  y1: 65, // ~15 months
+  y2: 156, // ~3 years
+};
+
+/** A manual backdate pill only records a fuzzy range ("1-4 wks ago"), not
+ * a real date. Without a real date, getSuccessionReminders and
+ * getFeedReminders have nothing to anchor their every-N-weeks cycle to and
+ * can never fire — which used to mean picking a bucket instead of tapping
+ * "Mark as planted today" (the common case) silently opted a crop out of
+ * both features forever, even on Pro. This turns a bucket pick into a
+ * one-time, stable best guess — the bucket's rough midpoint, counted back
+ * from the day it was picked — so those reminders have something to work
+ * from. It's deliberately not recomputed later: once stored, it ages
+ * forward like any other plantedDates entry, exactly as if "Mark as
+ * planted today" had been tapped that many weeks ago. Returns null for
+ * 'w0' ("not planted" has no date to guess at), which callers should treat
+ * as "clear plantedDates for this crop" the same as before this existed. */
+export function assumedPlantedDateForBucket(bucket: PlantedBackdate, pickedOn: Date = new Date()): string | null {
+  const weeksAgo = ASSUMED_WEEKS_AGO[bucket];
+  if (weeksAgo == null) return null;
+  return new Date(pickedOn.getTime() - weeksAgo * 7 * 86400000).toISOString();
 }
 
 interface SuccessionInfo {
@@ -339,6 +412,9 @@ interface FeedInfo {
  *  - Raspberries, blackberries, and grapes do best on one light spring
  *    feeding; overfeeding (especially grapes) pushes leafy growth at the
  *    expense of fruit.
+ *  - Peach and cherry trees are typically fed once in early spring before
+ *    bud break, occasionally a second light feeding if growth is weak —
+ *    not a recurring multi-week cadence like citrus.
  *  - Figs are famously light feeders — overfeeding is a common cause of
  *    lots of leaves and little fruit, sometimes even split bark.
  *  - Most annual flowers (marigold, zinnia, sunflower, cosmos,
@@ -463,6 +539,7 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
           title: `Fertilize ${cropLabel(crop)}`,
           detail: info.note,
           category: 'feed',
+          buyUrl: placeholderFertilizerBuyUrl(crop),
         });
         break;
       }
@@ -479,10 +556,212 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
         title: `Fertilize ${cropLabel(crop)}`,
         detail: info.note,
         category: 'feed',
+        buyUrl: placeholderFertilizerBuyUrl(crop),
       });
     }
   }
   return tasks;
+}
+
+interface TreeWaterInfo {
+  everyDays: number;
+  /** Which day in the cycle this crop's check lands on (0-based), so
+   * several trees on the same cadence don't all land on the same day —
+   * arbitrary but fixed per crop, same purpose as succession/feed's
+   * per-crop cadence numbers. */
+  offset: number;
+  note: string;
+}
+
+/** How often to check a container tree's — or perennial bush's — soil,
+ * separate from the bed's own watering task (see bedCrops in cropMeta.ts
+ * for why this whole category is excluded from that calculation
+ * entirely). Deliberately not tied to an
+ * exact plantedDates entry the way succession/feed reminders are — this
+ * only needs to know the tree is actually planted (effectiveBucket !==
+ * 'w0'), not precisely when, so it works the same whether that was set
+ * with "Mark as planted today" or a backdated pill. Deliberately also not
+ * bounded by frost dates the way fertilizing is: watering doesn't stop in
+ * winter, it just tends to matter less, and this app doesn't model that
+ * reduction (it doesn't for the bed's own watering task either — that one
+ * runs year-round on a fixed weekly pattern too).
+ *
+ * Cadence is a reasonable default, not a promise about any specific pot,
+ * soil mix, or climate — the honest signal is "check if the top couple
+ * inches of soil are dry," which every note below says explicitly, same
+ * as the per-bucket care copy already does for these crops. */
+const TREE_WATER_INFO: Partial<Record<CropKey, TreeWaterInfo>> = {
+  lemon: { everyDays: 3, offset: 0, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
+  lime: { everyDays: 3, offset: 1, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
+  orange: { everyDays: 3, offset: 2, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
+  kumquat: { everyDays: 3, offset: 0, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
+  avocado: { everyDays: 3, offset: 1, note: 'Avocado has shallow roots that dislike drying out completely, but also rot in soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
+  olive: { everyDays: 5, offset: 0, note: 'Drought-tolerant once established, and prone to root rot if kept too wet. Let it dry out somewhat between waterings.' },
+  pomegranate: { everyDays: 5, offset: 2, note: 'Fairly drought-tolerant once established. Check the top couple inches of soil, and water deeply if dry.' },
+  figs: { everyDays: 4, offset: 0, note: 'Tolerates some drying out once established, but a container still needs more frequent water than a bed. Check the top couple inches of soil.' },
+  peach: { everyDays: 4, offset: 1, note: 'Wants consistent moisture, especially while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
+  cherry: { everyDays: 4, offset: 2, note: 'Wants consistent moisture, especially while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
+  blueberries: { everyDays: 3, offset: 2, note: 'Shallow roots in the acidic, well-drained soil blueberries need mean they dry out faster than most bed plants. Check the top couple inches of soil, and water deeply if dry.' },
+  raspberries: { everyDays: 4, offset: 3, note: 'Cane fruit want consistent moisture through fruiting, especially now that they are off the bed\'s shared schedule. Check the top couple inches of soil, and water deeply if dry.' },
+};
+
+function isTreeWaterDay(info: TreeWaterInfo, date: Date): boolean {
+  const daysSinceEpoch = Math.floor(date.getTime() / 86400000);
+  return ((daysSinceEpoch - info.offset) % info.everyDays + info.everyDays) % info.everyDays === 0;
+}
+
+/** Any planted tree crop due for a water check on `date` — Pro, same
+ * gating as succession/feed (moot in practice since every tree crop is
+ * itself Pro-only, but kept for the same reason those check it: a
+ * profile that downgraded after adding one shouldn't keep getting Pro
+ * task reminders for free). Works identically whether `date` is today or
+ * a day being browsed ahead on the Calendar, since the cadence is a fixed
+ * calendar pattern rather than something anchored to a specific planting
+ * date. */
+export function getTreeWateringReminders(profile: GardenProfile, date: Date): DailyTask[] {
+  if (!profile.isPro) return [];
+  const tasks: DailyTask[] = [];
+  for (const crop of profile.crops) {
+    if (crop === 'other') continue;
+    const info = TREE_WATER_INFO[crop];
+    if (!info) continue;
+    if (effectiveBucket(profile, crop, date) === 'w0') continue;
+    if (!isTreeWaterDay(info, date)) continue;
+    tasks.push({
+      id: `treewater-${crop}-${dateKey(date)}`,
+      icon: cropIcon(crop),
+      iconBg: cropIconBg(crop),
+      title: `Water ${cropLabel(crop)}`,
+      detail: info.note,
+      category: 'tend',
+    });
+  }
+  return tasks;
+}
+
+// Crops where saving your own seed isn't really how home gardeners
+// propagate them, so a "collect seeds" reminder would be bad advice rather
+// than a nice-to-have:
+//  - Root and tuber crops (carrots, beets, radishes, turnips, rutabaga,
+//    kohlrabi, sweet potatoes, potatoes) are harvested for the root/tuber
+//    itself — saving seed means leaving one in the ground an extra year to
+//    bolt, not a normal extension of picking it.
+//  - Alliums (onions, garlic, leeks) are almost always replanted from sets
+//    or cloves at home, not grown from seed.
+//  - Perennials propagated by division or runners (asparagus, rhubarb,
+//    strawberries, blueberries, raspberries, blackberries, grapes) aren't
+//    typically seed-grown either.
+//  - Trees are usually grafted — a seed-grown citrus or stone fruit often
+//    doesn't come true to the parent and can take years to fruit at all.
+const SEED_SAVE_EXCLUDED = new Set<CropKey>([
+  'carrots', 'beets', 'radishes', 'turnips', 'rutabaga', 'kohlrabi', 'sweetpotatoes', 'potatoes',
+  'onions', 'garlic', 'leeks',
+  'asparagus', 'rhubarb', 'strawberries', 'blueberries', 'raspberries', 'blackberries', 'grapes',
+  'figs', 'lemon', 'lime', 'orange', 'kumquat', 'olive', 'avocado', 'pomegranate', 'peach', 'cherry',
+]);
+
+// A window, not a single precise day — seed drying time genuinely varies,
+// so this is deliberately fuzzy the same way harvestWindowsFor's estimate
+// is. The single checkable task below still fires on one specific day (the
+// window's midpoint), the same asymmetry getAlerts/harvestWindowsFor has:
+// Home needs one concrete day to make something actionable, but Calendar's
+// forward-browsing view is better served by a range when browsing ahead of
+// time, not a single date presented as more certain than it really is.
+const SEED_COLLECTION_WINDOW_START_WEEKS = 2;
+const SEED_COLLECTION_WINDOW_END_WEEKS = 4;
+const SEED_COLLECTION_WEEKS_AFTER =
+  (SEED_COLLECTION_WINDOW_START_WEEKS + SEED_COLLECTION_WINDOW_END_WEEKS) / 2;
+
+/** A one-time reminder to collect seeds, a few weeks after a harvest
+ * logged with isFinalHarvest — Pro, same gating as the other recurring
+ * reminders. Anchored to the harvest entry's own id rather than
+ * crop+cycle (there's exactly one of these per final harvest, not a
+ * repeating cadence), so logging a second final harvest for the same crop
+ * next season gets its own separate reminder instead of colliding with
+ * last year's. */
+export function getSeedCollectionReminders(profile: GardenProfile, date: Date): DailyTask[] {
+  if (!profile.isPro) return [];
+  const tasks: DailyTask[] = [];
+  for (const h of profile.harvests ?? []) {
+    if (!h.isFinalHarvest || h.crop === 'other' || SEED_SAVE_EXCLUDED.has(h.crop)) continue;
+    const dueDate = addWeeks(new Date(h.dateISO), SEED_COLLECTION_WEEKS_AFTER);
+    if (!sameDay(dueDate, date)) continue;
+    tasks.push({
+      id: `seeds-${h.id}`,
+      icon: cropIcon(h.crop),
+      iconBg: cropIconBg(h.crop),
+      title: `Collect seeds from ${cropLabel(h.crop)}`,
+      detail: 'Let seed pods or fruit dry fully before collecting, then store them somewhere cool and dry for next season.',
+      category: 'seed',
+    });
+  }
+  return tasks;
+}
+
+export interface HarvestWindow {
+  crop: CropKey;
+  start: Date;
+  end: Date;
+}
+
+/** Crops whose estimated harvest window covers `date` — a rough date-based
+ * projection from SEASON_SHAPE's sow/grow/harvest proportions applied to
+ * the crop's planted date, unlike getAlerts' severity='soon' "ready to
+ * pick" signal, which is precise but only ever evaluates today's actual
+ * tracked state (see STAGE_TABLE in alertsEngine.ts) and has nothing to
+ * say about a date weeks or months out. This is what lets Calendar
+ * highlight a likely-harvest window when browsing ahead, where getAlerts
+ * is silent. Deliberately kept separate from getTasksForDate's own task
+ * list rather than folded in as another task, so it doesn't create a
+ * second, less precise "is it ready" signal next to today's real one —
+ * callers that want a highlight (not a checkable task) call this
+ * directly. */
+export function harvestWindowsFor(profile: GardenProfile, date: Date): HarvestWindow[] {
+  if (!profile.isPro) return [];
+  const windows: HarvestWindow[] = [];
+  for (const crop of profile.crops) {
+    if (crop === 'other') continue;
+    const shape = SEASON_SHAPE[crop];
+    const plantedDateStr = profile.plantedDates?.[crop];
+    if (!shape || !plantedDateStr) continue;
+    const planted = new Date(plantedDateStr);
+    const totalDays = shape.weeks * 7;
+    const harvestStartDay = (totalDays * (shape.sow + shape.grow)) / 100;
+    const start = new Date(planted.getTime() + harvestStartDay * 86400000);
+    const end = new Date(planted.getTime() + totalDays * 86400000);
+    if (date.getTime() >= start.getTime() && date.getTime() <= end.getTime()) {
+      windows.push({ crop, start, end });
+    }
+  }
+  return windows;
+}
+
+export interface SeedWindow {
+  crop: CropKey;
+  harvestId: string;
+  start: Date;
+  end: Date;
+}
+
+/** The same kind of forward-looking, fuzzy-window estimate as
+ * harvestWindowsFor, but for when a final harvest's seeds are likely ready
+ * to collect (see SEED_COLLECTION_WINDOW_START_WEEKS/END_WEEKS above) —
+ * lets Calendar highlight the days leading up to getSeedCollectionReminders'
+ * one precise, checkable due day the same way it already does for a
+ * regular harvest. */
+export function seedCollectionWindowsFor(profile: GardenProfile, date: Date): SeedWindow[] {
+  if (!profile.isPro) return [];
+  const windows: SeedWindow[] = [];
+  for (const h of profile.harvests ?? []) {
+    if (!h.isFinalHarvest || h.crop === 'other' || SEED_SAVE_EXCLUDED.has(h.crop)) continue;
+    const harvestDate = new Date(h.dateISO);
+    const start = addWeeks(harvestDate, SEED_COLLECTION_WINDOW_START_WEEKS);
+    const end = addWeeks(harvestDate, SEED_COLLECTION_WINDOW_END_WEEKS);
+    if (date.getTime() >= start.getTime() && date.getTime() <= end.getTime()) {
+      windows.push({ crop: h.crop, harvestId: h.id, start, end });
+    }
+  }
+  return windows;
 }
 
 /** Any date's task list — watering pattern, reminders explicitly scheduled
@@ -507,9 +786,13 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
  * through the crop's real, frost-bounded window — a perennial's recurring
  * every year it stays established, an annual's only through its own single
  * season — instead of a single occurrence or an indefinite run into
- * winter. An already-planted crop's other, non-dated ongoing care alerts
- * (STAGE_TABLE's "keep soil evenly moist") still only ever show on today,
- * since there's no fixed date to hang those on. */
+ * winter. A tree crop's own water-check reminder (getTreeWateringReminders)
+ * also shows on any date it's due, but on a fixed calendar cadence rather
+ * than one anchored to a planting date, since it only needs to know the
+ * tree is planted, not precisely when. An already-planted crop's other,
+ * non-dated ongoing care alerts (STAGE_TABLE's "keep soil evenly moist")
+ * still only ever show on today, since there's no fixed date to hang
+ * those on. */
 export function getTasksForDate(profile: GardenProfile, date: Date, today: Date = new Date()): DailyTask[] {
   const tasks: DailyTask[] = [];
   const result = scheduleFor(profile);
@@ -537,6 +820,23 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       });
     }
   }
+  // A harvest already logged (Log a pick) on this exact date, shown as a
+  // read-only record of what actually happened rather than something to
+  // do — there's nothing to check off, so this deliberately isn't in
+  // getTodayTasks (Home's actionable list) or gated by isTaskComplete, only
+  // here, where Calendar can show it on the day it happened. Not Pro-gated,
+  // since logging a harvest at all isn't a Pro feature.
+  for (const h of profile.harvests ?? []) {
+    if (h.crop === 'other' || !sameDay(new Date(h.dateISO), date)) continue;
+    tasks.push({
+      id: `harvested-${h.id}`,
+      icon: cropIcon(h.crop),
+      iconBg: cropIconBg(h.crop),
+      title: `Picked ${cropLabel(h.crop)}`,
+      detail: h.note.trim() || `${h.weightLbs} lb${h.weightLbs === 1 ? '' : 's'} picked`,
+      category: 'harvest',
+    });
+  }
   if (profile.isPro && sameDay(date, today)) {
     const alerts = getAlerts(profile.crops, resolvedPlantedWeeks(profile, today), profile.weather, profile.frostDates);
     for (const a of alerts) {
@@ -557,6 +857,14 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       tasks.push(t);
     }
     for (const t of getFeedReminders(profile, today)) {
+      if (isTaskComplete(profile, t.id)) continue;
+      tasks.push(t);
+    }
+    for (const t of getTreeWateringReminders(profile, today)) {
+      if (isTaskComplete(profile, t.id)) continue;
+      tasks.push(t);
+    }
+    for (const t of getSeedCollectionReminders(profile, today)) {
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
@@ -600,6 +908,14 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
+    for (const t of getTreeWateringReminders(profile, date)) {
+      if (isTaskComplete(profile, t.id)) continue;
+      tasks.push(t);
+    }
+    for (const t of getSeedCollectionReminders(profile, date)) {
+      if (isTaskComplete(profile, t.id)) continue;
+      tasks.push(t);
+    }
   }
   return tasks;
 }
@@ -624,7 +940,11 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
   const result = scheduleFor(profile);
   const waterDate = mostRecentWateringDay(result.sessionsPerWeek, today);
   const waterId = `water-${dateKey(waterDate)}`;
-  if (!isTaskComplete(profile, waterId)) {
+  // sessionsPerWeek is 0 for an all-tree garden (nothing in the bed to
+  // water) — see computeSchedule in scheduleEngine.ts. mostRecentWateringDay
+  // has no "no watering day" of its own to return, so this is checked here
+  // instead of trusting it to come back empty.
+  if (result.sessionsPerWeek > 0 && !isTaskComplete(profile, waterId)) {
     tasks.push({
       id: waterId,
       icon: '💧',
@@ -649,6 +969,8 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
     }
     tasks.push(...getSuccessionReminders(profile, today));
     tasks.push(...getFeedReminders(profile, today));
+    tasks.push(...getTreeWateringReminders(profile, today));
+    tasks.push(...getSeedCollectionReminders(profile, today));
   }
   return tasks;
 }

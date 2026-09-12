@@ -17,7 +17,7 @@
 // that's a local preview flag, not a real subscription check.
 
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CropKey } from '../engines/scheduleEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
@@ -26,6 +26,8 @@ import {
   CATEGORY_LABEL,
   TaskCategory,
   getTasksForDate,
+  harvestWindowsFor,
+  seedCollectionWindowsFor,
 } from '../engines/taskEngine';
 import { cropIcon, cropLabel } from '../cropMeta';
 import { NEXT_ACTION, SEASON_SHAPE } from '../plantStageContent';
@@ -281,7 +283,17 @@ export default function CalendarScreen({
     return Array.from(cats);
   }
 
+  function hasHarvestWindow(day: number): boolean {
+    return harvestWindowsFor(profile, new Date(year, month, day)).length > 0;
+  }
+
+  function hasSeedWindow(day: number): boolean {
+    return seedCollectionWindowsFor(profile, new Date(year, month, day)).length > 0;
+  }
+
   const selectedTasks = useMemo(() => getTasksForDate(profile, selected, today), [profile, selected, today]);
+  const selectedHarvestWindows = useMemo(() => harvestWindowsFor(profile, selected), [profile, selected]);
+  const selectedSeedWindows = useMemo(() => seedCollectionWindowsFor(profile, selected), [profile, selected]);
   const dayHeader = `${selected.toLocaleDateString(undefined, { weekday: 'short' })} ${selected.getDate()} · ${
     selectedTasks.length
   } ${selectedTasks.length === 1 ? 'task' : 'tasks'}`;
@@ -380,10 +392,22 @@ export default function CalendarScreen({
                   const isToday = sameDay(date, today);
                   const isSelected = sameDay(date, selected);
                   const cats = categoriesForDay(day);
+                  const inSeedWindow = hasSeedWindow(day);
+                  // A day inside both windows at once is rare (a final
+                  // harvest's seed window and another crop's harvest window
+                  // overlapping), and the two tints can't be shown at once
+                  // in a cell this small — seeds wins arbitrarily since a
+                  // one-time seed window is shorter-lived and easier to
+                  // miss than a multi-week harvest window.
+                  const inHarvestWindow = !inSeedWindow && hasHarvestWindow(day);
                   return (
                     <TouchableOpacity
                       key={day}
-                      style={styles.dayCell}
+                      style={[
+                        styles.dayCell,
+                        inHarvestWindow && styles.dayCellHarvestWindow,
+                        inSeedWindow && styles.dayCellSeedWindow,
+                      ]}
                       onPress={() => setSelected(date)}
                       accessibilityRole="button"
                     >
@@ -415,16 +439,48 @@ export default function CalendarScreen({
                     <Text style={styles.legendText}>{CATEGORY_LABEL[c]}</Text>
                   </View>
                 ))}
+                <View style={styles.legendItem}>
+                  <View style={styles.legendSwatch} />
+                  <Text style={styles.legendText}>Likely harvest window</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSwatch, { backgroundColor: colors.seedBrownBg }]} />
+                  <Text style={styles.legendText}>Likely seed window</Text>
+                </View>
                 <Text style={styles.legendHint}>· tap a day</Text>
               </View>
             </View>
 
             <Text style={styles.dayHeader}>{dayHeader}</Text>
-            {selectedTasks.length === 0 ? (
+            {selectedHarvestWindows.length > 0 ? (
+              <View style={styles.harvestWindowCard}>
+                {selectedHarvestWindows.map((w) => (
+                  <View key={w.crop} style={styles.harvestWindowRow}>
+                    <Text style={styles.harvestWindowIcon}>{cropIcon(w.crop)}</Text>
+                    <Text style={styles.harvestWindowText}>
+                      {cropLabel(w.crop)} may be ready to harvest around now
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {selectedSeedWindows.length > 0 ? (
+              <View style={styles.seedWindowCard}>
+                {selectedSeedWindows.map((w) => (
+                  <View key={w.harvestId} style={styles.harvestWindowRow}>
+                    <Text style={styles.harvestWindowIcon}>{cropIcon(w.crop)}</Text>
+                    <Text style={styles.seedWindowText}>
+                      {cropLabel(w.crop)} seeds may be ready to collect around now
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {selectedTasks.length === 0 && selectedHarvestWindows.length === 0 && selectedSeedWindows.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Text style={styles.emptyText}>No tasks this day, a quiet one 🌱</Text>
               </View>
-            ) : (
+            ) : selectedTasks.length > 0 ? (
               <View style={{ gap: space.sm }}>
                 {selectedTasks.map((t, i) => (
                   <View key={i} style={styles.taskRow}>
@@ -434,11 +490,21 @@ export default function CalendarScreen({
                     <View style={{ flex: 1 }}>
                       <Text style={styles.taskTitle}>{t.title}</Text>
                       <Text style={styles.taskDetail}>{t.detail}</Text>
+                      {t.buyUrl ? (
+                        <TouchableOpacity
+                          onPress={() => Linking.openURL(t.buyUrl!)}
+                          style={styles.buyNowPill}
+                          accessibilityRole="button"
+                          accessibilityLabel="Buy now on Amazon"
+                        >
+                          <Text style={styles.buyNowText}>Buy now →</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   </View>
                 ))}
               </View>
-            )}
+            ) : null}
           </>
         )}
       </ScrollView>
@@ -501,6 +567,8 @@ const styles = StyleSheet.create({
   },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 4, gap: 2 },
+  dayCellHarvestWindow: { backgroundColor: colors.sevFyiBg, borderRadius: 10 },
+  dayCellSeedWindow: { backgroundColor: colors.seedBrownBg, borderRadius: 10 },
   dayNumber: { fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.ink },
   dayNumberSelected: { color: colors.mossGreen, fontFamily: fonts.bodyBold },
   todayCircle: {
@@ -526,8 +594,25 @@ const styles = StyleSheet.create({
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendDot: { width: 6, height: 6, borderRadius: 3 },
+  legendSwatch: { width: 10, height: 10, borderRadius: 3, backgroundColor: colors.sevFyiBg },
   legendText: { fontFamily: fonts.bodySemiBold, fontSize: 10, color: colors.inkSoft },
   legendHint: { fontFamily: fonts.body, fontSize: 10, color: colors.inkSoft },
+  harvestWindowCard: {
+    backgroundColor: colors.sevFyiBg,
+    borderRadius: 15,
+    padding: 13,
+    gap: 8,
+  },
+  harvestWindowRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  harvestWindowIcon: { fontSize: 18 },
+  harvestWindowText: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.sevFyiText },
+  seedWindowCard: {
+    backgroundColor: colors.seedBrownBg,
+    borderRadius: 15,
+    padding: 13,
+    gap: 8,
+  },
+  seedWindowText: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.seedBrown },
   dayHeader: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 11,
@@ -564,6 +649,16 @@ const styles = StyleSheet.create({
   taskIconText: { fontSize: 16 },
   taskTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
   taskDetail: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: 2 },
+  buyNowPill: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.clay,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  buyNowText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.clay },
   seasonLockCard: {
     backgroundColor: colors.card,
     borderWidth: 1.5,

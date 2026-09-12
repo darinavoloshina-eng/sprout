@@ -1,4 +1,5 @@
 import {
+  assumedPlantedDateForBucket,
   categorize,
   computeLongestStreak,
   computeStreak,
@@ -6,7 +7,11 @@ import {
   effectiveBackdate,
   effectiveBucket,
   getFeedReminders,
+  getSeedCollectionReminders,
+  harvestWindowsFor,
+  seedCollectionWindowsFor,
   getSuccessionReminders,
+  getTreeWateringReminders,
   plantedAgoLabel,
   getTasksForDate,
   getTodayTasks,
@@ -15,7 +20,7 @@ import {
   toggleTask,
 } from '../taskEngine';
 import { GardenProfile } from '../../types';
-import { cropIcon, cropIconBg } from '../../cropMeta';
+import { bedCrops, cropIcon, cropIconBg } from '../../cropMeta';
 
 // Jan 1 2024 is a known Monday, so sun:'full' (sessions=[Mon,Wed,Fri]) makes
 // Jan 1/3 watering days and Jan 2 a non-watering day, without depending on
@@ -70,6 +75,56 @@ describe('getTasksForDate', () => {
   it('omits the watering task on a non-watering day with no reminders', () => {
     const profile = makeProfile();
     expect(getTasksForDate(profile, TUE)).toEqual([]);
+  });
+
+  it('shows a harvest logged on that exact day, as a read-only record', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '4 tomatoes', dateISO: TUE.toISOString() }],
+    });
+    const tasks = getTasksForDate(profile, TUE);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({ id: 'harvested-h1', title: 'Picked Tomatoes', detail: '4 tomatoes', category: 'harvest' });
+  });
+
+  it('falls back to a weight-based detail when a harvest has no note', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: TUE.toISOString() }],
+    });
+    expect(getTasksForDate(profile, TUE)[0].detail).toBe('2 lbs picked');
+  });
+
+  it('does not show a harvest logged on a different day', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: MON.toISOString() }],
+    });
+    expect(getTasksForDate(profile, TUE).some((t) => t.id === 'harvested-h1')).toBe(false);
+  });
+
+  it('is not Pro-gated, unlike most other reminder types here', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: false,
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: TUE.toISOString() }],
+    });
+    expect(getTasksForDate(profile, TUE).some((t) => t.id === 'harvested-h1')).toBe(true);
+  });
+
+  it('does not appear on Home\'s today list, only on the calendar', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: TUE.toISOString() }],
+    });
+    expect(getTodayTasks(profile, TUE).some((t) => t.id === 'harvested-h1')).toBe(false);
+  });
+
+  it('never invents a bed watering task for a garden with only tree-category crops', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w4' } });
+    for (const day of [MON, TUE, WED]) {
+      expect(getTasksForDate(profile, day).some((t) => t.id.startsWith('water-'))).toBe(false);
+    }
   });
 
   it('includes a scheduled reminder on its date, categorized from its own text', () => {
@@ -310,6 +365,18 @@ describe('getTodayTasks', () => {
     expect(tasks.some((t) => t.id === `water-${dateKey(WED)}`)).toBe(true);
     expect(tasks.some((t) => t.id === `water-${dateKey(MON)}`)).toBe(false);
   });
+
+  it('never invents a bed watering task for a garden with only tree-category crops', () => {
+    // Regression: computeSchedule used to fall back to a made-up baseTarget
+    // when bedCrops(profile.crops) came back empty (an all-tree garden has
+    // nothing left in the bed), producing a phantom "Water the garden" task
+    // for a bed that isn't growing anything.
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w4' } });
+    for (const day of [MON, TUE, WED]) {
+      const tasks = getTodayTasks(profile, day);
+      expect(tasks.some((t) => t.id.startsWith('water-'))).toBe(false);
+    }
+  });
 });
 
 describe('isTaskComplete / toggleTask', () => {
@@ -433,6 +500,22 @@ describe('effectiveBackdate', () => {
     const today = new Date(2024, 1, 26); // 8 weeks later
     expect(effectiveBackdate(profile, 'tomatoes', today)).toBe(effectiveBucket(profile, 'tomatoes', today));
   });
+
+  it('still preserves a long-duration pick once it also has a synthesized plantedDates entry', () => {
+    // Regression: assumedPlantedDateForBucket populates plantedDates for
+    // every manual pick now, not just "Mark as planted today." Before this
+    // fix, that made a "2+ yrs" pill silently stop showing as selected the
+    // instant it was tapped — plantedDates existing was enough to send this
+    // through effectiveBucket, which collapsed it straight to 'w8'.
+    const pickedOn = new Date(2024, 0, 1);
+    const assumedDate = assumedPlantedDateForBucket('y2', pickedOn)!;
+    const profile = makeProfile({
+      crops: ['lemon'],
+      plantedWeeks: { lemon: 'y2' },
+      plantedDates: { lemon: assumedDate },
+    });
+    expect(effectiveBackdate(profile, 'lemon', pickedOn)).toBe('y2');
+  });
 });
 
 describe('markPlanted', () => {
@@ -442,6 +525,26 @@ describe('markPlanted', () => {
     const updated = markPlanted(profile, 'tomatoes', today);
     expect(updated.plantedWeeks.tomatoes).toBe('w2');
     expect(updated.plantedDates?.tomatoes).toBe(today.toISOString());
+  });
+});
+
+describe('assumedPlantedDateForBucket', () => {
+  it('is null for "not planted" — there is no date to guess at', () => {
+    expect(assumedPlantedDateForBucket('w0')).toBeNull();
+  });
+
+  it('returns a real date roughly at the bucket\'s midpoint, counted back from the pick date', () => {
+    const pickedOn = new Date(2024, 0, 1);
+    const assumed = new Date(assumedPlantedDateForBucket('w4', pickedOn)!);
+    const daysAgo = Math.round((pickedOn.getTime() - assumed.getTime()) / 86400000);
+    expect(daysAgo).toBe(42); // w4's ~6-week midpoint
+  });
+
+  it('picks a date well in the past for a long-established bucket like "2+ yrs"', () => {
+    const pickedOn = new Date(2024, 0, 1);
+    const assumed = new Date(assumedPlantedDateForBucket('y2', pickedOn)!);
+    const daysAgo = Math.round((pickedOn.getTime() - assumed.getTime()) / 86400000);
+    expect(daysAgo).toBeGreaterThan(365 * 2);
   });
 });
 
@@ -486,6 +589,23 @@ describe('plantedAgoLabel', () => {
     const planted = new Date(2022, 5, 1);
     const profile = makeProfile({ plantedDates: { lemon: planted.toISOString() } });
     expect(plantedAgoLabel(profile, 'lemon', new Date(2024, 5, 15))).toBe('2 years ago');
+  });
+
+  it('is null for a long-duration pick even once it has a synthesized plantedDates entry', () => {
+    // Regression, same root cause as effectiveBackdate's: a "2+ yrs" pick's
+    // synthesized date would otherwise produce a falsely precise "3 years
+    // ago" the instant it's tapped, when all the user actually said was
+    // "2+ yrs." Should read as unset here, same as before
+    // assumedPlantedDateForBucket existed, so callers fall back to the
+    // "2+ yrs" bucket label instead.
+    const pickedOn = new Date(2024, 0, 1);
+    const assumedDate = assumedPlantedDateForBucket('y2', pickedOn)!;
+    const profile = makeProfile({
+      crops: ['lemon'],
+      plantedWeeks: { lemon: 'y2' },
+      plantedDates: { lemon: assumedDate },
+    });
+    expect(plantedAgoLabel(profile, 'lemon', pickedOn)).toBeNull();
   });
 });
 
@@ -733,6 +853,23 @@ describe('getSuccessionReminders', () => {
       expect(browsingAhead?.id).toBe(onceItsToday?.id);
     });
   });
+
+  it('lets a crop backdated only via a bucket pill still get a succession reminder', () => {
+    // Same bug as getFeedReminders' bucket-only case: without a synthesized
+    // plantedDates entry, a bucket-only pick could never get a succession
+    // reminder either.
+    const pickedOn = new Date(2024, 2, 1); // March 1
+    const assumedDate = assumedPlantedDateForBucket('w2', pickedOn)!;
+    const profile = makeProfile({
+      crops: ['arugula'],
+      plantedWeeks: { arugula: 'w2' },
+      plantedDates: { arugula: assumedDate },
+      frostDates,
+      isPro: true,
+    });
+    const dueDate = new Date(new Date(assumedDate).getTime() + 20 * 86400000); // ~2 cycles later
+    expect(getSuccessionReminders(profile, dueDate).some((t) => t.id.startsWith('succession-arugula-'))).toBe(true);
+  });
 });
 
 describe('getFeedReminders', () => {
@@ -776,6 +913,18 @@ describe('getFeedReminders', () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].category).toBe('feed');
     expect(tasks[0].title).toBe('Fertilize Lemon tree');
+  });
+
+  it('includes a placeholder Amazon "buy now" link, scoped to the specific crop', () => {
+    const profile = makeProfile({
+      crops: ['lemon'],
+      plantedDates: { lemon: new Date(2023, 5, 1).toISOString() },
+      frostDates,
+      isPro: true,
+    });
+    const tasks = getFeedReminders(profile, new Date(2024, 4, 8));
+    expect(tasks[0].buyUrl).toContain('amazon.com');
+    expect(tasks[0].buyUrl).toContain(encodeURIComponent('Lemon tree fertilizer'));
   });
 
   describe('perennial trees (citrus etc.) — recurs every year, not just the planting year', () => {
@@ -884,6 +1033,30 @@ describe('getFeedReminders', () => {
     });
   });
 
+  describe('bucket-only crops (no exact plantedDates) — the bug this fixes', () => {
+    // Before assumedPlantedDateForBucket existed, a crop backdated only via
+    // a manual bucket pill (the common case — most users never tap "Mark
+    // as planted today") had no plantedDates entry at all, so it could
+    // never get a feed reminder, silently, even on Pro. The screens now
+    // synthesize an approximate plantedDates entry from the bucket instead
+    // of leaving it empty; these tests confirm that actually unblocks the
+    // reminder once it's in place.
+    it('lets a lemon tree backdated only via a bucket pill still get a feed reminder', () => {
+      const pickedOn = new Date(2024, 0, 1);
+      const assumedDate = assumedPlantedDateForBucket('y1', pickedOn);
+      expect(assumedDate).not.toBeNull();
+      const profile = makeProfile({
+        crops: ['lemon'],
+        plantedWeeks: { lemon: 'y1' },
+        plantedDates: { lemon: assumedDate! },
+        frostDates,
+        isPro: true,
+      });
+      const firstFeed = new Date(2024, 4, 8); // this season's first feed date
+      expect(getFeedReminders(profile, firstFeed).some((t) => t.id === 'feed-lemon-2024-1')).toBe(true);
+    });
+  });
+
   describe('integration with Home and Calendar', () => {
     const frostDatesLocal = frostDates;
 
@@ -926,5 +1099,318 @@ describe('getFeedReminders', () => {
       expect(getTodayTasks(checkedOff, dueDate).some((t) => t.id === 'feed-lemon-2024-1')).toBe(true);
       expect(getTasksForDate(checkedOff, dueDate, dueDate).some((t) => t.id === 'feed-lemon-2024-1')).toBe(false);
     });
+  });
+});
+
+describe('bedCrops (trees excluded from the bed watering schedule)', () => {
+  it('drops tree crops but keeps everything else', () => {
+    expect(bedCrops(['tomatoes', 'lemon', 'carrots', 'avocado'])).toEqual(['tomatoes', 'carrots']);
+  });
+
+  it('leaves a garden of only trees empty', () => {
+    expect(bedCrops(['lemon', 'lime'])).toEqual([]);
+  });
+
+  it('adding a tree to the garden does not change the "Water the garden" task', () => {
+    const withoutTree = makeProfile({ crops: ['radishes'], plantedWeeks: { radishes: 'w2' }, isPro: true });
+    const withTree = makeProfile({
+      crops: ['radishes', 'avocado'],
+      plantedWeeks: { radishes: 'w2', avocado: 'w8' },
+      isPro: true,
+    });
+    const waterTaskWithout = getTodayTasks(withoutTree, MON).find((t) => t.id.startsWith('water-'));
+    const waterTaskWith = getTodayTasks(withTree, MON).find((t) => t.id.startsWith('water-'));
+    expect(waterTaskWith?.detail).toBe(waterTaskWithout?.detail);
+  });
+});
+
+describe('getTreeWateringReminders', () => {
+  it('is empty for a crop with no tree-watering data (e.g. tomatoes)', () => {
+    const profile = makeProfile({ crops: ['tomatoes'], plantedWeeks: { tomatoes: 'w8' }, isPro: true });
+    expect(getTreeWateringReminders(profile, new Date(2024, 0, 3))).toEqual([]);
+  });
+
+  it('is empty for a tree that has not been planted yet', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w0' }, isPro: true });
+    expect(getTreeWateringReminders(profile, new Date(2024, 0, 3))).toEqual([]);
+  });
+
+  it('is Pro-gated', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w8' }, isPro: false });
+    expect(getTreeWateringReminders(profile, new Date(2024, 0, 3))).toEqual([]);
+  });
+
+  it('is due on its cadence day and not on other days, backdated via a pill alone (no exact date needed)', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'y2' }, isPro: true });
+    const jan3 = new Date(2024, 0, 3);
+    const jan4 = new Date(2024, 0, 4);
+    const dueDay = getTreeWateringReminders(profile, jan3);
+    const offDay = getTreeWateringReminders(profile, jan4);
+    expect(
+      dueDay.some((t) => t.id === `treewater-lemon-${dateKey(jan3)}` && t.title === 'Water Lemon tree')
+    ).toBe(true);
+    expect(offDay).toEqual([]);
+  });
+
+  it('tags the reminder with the "tend" category', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w8' }, isPro: true });
+    const tasks = getTreeWateringReminders(profile, new Date(2024, 0, 3));
+    expect(tasks[0].category).toBe('tend');
+  });
+
+  it('spreads multiple trees on the same cadence across different days instead of clustering them', () => {
+    const profile = makeProfile({
+      crops: ['lemon', 'lime'],
+      plantedWeeks: { lemon: 'w8', lime: 'w8' },
+      isPro: true,
+    });
+    // lemon is due Jan 3, lime is due Jan 1 and Jan 4 — not the same day.
+    const jan3 = getTreeWateringReminders(profile, new Date(2024, 0, 3));
+    expect(jan3.some((t) => t.id.startsWith('treewater-lemon-'))).toBe(true);
+    expect(jan3.some((t) => t.id.startsWith('treewater-lime-'))).toBe(false);
+  });
+
+  it('shows up on Home and on the calendar, and drops from the calendar (but not Home) once checked off', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w8' }, isPro: true });
+    const dueDate = new Date(2024, 0, 3);
+    const id = `treewater-lemon-${dateKey(dueDate)}`;
+    expect(getTodayTasks(profile, dueDate).some((t) => t.id === id)).toBe(true);
+    expect(getTasksForDate(profile, dueDate, dueDate).some((t) => t.id === id)).toBe(true);
+
+    const checkedOff = toggleTask(profile, id);
+    expect(getTodayTasks(checkedOff, dueDate).some((t) => t.id === id)).toBe(true);
+    expect(getTasksForDate(checkedOff, dueDate, dueDate).some((t) => t.id === id)).toBe(false);
+  });
+
+  it('shows on the calendar when browsing a future date, not just today', () => {
+    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w8' }, isPro: true });
+    const today = new Date(2024, 0, 1);
+    const futureDueDay = new Date(2024, 0, 6); // also a lemon due day
+    const tasks = getTasksForDate(profile, futureDueDay, today);
+    expect(tasks.some((t) => t.id === `treewater-lemon-${dateKey(futureDueDay)}`)).toBe(true);
+  });
+});
+
+describe('getSeedCollectionReminders', () => {
+  it('is empty for a harvest not marked as the final one of the season', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: new Date(2024, 6, 1).toISOString() }],
+    });
+    const dueDate = new Date(2024, 6, 22); // 3 weeks later
+    expect(getSeedCollectionReminders(profile, dueDate)).toEqual([]);
+  });
+
+  it('is due 3 weeks after a harvest marked as final', () => {
+    const harvestDate = new Date(2024, 6, 1);
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    const dueDate = new Date(2024, 6, 22); // 3 weeks later
+    const tasks = getSeedCollectionReminders(profile, dueDate);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({ id: 'seeds-h1', title: 'Collect seeds from Tomatoes', category: 'seed' });
+    expect(getSeedCollectionReminders(profile, new Date(2024, 6, 21))).toEqual([]);
+    expect(getSeedCollectionReminders(profile, new Date(2024, 6, 23))).toEqual([]);
+  });
+
+  it('is Pro-gated', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: false,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: new Date(2024, 6, 1).toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(getSeedCollectionReminders(profile, new Date(2024, 6, 22))).toEqual([]);
+  });
+
+  it('is excluded for a crop that is not realistically home-seed-saved (e.g. carrots, a root crop)', () => {
+    const profile = makeProfile({
+      crops: ['carrots'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'carrots', weightLbs: 1, note: '', dateISO: new Date(2024, 6, 1).toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(getSeedCollectionReminders(profile, new Date(2024, 6, 22))).toEqual([]);
+  });
+
+  it('is excluded for a tree crop (e.g. lemon), which is grafted rather than seed-grown at home', () => {
+    const profile = makeProfile({
+      crops: ['lemon'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'lemon', weightLbs: 1, note: '', dateISO: new Date(2024, 6, 1).toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(getSeedCollectionReminders(profile, new Date(2024, 6, 22))).toEqual([]);
+  });
+
+  it('shows up on Home and the calendar, and can be checked off', () => {
+    const harvestDate = new Date(2024, 6, 1);
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    const dueDate = new Date(2024, 6, 22);
+    expect(getTodayTasks(profile, dueDate).some((t) => t.id === 'seeds-h1')).toBe(true);
+    expect(getTasksForDate(profile, dueDate, dueDate).some((t) => t.id === 'seeds-h1')).toBe(true);
+
+    const checkedOff = toggleTask(profile, 'seeds-h1');
+    expect(getTasksForDate(checkedOff, dueDate, dueDate).some((t) => t.id === 'seeds-h1')).toBe(false);
+  });
+
+  it('gives a second final harvest of the same crop its own separate reminder', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: new Date(2023, 6, 1).toISOString(), isFinalHarvest: true },
+        { id: 'h2', crop: 'tomatoes', weightLbs: 3, note: '', dateISO: new Date(2024, 6, 1).toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(getSeedCollectionReminders(profile, new Date(2023, 6, 22)).map((t) => t.id)).toEqual(['seeds-h1']);
+    expect(getSeedCollectionReminders(profile, new Date(2024, 6, 22)).map((t) => t.id)).toEqual(['seeds-h2']);
+  });
+});
+
+describe('harvestWindowsFor', () => {
+  // Arugula: sow 15% / grow 30% / harvest 55% of a 5-week (35-day) season —
+  // harvest phase starts 35 * 0.45 = 15.75 days after planting and runs to
+  // day 35.
+  const planted = new Date(2024, 0, 1);
+
+  it('is empty for a crop with no tracked planted date', () => {
+    const profile = makeProfile({ crops: ['arugula'], isPro: true });
+    expect(harvestWindowsFor(profile, new Date(2024, 0, 20))).toEqual([]);
+  });
+
+  it('is Pro-gated', () => {
+    const profile = makeProfile({
+      crops: ['arugula'],
+      isPro: false,
+      plantedDates: { arugula: planted.toISOString() },
+    });
+    expect(harvestWindowsFor(profile, new Date(2024, 0, 20))).toEqual([]);
+  });
+
+  it('is empty before the harvest phase begins', () => {
+    const profile = makeProfile({
+      crops: ['arugula'],
+      isPro: true,
+      plantedDates: { arugula: planted.toISOString() },
+    });
+    expect(harvestWindowsFor(profile, new Date(2024, 0, 6))).toEqual([]); // day 5
+  });
+
+  it('covers the crop once the harvest phase begins', () => {
+    const profile = makeProfile({
+      crops: ['arugula'],
+      isPro: true,
+      plantedDates: { arugula: planted.toISOString() },
+    });
+    const windows = harvestWindowsFor(profile, new Date(2024, 0, 21)); // day 20
+    expect(windows).toHaveLength(1);
+    expect(windows[0].crop).toBe('arugula');
+  });
+
+  it('is empty again once the season is over', () => {
+    const profile = makeProfile({
+      crops: ['arugula'],
+      isPro: true,
+      plantedDates: { arugula: planted.toISOString() },
+    });
+    expect(harvestWindowsFor(profile, new Date(2024, 1, 20))).toEqual([]); // well past day 35
+  });
+
+  it('is empty for a crop with no SEASON_SHAPE entry', () => {
+    const profile = makeProfile({
+      crops: ['other'],
+      isPro: true,
+    });
+    expect(harvestWindowsFor(profile, new Date(2024, 0, 20))).toEqual([]);
+  });
+});
+
+describe('seedCollectionWindowsFor', () => {
+  // Window is 2-4 weeks (14-28 days) after a final harvest, centered on the
+  // same day getSeedCollectionReminders' single checkable task fires.
+  const harvestDate = new Date(2024, 0, 1);
+
+  it('is empty for a harvest not marked final', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [{ id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString() }],
+    });
+    expect(seedCollectionWindowsFor(profile, new Date(2024, 0, 21))).toEqual([]);
+  });
+
+  it('is Pro-gated', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: false,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(seedCollectionWindowsFor(profile, new Date(2024, 0, 21))).toEqual([]);
+  });
+
+  it('is empty before the window opens (under 2 weeks after the final harvest)', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(seedCollectionWindowsFor(profile, new Date(2024, 0, 10))).toEqual([]); // day 9
+  });
+
+  it('covers the crop across the 2-4 week window, including the midpoint the checkable task fires on', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    const midpoint = new Date(2024, 0, 22); // 3 weeks after harvestDate
+    const windows = seedCollectionWindowsFor(profile, midpoint);
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({ crop: 'tomatoes', harvestId: 'h1' });
+    expect(getSeedCollectionReminders(profile, midpoint).some((t) => t.id === 'seeds-h1')).toBe(true);
+  });
+
+  it('is empty again once the window closes (over 4 weeks after the final harvest)', () => {
+    const profile = makeProfile({
+      crops: ['tomatoes'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'tomatoes', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(seedCollectionWindowsFor(profile, new Date(2024, 1, 5))).toEqual([]); // day 35
+  });
+
+  it('excludes a crop that is not realistically home-seed-saved (e.g. a tree)', () => {
+    const profile = makeProfile({
+      crops: ['lemon'],
+      isPro: true,
+      harvests: [
+        { id: 'h1', crop: 'lemon', weightLbs: 2, note: '', dateISO: harvestDate.toISOString(), isFinalHarvest: true },
+      ],
+    });
+    expect(seedCollectionWindowsFor(profile, new Date(2024, 0, 22))).toEqual([]);
   });
 });

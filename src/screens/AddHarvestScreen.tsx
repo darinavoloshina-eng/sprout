@@ -24,6 +24,7 @@ export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarve
   const [crop, setCrop] = useState<CropKey | null>(crops[0] ?? null);
   const [weightText, setWeightText] = useState('');
   const [note, setNote] = useState('');
+  const [isFinalHarvest, setIsFinalHarvest] = useState(false);
 
   const units: UnitSystem = profile.units ?? 'imperial';
   const weight = parseFloat(weightText);
@@ -37,6 +38,7 @@ export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarve
       weightLbs: parseWeightToLbs(weight, units),
       note: note.trim(),
       dateISO: new Date().toISOString(),
+      isFinalHarvest,
     });
   }
 
@@ -87,6 +89,23 @@ export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarve
           placeholderTextColor={colors.inkSoft}
           accessibilityLabel="Note"
         />
+
+        <TouchableOpacity
+          style={styles.finalHarvestRow}
+          onPress={() => setIsFinalHarvest((v) => !v)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isFinalHarvest }}
+        >
+          <View style={[styles.checkbox, isFinalHarvest && styles.checkboxChecked]}>
+            {isFinalHarvest ? <Text style={styles.checkboxMark}>✓</Text> : null}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.finalHarvestTitle}>Final harvest of the season</Text>
+            <Text style={styles.finalHarvestSub}>
+              We'll remind you to collect seeds for next year a few weeks from now.
+            </Text>
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.spacer} />
 
@@ -155,6 +174,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink,
   },
+  finalHarvestRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    padding: space.md,
+    marginTop: space.lg,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.mossGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: { backgroundColor: colors.mossGreen },
+  checkboxMark: { color: colors.onPine, fontFamily: fonts.bodyBold, fontSize: 12 },
+  finalHarvestTitle: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  finalHarvestSub: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: 2 },
   spacer: { flex: 1, minHeight: space.xxl },
   saveButton: {
     backgroundColor: colors.pine,
