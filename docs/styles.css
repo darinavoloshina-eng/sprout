@@ -77,9 +77,9 @@ section { padding: 0 24px; }
 
 /* ---------- site header (every page) ---------- */
 .site-header {
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 26px 24px 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 26px 32px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -129,7 +129,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
   align-items: center;
   padding-top: 64px;
 }
-.hero-eyebrow { color: var(--hero-mustard); margin-bottom: 18px; opacity: 0; }
 .hero h1 {
   font-size: clamp(34px, 4.6vw, 54px);
   line-height: 1.08;
@@ -175,6 +174,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 .hero-icon {
   opacity: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 24px;
@@ -184,13 +184,21 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
   max-width: 300px;
   filter: drop-shadow(0 24px 48px rgba(0,0,0,0.35));
 }
+.hero-icon-caption {
+  margin-top: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hero-ink-soft);
+  text-align: center;
+}
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-.hero-eyebrow, .hero h1, .hero-sub, .hero-actions, .hero-icon {
+.hero h1, .hero-sub, .hero-actions, .hero-icon {
   animation: rise 0.7s cubic-bezier(0.2,0.7,0.2,1) forwards;
 }
-.hero-eyebrow { animation-delay: 0.05s; }
-.hero h1 { animation-delay: 0.15s; }
+.hero h1 { animation-delay: 0.05s; }
 .hero-sub { animation-delay: 0.3s; }
 .hero-actions { animation-delay: 0.42s; }
 .hero-icon { animation-delay: 0.3s; }
@@ -230,14 +238,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 }
 .feature-icon {
   width: 44px; height: 44px; border-radius: 13px;
-  background: var(--paper); border: 1.5px solid var(--line);
+  background: var(--paper); border: 1.5px solid var(--mustard);
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; margin-bottom: 18px;
 }
-.feature-card:nth-child(1) .feature-icon { border-color: var(--moss); }
-.feature-card:nth-child(2) .feature-icon { border-color: var(--mustard); }
-.feature-card:nth-child(3) .feature-icon { border-color: var(--clay); }
-.feature-card:nth-child(4) .feature-icon { border-color: var(--moss); }
 .feature-card h3 { font-size: 17.5px; margin-bottom: 10px; line-height: 1.32; }
 .feature-card p { font-size: 13.5px; line-height: 1.65; color: var(--ink-soft); }
 
@@ -267,7 +271,16 @@ footer.site-footer {
   border-top: 1px solid var(--line);
   text-align: center;
 }
-footer.site-footer .wordmark { font-family: 'Fraunces', serif; font-weight: 600; font-size: 17px; }
+footer.site-footer .wordmark {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+footer.site-footer .wordmark svg { flex-shrink: 0; }
 footer.site-footer .tagline { margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); }
 footer.site-footer .copy { margin-top: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-soft); opacity: 0.8; }
 footer.site-footer .copy a { color: var(--moss); text-decoration: underline; }
@@ -359,6 +372,17 @@ footer.site-footer .copy a { color: var(--moss); text-decoration: underline; }
 }
 .article-hero h1 { font-size: clamp(28px, 4vw, 40px); color: var(--pine); margin-top: 8px; }
 .article-dek { margin-top: 14px; font-size: 16px; line-height: 1.6; color: var(--ink-soft); }
+.post-image {
+  max-width: 700px;
+  margin: 28px auto 0;
+  padding: 0 24px;
+}
+.post-image svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 20px;
+}
 article.post-body {
   max-width: 700px;
   margin: 0 auto;
@@ -442,7 +466,7 @@ article.post-body strong { color: var(--pine); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-eyebrow, .hero h1, .hero-sub, .hero-actions, .hero-icon, .reveal {
+  .hero h1, .hero-sub, .hero-actions, .hero-icon, .reveal {
     animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;
   }
 }
