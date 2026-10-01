@@ -6,7 +6,7 @@
 // they're not (the default demo props still show the mock example content).
 
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
 import { TabBar, TabKey } from '../components/ui';
 
@@ -42,6 +42,8 @@ export interface PlantDetailScreenProps {
   /** Newest-first — see App.tsx's plantDetailProps. */
   notes?: NoteTile[];
   onAddNote?: (text: string) => void;
+  onEditNote?: (id: string, text: string) => void;
+  onDeleteNote?: (id: string) => void;
   onBack: () => void;
   onAddPhoto?: () => void;
   onPlayTimeline?: () => void;
@@ -79,6 +81,8 @@ export default function PlantDetailScreen({
   stats = DEFAULT_STATS,
   notes = [],
   onAddNote,
+  onEditNote,
+  onDeleteNote,
   onBack,
   onAddPhoto,
   onPlayTimeline,
@@ -87,12 +91,42 @@ export default function PlantDetailScreen({
 }: PlantDetailScreenProps) {
   const currentDay = timeline[timeline.length - 1]?.day;
   const [draftNote, setDraftNote] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+
+  function startEditNote(note: NoteTile) {
+    setEditingNoteId(note.id);
+    setDraftNote(note.text);
+  }
+
+  function cancelEditNote() {
+    setEditingNoteId(null);
+    setDraftNote('');
+  }
 
   function saveNote() {
     const text = draftNote.trim();
-    if (!text || !onAddNote) return;
-    onAddNote(text);
+    if (!text) return;
+    if (editingNoteId) {
+      onEditNote?.(editingNoteId, text);
+    } else {
+      onAddNote?.(text);
+    }
     setDraftNote('');
+    setEditingNoteId(null);
+  }
+
+  function confirmDeleteNote(id: string) {
+    Alert.alert("Delete this note?", "This can't be undone.", [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          if (editingNoteId === id) cancelEditNote();
+          onDeleteNote?.(id);
+        },
+      },
+    ]);
   }
 
   return (
@@ -193,10 +227,37 @@ export default function PlantDetailScreen({
           {notes.length > 0 ? (
             <View style={styles.notesList}>
               {notes.map((n) => (
-                <View key={n.id} style={styles.noteRow}>
+                <View key={n.id} style={[styles.noteRow, editingNoteId === n.id && styles.noteRowEditing]}>
                   <Text style={styles.noteText}>{n.text}</Text>
+                  <View style={styles.noteActions}>
+                    <TouchableOpacity
+                      onPress={() => startEditNote(n)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Edit note"
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <Text style={styles.noteActionText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => confirmDeleteNote(n.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Delete note"
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <Text style={styles.noteActionTextDelete}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))}
+            </View>
+          ) : null}
+
+          {editingNoteId ? (
+            <View style={styles.editingBanner}>
+              <Text style={styles.editingBannerText}>Editing note</Text>
+              <TouchableOpacity onPress={cancelEditNote} accessibilityRole="button">
+                <Text style={styles.editingCancelText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
 
@@ -216,7 +277,7 @@ export default function PlantDetailScreen({
               disabled={!draftNote.trim()}
               accessibilityRole="button"
             >
-              <Text style={styles.noteSaveButtonText}>Save</Text>
+              <Text style={styles.noteSaveButtonText}>{editingNoteId ? 'Update' : 'Save'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -391,8 +452,20 @@ const styles = StyleSheet.create({
   notesHeading: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
   notesSub: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: -4 },
   notesList: { gap: 10 },
-  noteRow: {},
+  noteRow: { gap: 5 },
+  noteRowEditing: { opacity: 0.5 },
   noteText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.ink },
+  noteActions: { flexDirection: 'row', gap: 14 },
+  noteActionText: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.mossGreen },
+  noteActionTextDelete: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.clay },
+  editingBanner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  editingBannerText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    color: colors.inkSoft,
+  },
+  editingCancelText: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.mossGreen },
   noteInputRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   noteInput: {
     flex: 1,

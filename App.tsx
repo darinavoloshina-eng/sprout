@@ -264,6 +264,30 @@ export default function App() {
     });
   }
 
+  function handleEditNote(id: string, text: string) {
+    setProfile((current) => {
+      if (!current) return current;
+      const updated: GardenProfile = {
+        ...current,
+        notes: (current.notes ?? []).map((n) => (n.id === id ? { ...n, text } : n)),
+      };
+      saveProfile(updated).catch(() => {});
+      return updated;
+    });
+  }
+
+  function handleDeleteNote(id: string) {
+    setProfile((current) => {
+      if (!current) return current;
+      const updated: GardenProfile = {
+        ...current,
+        notes: (current.notes ?? []).filter((n) => n.id !== id),
+      };
+      saveProfile(updated).catch(() => {});
+      return updated;
+    });
+  }
+
   function handleRemoveCrop(crop: CropKey) {
     setProfile((current) => {
       if (!current) return current;
@@ -390,6 +414,8 @@ export default function App() {
           onBack={() => setScreen('garden')}
           onAddPhoto={() => handleAddPhoto(selectedCrop)}
           onAddNote={(text) => handleAddNote(selectedCrop, text)}
+          onEditNote={handleEditNote}
+          onDeleteNote={handleDeleteNote}
           activeTab="garden"
           onTabPress={handleTabPress}
         />
@@ -430,6 +456,8 @@ export default function App() {
           onAddHarvest={() => setScreen('addHarvest')}
           onOpenPaywall={openPaywall}
           onOpenRecap={() => setRecapOpen(true)}
+          onEditNote={handleEditNote}
+          onDeleteNote={handleDeleteNote}
           activeTab="log"
           onTabPress={handleTabPress}
         />

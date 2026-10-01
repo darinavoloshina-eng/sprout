@@ -11,10 +11,10 @@
 // calendar years to say anything, which a fresh install won't have — that
 // empty state is handled explicitly rather than showing a blank card.
 
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CropKey } from '../engines/scheduleEngine';
-import { GardenProfile, HarvestEntry } from '../types';
+import { CropNote, GardenProfile, HarvestEntry } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { cropIconBg, cropLabel } from '../cropMeta';
 import { formatWeightLbs, UnitSystem } from '../utils/units';
@@ -75,6 +75,8 @@ export interface LogScreenProps {
   onAddHarvest: () => void;
   onOpenPaywall: () => void;
   onOpenRecap: () => void;
+  onEditNote?: (id: string, text: string) => void;
+  onDeleteNote?: (id: string) => void;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
@@ -84,9 +86,53 @@ export default function LogScreen({
   onAddHarvest,
   onOpenPaywall,
   onOpenRecap,
+  onEditNote,
+  onDeleteNote,
   activeTab = 'log',
   onTabPress,
 }: LogScreenProps) {
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+
+  function startEdit(note: CropNote) {
+    setEditingNoteId(note.id);
+    setEditDraft(note.text);
+  }
+
+  function cancelEdit() {
+    setEditingNoteId(null);
+    setEditDraft('');
+  }
+
+  function saveEdit() {
+    const text = editDraft.trim();
+    if (!text || !editingNoteId) return;
+    onEditNote?.(editingNoteId, text);
+    setEditingNoteId(null);
+    setEditDraft('');
+  }
+
+  function confirmDelete(id: string) {
+    Alert.alert("Delete this note?", "This can't be undone.", [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          if (editingNoteId === id) cancelEdit();
+          onDeleteNote?.(id);
+        },
+      },
+    ]);
+  }
+
+  // Newest first, across every crop — a running journal of the whole
+  // garden, not just one plant's page (see PlantDetailScreen for the
+  // per-crop version this mirrors).
+  const notes = [...(profile.notes ?? [])].sort(
+    (a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime()
+  );
+
   const harvests = profile.harvests ?? [];
   const totalLbs = harvests.reduce((sum, h) => sum + h.weightLbs, 0);
   const units: UnitSystem = profile.units ?? 'imperial';
@@ -190,6 +236,62 @@ export default function LogScreen({
                     .toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
                     .toUpperCase()}
                 </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <Text style={styles.sectionLabel}>Notes & learnings</Text>
+
+        {notes.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>
+              Nothing noted yet. Add one from any crop's page to remember it next season.
+            </Text>
+          </View>
+        ) : (
+          <View style={{ gap: space.sm }}>
+            {notes.map((n) => (
+              <View key={n.id} style={styles.noteRow}>
+                <View style={[styles.pickIconWrap, { backgroundColor: cropIconBg(n.crop) }]}>
+                  <CropIcon crop={n.crop} size={15} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.noteCrop}>{cropLabel(n.crop)}</Text>
+                  {editingNoteId === n.id ? (
+                    <TextInput
+                      style={styles.noteEditInput}
+                      value={editDraft}
+                      onChangeText={setEditDraft}
+                      multiline
+                      autoFocus
+                      accessibilityLabel="Edit note"
+                    />
+                  ) : (
+                    <Text style={styles.noteText}>{n.text}</Text>
+                  )}
+                  <View style={styles.noteActions}>
+                    {editingNoteId === n.id ? (
+                      <>
+                        <TouchableOpacity onPress={saveEdit} accessibilityRole="button">
+                          <Text style={styles.noteActionText}>Save</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={cancelEdit} accessibilityRole="button">
+                          <Text style={styles.noteActionTextMuted}>Cancel</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <>
+                        <TouchableOpacity onPress={() => startEdit(n)} accessibilityRole="button">
+                          <Text style={styles.noteActionText}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => confirmDelete(n.id)} accessibilityRole="button">
+                          <Text style={styles.noteActionTextDelete}>Delete</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </View>
               </View>
             ))}
           </View>
@@ -338,6 +440,33 @@ const styles = StyleSheet.create({
   pickTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
   pickSub: { fontFamily: fonts.body, fontSize: 11, color: colors.inkSoft, marginTop: 2 },
   pickDate: { fontFamily: fonts.monoSemiBold, fontSize: 11, color: colors.inkSoft },
+  noteRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    padding: 11,
+    paddingHorizontal: 14,
+  },
+  noteCrop: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.ink, marginBottom: 2 },
+  noteText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
+  noteEditInput: {
+    fontFamily: fonts.body,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: colors.ink,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: 10,
+    padding: 8,
+  },
+  noteActions: { flexDirection: 'row', gap: 14, marginTop: 6 },
+  noteActionText: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.mossGreen },
+  noteActionTextMuted: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.inkSoft },
+  noteActionTextDelete: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.clay },
   compareCard: {
     backgroundColor: colors.card,
     borderWidth: 1.5,
