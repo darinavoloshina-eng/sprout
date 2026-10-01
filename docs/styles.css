@@ -238,11 +238,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 
 /* ---------- pricing ---------- */
 .pricing { padding: 20px 24px 100px; }
-.price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 48px; max-width: 780px; margin-inline: auto; }
+.price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; margin-top: 48px; max-width: 1080px; margin-inline: auto; }
 .price-card { background: var(--card); border: 1.5px solid var(--line); border-radius: 22px; padding: 30px 28px; }
 .price-card.pro { background: var(--hero-bg); border-color: var(--hero-bg); color: var(--hero-ink); }
+.price-card.lifetime { border-color: var(--mustard); }
 .price-name { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--moss); }
 .price-card.pro .price-name { color: var(--hero-mustard); }
+.price-card.lifetime .price-name { color: var(--mustard); }
 .price-amount { font-family: 'Fraunces', serif; font-size: 40px; margin-top: 10px; }
 .price-amount span { font-family: 'Work Sans', sans-serif; font-size: 13px; color: var(--ink-soft); font-weight: 500; }
 .price-card.pro .price-amount span { color: var(--hero-ink-soft); }
@@ -255,6 +257,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
   font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
   background: rgba(227,185,76,0.16); color: var(--hero-mustard); padding: 4px 10px; border-radius: 999px;
 }
+.price-card.lifetime .price-save { background: rgba(184,134,42,0.12); color: var(--mustard); }
 
 /* ---------- footer ---------- */
 footer.site-footer {

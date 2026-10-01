@@ -205,19 +205,19 @@ export default function App() {
   useEffect(() => {
     if (!profile || !isPurchasesConfigured()) return;
     let cancelled = false;
-    fetchCurrentEntitlement().then((isPro) => {
-      if (cancelled || isPro === null) return;
+    fetchCurrentEntitlement().then((status) => {
+      if (cancelled || status === null) return;
       setProfile((current) => {
-        if (!current || current.isPro === isPro) return current;
-        const updated = { ...current, isPro };
+        if (!current || (current.isPro === status.isPro && current.isLifetime === status.isLifetime)) return current;
+        const updated = { ...current, isPro: status.isPro, isLifetime: status.isLifetime };
         saveProfile(updated).catch(() => {});
         return updated;
       });
     });
-    const unsubscribe = onEntitlementChange((isPro) => {
+    const unsubscribe = onEntitlementChange((status) => {
       setProfile((current) => {
-        if (!current || current.isPro === isPro) return current;
-        const updated = { ...current, isPro };
+        if (!current || (current.isPro === status.isPro && current.isLifetime === status.isLifetime)) return current;
+        const updated = { ...current, isPro: status.isPro, isLifetime: status.isLifetime };
         saveProfile(updated).catch(() => {});
         return updated;
       });

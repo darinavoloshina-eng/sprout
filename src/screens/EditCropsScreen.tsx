@@ -338,7 +338,7 @@ export default function EditCropsScreen({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.proBannerTitle}>Grow more than {FREE_CROP_LIMIT} crops</Text>
-              <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $3/mo</Text>
+              <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $2.99/mo</Text>
             </View>
             <View style={styles.proBannerCta}>
               <Text style={styles.proBannerCtaText}>Try free</Text>

@@ -110,7 +110,7 @@ export default function SettingsScreen({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.proTitle}>Try Pro free for 14 days</Text>
-              <Text style={styles.proSub}>All crops, season view, year-over-year · then $3/mo</Text>
+              <Text style={styles.proSub}>All crops, season view, year-over-year · then $2.99/mo</Text>
             </View>
           </TouchableOpacity>
         ) : null}

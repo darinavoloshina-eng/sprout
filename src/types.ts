@@ -98,11 +98,18 @@ export interface GardenProfile {
   // the old account system (an unauthenticated, guessable userId) was
   // removed rather than fixed.
   email?: string;
-  // Optional — same fallback reasoning as harvests above. There is no real
-  // payment/subscription system behind this (see PaywallScreen.tsx): it's
-  // a local flag the paywall's trial button sets directly, for previewing
-  // what Pro unlocks. Not tied to any App Store/Play receipt.
+  // Mirrors the real RevenueCat/App Store entitlement once purchases are
+  // configured (see purchases.ts) — kept in sync by App.tsx's
+  // fetchCurrentEntitlement/onEntitlementChange listeners. Before a real
+  // API key is set, PaywallScreen instead sets this directly as a local,
+  // unpaid preview toggle.
   isPro?: boolean;
+  // True when the active entitlement came from the one-time Lifetime
+  // purchase rather than a recurring subscription — RevenueCat's
+  // EntitlementInfo.willRenew is false for it. PaywallScreen uses this to
+  // avoid sending a lifetime owner to "Manage subscription", since there
+  // is no subscription for Apple's subscription-settings page to show.
+  isLifetime?: boolean;
 }
 
 export const CURRENT_SCHEMA_VERSION = 1;

@@ -3,27 +3,26 @@
 // upsell (Settings banner, Calendar season lock, Log's year-over-year row).
 //
 // Real purchases go through RevenueCat (see purchases.ts) once it's been
-// configured with a real API key. Until then — no key set yet, which is
-// the state this ships in — every purchases.ts function reports "not
-// configured" and this screen falls back to exactly its old behavior: a
-// local preview that flips profile.isPro with no payment behind it, so
-// the rest of the app's Pro gates (extra crops, season view,
-// year-over-year) can still be previewed and tested. That fallback is
-// also why "Turn off Pro preview" only shows in the unconfigured case —
-// once real purchases are live, isPro should only change because
-// RevenueCat says it did (a real purchase, renewal, or cancellation), not
-// because of a local toggle the user could tap to dodge paying. A real
-// subscriber gets "Manage subscription" instead, which hands off to iOS's
-// own subscription settings, same as any other app.
-//
-// Multiple gardens is called out as not-yet-built below — it's a
-// genuinely different-sized project (a full multi-garden data model), not
-// something a flag can turn on, so it stays honestly unbuilt rather than
-// faking it the way the other three benefits used to be faked.
+// configured with a real API key. If that key is ever missing or reset to
+// a placeholder, every purchases.ts function reports "not configured" and
+// this screen falls back to its original preview behavior instead: a
+// local toggle that flips profile.isPro with no payment behind it, so the
+// rest of the app's Pro gates (extra crops, season view, year-over-year)
+// can still be previewed and tested. That fallback is also why "Turn off
+// Pro preview" only shows in the unconfigured case — once real purchases
+// are live, isPro should only change because RevenueCat says it did (a
+// real purchase, renewal, or cancellation), not because of a local toggle
+// the user could tap to dodge paying. A real subscriber gets "Manage
+// subscription" instead, which hands off to iOS's own subscription
+// settings, same as any other app — except a Lifetime buyer, who gets
+// neither: there's no subscription for that settings page to show, and no
+// local toggle to dodge, so they just see a plain "it's yours for good"
+// line (see profile.isLifetime below).
 //
 // The auto-renewal disclosure and Privacy Policy/Terms links below the CTA
 // are required by App Store review for any subscription offering, real or
-// not.
+// not. Lifetime is a one-time purchase, not a subscription, so it gets its
+// own non-renewal disclosure instead (see the plan === 'lifetime' branch).
 
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -37,23 +36,17 @@ const BENEFITS = [
   {
     icon: '🌱',
     title: 'Every crop in the catalogue',
-    body: 'Peppers, squash, garlic, berries and the rest, each with its own stage guidance',
+    body: '35 vegetables, 6 fruits, and 12 trees, each with its own stage guidance',
   },
   {
     icon: '🗓',
     title: 'The season view',
-    body: 'Know what to plant next and when to stop, the part nobody tells first-time gardeners',
+    body: 'Know what to plant next and when to stop',
   },
   {
     icon: '📚',
     title: 'Year over year',
     body: 'GardenWise remembers last season and moves your reminders to match what actually happened',
-  },
-  {
-    icon: '🪵',
-    title: 'Multiple gardens',
-    body: 'Separate beds, borders, and containers, each on its own calendar',
-    soon: true,
   },
 ];
 
@@ -66,8 +59,8 @@ export interface PaywallScreenProps {
 }
 
 export default function PaywallScreen({ profile, onProfileChange, onClose }: PaywallScreenProps) {
-  const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly');
-  const [plans, setPlans] = useState<SubscriptionPlans>({ monthly: null, yearly: null });
+  const [plan, setPlan] = useState<'monthly' | 'yearly' | 'lifetime'>('yearly');
+  const [plans, setPlans] = useState<SubscriptionPlans>({ monthly: null, yearly: null, lifetime: null });
   const [busy, setBusy] = useState(false);
   const real = isConfigured();
 
@@ -75,15 +68,15 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
     if (real) fetchPlans().then(setPlans);
   }, [real]);
 
-  function setPro(isPro: boolean) {
-    const updated: GardenProfile = { ...profile, isPro };
+  function setPro(isPro: boolean, isLifetime = false) {
+    const updated: GardenProfile = { ...profile, isPro, isLifetime };
     onProfileChange(updated);
     saveProfile(updated).catch(() => {});
   }
 
-  async function startTrial() {
+  async function handlePurchase() {
     if (!real) {
-      setPro(true);
+      setPro(true, plan === 'lifetime');
       Alert.alert(
         "You're on GardenWise Pro",
         "This is a local preview, not a real purchase. There's no payment behind it. All the crops, the season view, and year-over-year comparisons are unlocked now."
@@ -91,7 +84,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
       onClose();
       return;
     }
-    const pkg = plan === 'yearly' ? plans.yearly : plans.monthly;
+    const pkg = plan === 'yearly' ? plans.yearly : plan === 'lifetime' ? plans.lifetime : plans.monthly;
     if (!pkg) {
       Alert.alert('Not available yet', "This plan isn't ready in the store yet. Try again in a moment.");
       return;
@@ -100,7 +93,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
     const outcome = await purchase(pkg);
     setBusy(false);
     if (outcome === 'success') {
-      setPro(true);
+      setPro(true, plan === 'lifetime');
       onClose();
     } else if (outcome === 'error') {
       Alert.alert('Purchase failed', 'Something went wrong completing the purchase. Check your connection and try again.');
@@ -114,10 +107,10 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
       return;
     }
     setBusy(true);
-    const isPro = await restorePurchases();
+    const status = await restorePurchases();
     setBusy(false);
-    if (isPro) {
-      setPro(true);
+    if (status.isPro) {
+      setPro(true, status.isLifetime);
       Alert.alert('Restored', 'Your GardenWise Pro subscription is back.');
       onClose();
     } else {
@@ -129,8 +122,9 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
     setPro(false);
   }
 
-  const monthlyPrice = plans.monthly?.product.priceString ?? '$3';
-  const yearlyPrice = plans.yearly?.product.priceString ?? '$24';
+  const monthlyPrice = plans.monthly?.product.priceString ?? '$2.99';
+  const yearlyPrice = plans.yearly?.product.priceString ?? '$24.99';
+  const lifetimePrice = plans.lifetime?.product.priceString ?? '$59.99';
 
   return (
     <View style={styles.screen}>
@@ -148,14 +142,16 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
         <Text style={styles.headline}>
           {profile.isPro
             ? "You're on\nGardenWise Pro\nalready"
-            : 'Grow the whole\ngarden, not four\nsquares of it'}
+            : 'Grow the\nwhole garden'}
         </Text>
         <Text style={styles.sub}>
           {profile.isPro
             ? real
-              ? 'Thanks for subscribing.'
+              ? profile.isLifetime
+                ? 'Thanks for buying GardenWise Pro for life.'
+                : 'Thanks for subscribing.'
               : 'This is a local preview, not a real subscription.'
-            : 'Free covers one garden and four crops. Pro is for the garden you actually have.'}
+            : 'The GardenWise free plan covers 4 crops. GardenWise Pro is for the garden you actually have.'}
         </Text>
 
         <View style={styles.benefits}>
@@ -165,11 +161,6 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
               <View style={{ flex: 1 }}>
                 <View style={styles.benefitTitleRow}>
                   <Text style={styles.benefitTitle}>{b.title}</Text>
-                  {b.soon ? (
-                    <View style={styles.soonTag}>
-                      <Text style={styles.soonTagText}>Not built yet</Text>
-                    </View>
-                  ) : null}
                 </View>
                 <Text style={styles.benefitBody}>{b.body}</Text>
               </View>
@@ -181,18 +172,26 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
 
         {profile.isPro ? (
           <>
-            <TouchableOpacity
-              style={styles.ctaButtonSecondary}
-              onPress={real ? () => Linking.openURL(MANAGE_SUBSCRIPTIONS_URL) : cancelPreview}
-              accessibilityRole="button"
-            >
-              <Text style={styles.ctaTextSecondary}>{real ? 'Manage subscription' : 'Turn off Pro preview'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.finePrint}>
-              {real
-                ? 'Opens your Apple ID subscription settings, where you can change plans or cancel.'
-                : 'Switches you back to the free tier locally, no account or payment involved.'}
-            </Text>
+            {real && profile.isLifetime ? (
+              <Text style={styles.finePrint}>
+                It's yours for good — no subscription, nothing to renew or cancel.
+              </Text>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.ctaButtonSecondary}
+                  onPress={real ? () => Linking.openURL(MANAGE_SUBSCRIPTIONS_URL) : cancelPreview}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.ctaTextSecondary}>{real ? 'Manage subscription' : 'Turn off Pro preview'}</Text>
+                </TouchableOpacity>
+                <Text style={styles.finePrint}>
+                  {real
+                    ? 'Opens your Apple ID subscription settings, where you can change plans or cancel.'
+                    : 'Switches you back to the free tier locally, no account or payment involved.'}
+                </Text>
+              </>
+            )}
           </>
         ) : (
           <>
@@ -214,33 +213,60 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
                 accessibilityState={{ selected: plan === 'yearly' }}
               >
                 <View style={styles.saveTag}>
-                  <Text style={styles.saveTagText}>Save 33%</Text>
+                  <Text style={styles.saveTagText}>Save 30%</Text>
                 </View>
                 <Text style={[styles.planLabel, plan === 'yearly' && styles.planLabelYearly]}>Yearly</Text>
                 <Text style={styles.planPrice}>{yearlyPrice}</Text>
                 <Text style={styles.planUnit}>billed once a year</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.planCard, plan === 'lifetime' && styles.planCardSelected]}
+                onPress={() => setPlan('lifetime')}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: plan === 'lifetime' }}
+              >
+                <Text style={styles.planLabel}>Lifetime</Text>
+                <Text style={styles.planPrice}>{lifetimePrice}</Text>
+                <Text style={styles.planUnit}>pay once</Text>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.ctaButton} onPress={startTrial} accessibilityRole="button" disabled={busy}>
+            <TouchableOpacity style={styles.ctaButton} onPress={handlePurchase} accessibilityRole="button" disabled={busy}>
               {busy ? (
                 <ActivityIndicator color={colors.pine} />
               ) : (
-                <Text style={styles.ctaText}>Start 14-day free trial</Text>
+                <Text style={styles.ctaText}>{plan === 'lifetime' ? 'Get lifetime access' : 'Start 14-day free trial'}</Text>
               )}
             </TouchableOpacity>
-            {!real ? (
-              <Text style={styles.finePrint}>
-                Local preview only, nothing is charged. Real pricing would be $
-                {plan === 'yearly' ? '24/year' : '3/month'} after a trial.
-              </Text>
-            ) : null}
-            <Text style={styles.finePrint}>
-              {real ? 'Once' : 'Once billing is enabled:'} {plan === 'yearly' ? yearlyPrice + '/year' : monthlyPrice + '/month'}
-              , charged to your Apple ID account. Subscriptions auto-renew unless turned off at least 24 hours
-              before the current period ends, and can be managed or cancelled anytime in your device's Account
-              Settings.
-            </Text>
+            {plan === 'lifetime' ? (
+              <>
+                {!real ? (
+                  <Text style={styles.finePrint}>
+                    Local preview only, nothing is charged. Real pricing would be {lifetimePrice}, once.
+                  </Text>
+                ) : null}
+                <Text style={styles.finePrint}>
+                  {real ? 'A one-time payment of' : 'Once billing is enabled, a one-time payment of'} {lifetimePrice}{' '}
+                  is charged to your Apple ID account. Access never expires — no subscription, nothing to renew or
+                  cancel.
+                </Text>
+              </>
+            ) : (
+              <>
+                {!real ? (
+                  <Text style={styles.finePrint}>
+                    Local preview only, nothing is charged. Real pricing would be{' '}
+                    {plan === 'yearly' ? yearlyPrice + '/year' : monthlyPrice + '/month'} after a trial.
+                  </Text>
+                ) : null}
+                <Text style={styles.finePrint}>
+                  {real ? 'Once' : 'Once billing is enabled:'} {plan === 'yearly' ? yearlyPrice + '/year' : monthlyPrice + '/month'}
+                  , charged to your Apple ID account. Subscriptions auto-renew unless turned off at least 24 hours
+                  before the current period ends, and can be managed or cancelled anytime in your device's Account
+                  Settings.
+                </Text>
+              </>
+            )}
             <View style={styles.legalRow}>
               <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} accessibilityRole="link">
                 <Text style={styles.legalLink}>Privacy Policy</Text>
@@ -303,19 +329,6 @@ const styles = StyleSheet.create({
   benefitTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   benefitTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.onPine },
   benefitBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.pineFoot, marginTop: 2 },
-  soonTag: {
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 6,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-  },
-  soonTagText: {
-    fontFamily: fonts.monoSemiBold,
-    fontSize: 9,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: colors.pineFoot,
-  },
   spacer: { height: space.lg },
   planRow: { flexDirection: 'row', gap: 9, marginBottom: 13 },
   planCard: {

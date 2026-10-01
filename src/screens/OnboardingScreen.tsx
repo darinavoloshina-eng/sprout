@@ -513,7 +513,7 @@ export default function OnboardingScreen({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.proBannerTitle}>Grow more than {FREE_CROP_LIMIT} crops</Text>
-                  <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $3/mo</Text>
+                  <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $2.99/mo</Text>
                 </View>
                 <View style={styles.proBannerCta}>
                   <Text style={styles.proBannerCtaText}>Try free</Text>
@@ -835,7 +835,7 @@ export default function OnboardingScreen({
               <View style={styles.trialHeadRow}>
                 <Text style={styles.trialEyebrow}>GardenWise Pro</Text>
                 <View style={styles.trialRule} />
-                <Text style={styles.trialPrice}>$3/mo</Text>
+                <Text style={styles.trialPrice}>$2.99/mo</Text>
               </View>
               <Text style={styles.trialTitle}>Try Pro free for 14 days</Text>
               <View style={{ gap: 6, marginBottom: 13 }}>
