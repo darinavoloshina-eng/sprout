@@ -5,8 +5,8 @@
 // `uri` is present, falling back to the mockup's emoji-tile look when
 // they're not (the default demo props still show the mock example content).
 
-import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
 import { TabBar, TabKey } from '../components/ui';
 
@@ -14,6 +14,12 @@ export interface PhotoTile {
   day: number;
   icon?: string;
   uri?: string;
+}
+
+export interface NoteTile {
+  id: string;
+  text: string;
+  dateISO: string;
 }
 
 export interface PlantDetailScreenProps {
@@ -33,6 +39,9 @@ export interface PlantDetailScreenProps {
   instructionTitle?: string;
   instructionDetail?: string;
   stats?: { value: string; label: string }[];
+  /** Newest-first — see App.tsx's plantDetailProps. */
+  notes?: NoteTile[];
+  onAddNote?: (text: string) => void;
   onBack: () => void;
   onAddPhoto?: () => void;
   onPlayTimeline?: () => void;
@@ -68,6 +77,8 @@ export default function PlantDetailScreen({
   instructionTitle = 'Feed 5-10-10, and pinch suckers if indeterminate',
   instructionDetail = 'High nitrogen now gives leaves, not fruit. On indeterminate varieties, snap out the shoots in each stem-branch V to push energy into the fruit already set. Leave determinate plants alone: pruning costs you yield.',
   stats = DEFAULT_STATS,
+  notes = [],
+  onAddNote,
   onBack,
   onAddPhoto,
   onPlayTimeline,
@@ -75,6 +86,14 @@ export default function PlantDetailScreen({
   onTabPress,
 }: PlantDetailScreenProps) {
   const currentDay = timeline[timeline.length - 1]?.day;
+  const [draftNote, setDraftNote] = useState('');
+
+  function saveNote() {
+    const text = draftNote.trim();
+    if (!text || !onAddNote) return;
+    onAddNote(text);
+    setDraftNote('');
+  }
 
   return (
     <View style={styles.screen}>
@@ -166,6 +185,44 @@ export default function PlantDetailScreen({
         <TouchableOpacity style={styles.cta} onPress={onAddPhoto} accessibilityRole="button">
           <Text style={styles.ctaText}>📷 Add today's photo</Text>
         </TouchableOpacity>
+
+        <View style={styles.notesSection}>
+          <Text style={styles.notesHeading}>Notes & learnings</Text>
+          <Text style={styles.notesSub}>Jot down anything worth remembering next season.</Text>
+
+          {notes.length > 0 ? (
+            <View style={styles.notesList}>
+              {notes.map((n) => (
+                <View key={n.id} style={styles.noteRow}>
+                  <Text style={styles.noteDate}>
+                    {new Date(n.dateISO).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                  </Text>
+                  <Text style={styles.noteText}>{n.text}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          <View style={styles.noteInputRow}>
+            <TextInput
+              style={styles.noteInput}
+              value={draftNote}
+              onChangeText={setDraftNote}
+              placeholder="e.g. Green beans shaded this, move it next year"
+              placeholderTextColor={colors.inkSoft}
+              multiline
+              accessibilityLabel="New note"
+            />
+            <TouchableOpacity
+              style={[styles.noteSaveButton, !draftNote.trim() && styles.noteSaveButtonDisabled]}
+              onPress={saveNote}
+              disabled={!draftNote.trim()}
+              accessibilityRole="button"
+            >
+              <Text style={styles.noteSaveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
 
       <TabBar active={activeTab} onPress={onTabPress} />
@@ -326,4 +383,47 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   ctaText: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.pine },
+  notesSection: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.xl,
+    padding: 14,
+    gap: 10,
+  },
+  notesHeading: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  notesSub: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: -4 },
+  notesList: { gap: 10 },
+  noteRow: { gap: 2 },
+  noteDate: {
+    fontFamily: fonts.monoSemiBold,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.mossGreen,
+  },
+  noteText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.ink },
+  noteInputRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
+  noteInput: {
+    flex: 1,
+    backgroundColor: colors.paper,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.ink,
+    minHeight: 42,
+    maxHeight: 100,
+  },
+  noteSaveButton: {
+    backgroundColor: colors.mossGreen,
+    borderRadius: radius.md,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+  },
+  noteSaveButtonDisabled: { backgroundColor: colors.disabled },
+  noteSaveButtonText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.onPine },
 });

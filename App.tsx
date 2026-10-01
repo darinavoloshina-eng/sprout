@@ -25,7 +25,7 @@ import PaywallScreen from './src/screens/PaywallScreen';
 import SeasonRecapScreen from './src/screens/SeasonRecapScreen';
 import { clearProfile, loadProfile, saveProfile } from './src/api/storage';
 import { pickPlantPhoto } from './src/api/photos';
-import { GardenProfile, PlantPhoto } from './src/types';
+import { CropNote, GardenProfile, PlantPhoto } from './src/types';
 import { CropKey } from './src/engines/scheduleEngine';
 import { effectiveBackdate, effectiveBucket, plantedAgoLabel } from './src/engines/taskEngine';
 import { formatWeightLbs, UnitSystem } from './src/utils/units';
@@ -114,6 +114,12 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
         )}`
       : 'No photos yet';
 
+  // Newest first — a note from last season is still worth seeing, but this
+  // year's is what you're most likely looking for.
+  const cropNotes = (profile.notes ?? [])
+    .filter((n) => n.crop === crop)
+    .sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
+
   return {
     cropName: cropLabel(crop),
     cropIcon: getCropIcon(crop),
@@ -132,6 +138,7 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
       { value: `${cropTaskCount}`, label: 'tasks done' },
       { value: `~${SEASON_SHAPE[crop]?.weeks ?? '–'}`, label: 'wk season' },
     ],
+    notes: cropNotes.map((n) => ({ id: n.id, text: n.text, dateISO: n.dateISO })),
   };
 }
 
@@ -242,6 +249,16 @@ export default function App() {
       if (!current) return current;
       const newPhoto: PlantPhoto = { id: `${Date.now()}`, crop, uri, dateISO: new Date().toISOString() };
       const updated: GardenProfile = { ...current, photos: [...(current.photos ?? []), newPhoto] };
+      saveProfile(updated).catch(() => {});
+      return updated;
+    });
+  }
+
+  function handleAddNote(crop: CropKey, text: string) {
+    setProfile((current) => {
+      if (!current) return current;
+      const newNote: CropNote = { id: `${Date.now()}`, crop, text, dateISO: new Date().toISOString() };
+      const updated: GardenProfile = { ...current, notes: [...(current.notes ?? []), newNote] };
       saveProfile(updated).catch(() => {});
       return updated;
     });
@@ -372,6 +389,7 @@ export default function App() {
           {...plantDetailProps(profile, selectedCrop)}
           onBack={() => setScreen('garden')}
           onAddPhoto={() => handleAddPhoto(selectedCrop)}
+          onAddNote={(text) => handleAddNote(selectedCrop, text)}
           activeTab="garden"
           onTabPress={handleTabPress}
         />

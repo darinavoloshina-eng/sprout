@@ -35,6 +35,13 @@ export interface HarvestEntry {
   isFinalHarvest?: boolean;
 }
 
+export interface CropNote {
+  id: string;
+  crop: CropKey;
+  text: string;
+  dateISO: string;
+}
+
 export interface PlantPhoto {
   id: string;
   crop: CropKey;
@@ -86,6 +93,11 @@ export interface GardenProfile {
   // reasoning as harvests above.
   taskCompletions?: Record<string, string>;
   photos?: PlantPhoto[];
+  // Free-text, dated observations per crop — "the green beans shaded the
+  // watermelon, plant it on the other side next year" — meant to be read
+  // back next season, not acted on now, so there's no reminder/task tied
+  // to these. Same optional-field reasoning as harvests above.
+  notes?: CropNote[];
   frostDates?: FrostEstimate;
   // Optional — same fallback reasoning as harvests above. All stored values
   // stay imperial regardless of this; it only controls display/input
