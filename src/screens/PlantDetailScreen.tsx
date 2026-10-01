@@ -194,9 +194,6 @@ export default function PlantDetailScreen({
             <View style={styles.notesList}>
               {notes.map((n) => (
                 <View key={n.id} style={styles.noteRow}>
-                  <Text style={styles.noteDate}>
-                    {new Date(n.dateISO).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-                  </Text>
                   <Text style={styles.noteText}>{n.text}</Text>
                 </View>
               ))}
@@ -208,7 +205,7 @@ export default function PlantDetailScreen({
               style={styles.noteInput}
               value={draftNote}
               onChangeText={setDraftNote}
-              placeholder="e.g. Green beans shaded this, move it next year"
+              placeholder="Add a note..."
               placeholderTextColor={colors.inkSoft}
               multiline
               accessibilityLabel="New note"
@@ -394,14 +391,7 @@ const styles = StyleSheet.create({
   notesHeading: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
   notesSub: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: -4 },
   notesList: { gap: 10 },
-  noteRow: { gap: 2 },
-  noteDate: {
-    fontFamily: fonts.monoSemiBold,
-    fontSize: 10,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: colors.mossGreen,
-  },
+  noteRow: {},
   noteText: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.ink },
   noteInputRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   noteInput: {
