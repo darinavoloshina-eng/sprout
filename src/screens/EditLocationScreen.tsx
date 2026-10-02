@@ -12,7 +12,7 @@
 // away rather than left to useLiveWeather's staleness check, which could
 // otherwise keep showing the old location's forecast for up to 3 hours.
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -44,6 +44,12 @@ export interface EditLocationScreenProps {
   onTabPress?: (tab: TabKey) => void;
 }
 
+// expo-location's getCurrentPositionAsync has no built-in timeout, and with
+// Accuracy.High it can hang indefinitely indoors or on a weak signal, leaving
+// the card stuck on "Locating..." with no way out. Race it against this so a
+// bad GPS fix always falls back to manual entry instead of hanging forever.
+const GPS_TIMEOUT_MS = 10000;
+
 export default function EditLocationScreen({
   profile,
   onProfileChange,
@@ -59,6 +65,13 @@ export default function EditLocationScreen({
   const [searching, setSearching] = useState(false);
   const [locationHint, setLocationHint] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const manualInputRef = useRef<TextInput>(null);
+
+  function revealManualEntry() {
+    setShowManualEntry(true);
+    setLocationHint(null);
+    requestAnimationFrame(() => manualInputRef.current?.focus());
+  }
 
   async function useMyLocation() {
     setLocating(true);
@@ -66,15 +79,20 @@ export default function EditLocationScreen({
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setShowManualEntry(true);
+        revealManualEntry();
         setLocationHint('No problem, type your city instead and everything still works.');
         return;
       }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const pos = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Location request timed out')), GPS_TIMEOUT_MS)
+        ),
+      ]);
       const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude, label });
     } catch {
-      setShowManualEntry(true);
+      revealManualEntry();
       setLocationHint("Couldn't read your location. Type your city instead.");
     } finally {
       setLocating(false);
@@ -83,7 +101,10 @@ export default function EditLocationScreen({
 
   async function searchManualLocation() {
     const query = manualQuery.trim();
-    if (!query) return;
+    if (!query) {
+      setLocationHint('Type an address first.');
+      return;
+    }
     setSearching(true);
     setLocationHint(null);
     try {
@@ -174,7 +195,7 @@ export default function EditLocationScreen({
         {locating ? <ActivityIndicator style={styles.spinner} /> : null}
 
         {!showManualEntry ? (
-          <TouchableOpacity onPress={() => setShowManualEntry(true)} accessibilityRole="button">
+          <TouchableOpacity onPress={revealManualEntry} accessibilityRole="button">
             <Text style={styles.link}>{location ? 'Search a different address' : 'Enter your address instead'}</Text>
           </TouchableOpacity>
         ) : null}
@@ -182,6 +203,7 @@ export default function EditLocationScreen({
         {showManualEntry ? (
           <View style={styles.manualRow}>
             <TextInput
+              ref={manualInputRef}
               style={styles.input}
               value={manualQuery}
               onChangeText={setManualQuery}
