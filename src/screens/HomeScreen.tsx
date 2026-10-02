@@ -21,8 +21,8 @@
 // scheduled-notification system built for that, and promising proactive
 // pings the app doesn't send would be worse than not mentioning it.
 
-import React, { useMemo } from 'react';
-import { Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import * as Notifications from 'expo-notifications';
 import { CropKey, computeSchedule } from '../engines/scheduleEngine';
@@ -45,7 +45,7 @@ import { colors, fonts, radius, space } from '../theme';
 import { bedCrops, cropLabel } from '../cropMeta';
 import { NEXT_ACTION, STAGE_HEADLINE, BUCKET_LABEL } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
-import { TabBar, TabKey } from '../components/ui';
+import { CropIcon, TabBar, TabKey } from '../components/ui';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -143,6 +143,7 @@ export default function HomeScreen({
 }) {
   const { refreshing, error, refresh } = useLiveWeather(profile, onProfileChange);
   const { isOnline } = useNetworkStatus();
+  const [photoPickerOpen, setPhotoPickerOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const tasks = useMemo(() => getTodayTasks(profile, today), [profile, today]);
@@ -204,6 +205,20 @@ export default function HomeScreen({
   });
   const topCrop = sortedByStage[0];
   const topBucket = topCrop ? effectiveBucket(profile, topCrop, today) : null;
+
+  // "Add a photo" used to always jump straight to topCrop with no way to
+  // pick a different one — fine with one crop, but with several there was
+  // no way to photograph anything but whichever one Home happened to
+  // feature. Skip the picker when there's nothing to choose between.
+  function openAddPhoto() {
+    if (gardenCrops.length > 1) {
+      setPhotoPickerOpen(true);
+    } else if (topCrop) {
+      onAddPhotoFor(topCrop);
+    } else {
+      onOpenMyGarden();
+    }
+  }
   const topNotPlanted = topBucket === 'w0';
   const topGuidance =
     topCrop && topNotPlanted ? plantingGuidanceFor(topCrop, profile.frostDates) : null;
@@ -355,7 +370,7 @@ export default function HomeScreen({
             <View style={styles.shortcutRow}>
               <TouchableOpacity
                 style={[styles.shortcut, styles.shortcutHighlight]}
-                onPress={() => (topCrop ? onAddPhotoFor(topCrop) : onOpenMyGarden())}
+                onPress={openAddPhoto}
                 accessibilityRole="button"
               >
                 <Text style={styles.shortcutIcon}>{topNotPlanted ? '🌱' : '📷'}</Text>
@@ -412,7 +427,7 @@ export default function HomeScreen({
           <View style={styles.shortcutRow}>
             <TouchableOpacity
               style={styles.shortcut}
-              onPress={() => (topCrop ? onAddPhotoFor(topCrop) : onOpenMyGarden())}
+              onPress={openAddPhoto}
               accessibilityRole="button"
             >
               <Text style={styles.shortcutIcon}>{topNotPlanted ? '🌱' : '📷'}</Text>
@@ -438,6 +453,40 @@ export default function HomeScreen({
       </ScrollView>
 
       <TabBar active={activeTab} onPress={onTabPress} />
+
+      <Modal
+        visible={photoPickerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPhotoPickerOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.pickerBackdrop}
+          activeOpacity={1}
+          onPress={() => setPhotoPickerOpen(false)}
+          accessible={false}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.pickerSheet} accessible={false}>
+            <Text style={styles.pickerTitle}>Add a photo of…</Text>
+            <View style={styles.pillRow}>
+              {gardenCrops.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={styles.pill}
+                  onPress={() => {
+                    setPhotoPickerOpen(false);
+                    onAddPhotoFor(c);
+                  }}
+                  accessibilityRole="button"
+                >
+                  <CropIcon crop={c} size={14} />
+                  <Text style={styles.pillText}>{cropLabel(c)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -718,4 +767,35 @@ const styles = StyleSheet.create({
   diagnoseTitle: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
   diagnoseSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
   chevron: { fontFamily: fonts.body, fontSize: 15, color: colors.inkSoft },
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(31,41,33,0.45)',
+    justifyContent: 'flex-end',
+  },
+  pickerSheet: {
+    backgroundColor: colors.paper,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    padding: space.xl,
+    paddingBottom: space.xl + 16,
+  },
+  pickerTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 18,
+    color: colors.pine,
+    marginBottom: space.md,
+  },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  pillText: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.ink },
 });
