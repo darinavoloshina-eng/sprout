@@ -340,7 +340,10 @@ const styles = StyleSheet.create({
     padding: 13,
     position: 'relative',
   },
-  planCardSelected: {},
+  planCardSelected: {
+    backgroundColor: 'rgba(76,122,82,0.22)',
+    borderColor: colors.mossGreen,
+  },
   planCardSelectedYearly: {
     backgroundColor: 'rgba(217,166,46,0.16)',
     borderColor: colors.mustard,
