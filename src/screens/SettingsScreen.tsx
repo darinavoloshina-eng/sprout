@@ -1,11 +1,12 @@
 // SettingsScreen.tsx
 // Screen 1g from the design handoff. Adapted for honesty against what the
-// app actually has: no subscriptions/IAP and no export — those rows are
-// shown as informational rather than wired to features that don't exist.
-// Crops, location, units, email, the notification toggle, and the Watering
-// section below are all real and read/write the saved profile. Email is a
-// local field only — see types.ts — editable here in case onboarding's
-// email step was skipped or the address changes.
+// app actually has: no export — that row is shown as informational rather
+// than wired to a feature that doesn't exist. Subscription is real (see
+// purchases.ts/PaywallScreen.tsx); crops, location, units, email, the
+// notification toggle, and the Watering section below are all real too and
+// read/write the saved profile. Email is a local field only — see
+// types.ts — editable here in case onboarding's email step was skipped or
+// the address changes.
 //
 // Watering method used to be asked during onboarding; the redesign's setup
 // flow deliberately drops that question (see OnboardingScreen.tsx), so new
@@ -31,6 +32,7 @@ import { saveProfile } from '../api/storage';
 import { formatFlowGph, formatLengthIn, UnitSystem } from '../utils/units';
 import { TabBar, TabKey } from '../components/ui';
 import { PRIVACY_POLICY_URL } from '../legal';
+import { isConfigured as isPurchasesConfigured } from '../purchases';
 
 const METHOD_OPTIONS: { key: WateringMethod; icon: string; label: string }[] = [
   { key: 'drip', icon: '💧', label: 'Drip' },
@@ -41,6 +43,17 @@ const UNIT_OPTIONS: { key: UnitSystem; label: string }[] = [
   { key: 'imperial', label: '°F / in' },
   { key: 'metric', label: '°C / cm' },
 ];
+
+/** "(preview)" only belongs on the local, unpaid toggle PaywallScreen falls
+ * back to when purchases aren't configured — a real subscriber (or
+ * lifetime buyer) was quietly getting the same label, which reads as "this
+ * isn't a real purchase" to someone who just paid. See PaywallScreen.tsx
+ * for the same real/preview distinction. */
+function subscriptionRowValue(profile: GardenProfile): string {
+  if (!profile.isPro) return 'Free plan';
+  if (!isPurchasesConfigured()) return 'GardenWise Pro (preview)';
+  return profile.isLifetime ? 'GardenWise Pro (lifetime)' : 'GardenWise Pro';
+}
 
 function joinNames(names: string[]): string {
   if (names.length === 0) return '';
@@ -136,7 +149,7 @@ export default function SettingsScreen({
           <View style={styles.divider} />
           <TouchableOpacity style={styles.row} onPress={onOpenPaywall} accessibilityRole="button">
             <Text style={styles.rowLabel}>Subscription</Text>
-            <Text style={styles.rowValue}>{profile.isPro ? 'GardenWise Pro (preview) ›' : 'Free plan ›'}</Text>
+            <Text style={styles.rowValue}>{subscriptionRowValue(profile)} ›</Text>
           </TouchableOpacity>
         </View>
 

@@ -155,6 +155,10 @@ export default function App() {
   // Which tab "+ Add a crop" was opened from, so EditCropsScreen shows the
   // right tab highlighted and `onBack` returns to the right place.
   const [editCropsFrom, setEditCropsFrom] = useState<TabKey>('garden');
+  // Same idea for EditLocationScreen — Calendar's season-view lock can open
+  // it directly now (see CalendarScreen's "no location set" card), and
+  // `onBack` should return there instead of always landing on Settings.
+  const [editLocationFrom, setEditLocationFrom] = useState<TabKey>('settings');
   // Which category tab EditCropsScreen should open on — set from My
   // Garden's own active category tab so "+ Add a crop" lands where the
   // user was already browsing, instead of always defaulting to Vegetables.
@@ -402,8 +406,8 @@ export default function App() {
         <EditLocationScreen
           profile={profile}
           onProfileChange={handleProfileChange}
-          onBack={() => setScreen('settings')}
-          activeTab="settings"
+          onBack={() => setScreen(editLocationFrom)}
+          activeTab={editLocationFrom}
           onTabPress={handleTabPress}
         />
       )}
@@ -425,7 +429,10 @@ export default function App() {
         <SettingsScreen
           profile={profile}
           onProfileChange={handleProfileChange}
-          onEditGarden={() => setScreen('editLocation')}
+          onEditGarden={() => {
+            setEditLocationFrom('settings');
+            setScreen('editLocation');
+          }}
           onEditCrops={() => {
             setEditCropsFrom('settings');
             setEditCropsInitialCategory('vegetable');
@@ -483,6 +490,10 @@ export default function App() {
         <CalendarScreen
           profile={profile}
           onOpenPaywall={openPaywall}
+          onOpenLocation={() => {
+            setEditLocationFrom('calendar');
+            setScreen('editLocation');
+          }}
           activeTab="calendar"
           onTabPress={handleTabPress}
         />

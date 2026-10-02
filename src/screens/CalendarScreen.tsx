@@ -245,6 +245,7 @@ function SeasonChartView({ data }: { data: SeasonChartData }) {
 export interface CalendarScreenProps {
   profile: GardenProfile;
   onOpenPaywall: () => void;
+  onOpenLocation: () => void;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
@@ -252,6 +253,7 @@ export interface CalendarScreenProps {
 export default function CalendarScreen({
   profile,
   onOpenPaywall,
+  onOpenLocation,
   activeTab = 'calendar',
   onTabPress,
 }: CalendarScreenProps) {
@@ -361,7 +363,7 @@ export default function CalendarScreen({
         {view === 'season' ? (
           seasonChartData ? (
             <SeasonChartView data={seasonChartData} />
-          ) : (
+          ) : !profile.isPro ? (
             <TouchableOpacity style={styles.seasonLockCard} onPress={onOpenPaywall} accessibilityRole="button">
               <Text style={styles.seasonLockIcon}>🔒</Text>
               <Text style={styles.seasonLockTitle}>Season view is Pro</Text>
@@ -370,6 +372,20 @@ export default function CalendarScreen({
                 milestones coming up the rest of the season.
               </Text>
               <Text style={styles.seasonLockCta}>Try Pro free for 14 days ›</Text>
+            </TouchableOpacity>
+          ) : (
+            // Already Pro — the only other reason computeSeasonChart comes
+            // back empty is no real frost-date location set yet (it needs
+            // a season start/end to lay the timeline out). Not a paywall
+            // problem, so this deliberately doesn't look like one.
+            <TouchableOpacity style={styles.seasonLockCard} onPress={onOpenLocation} accessibilityRole="button">
+              <Text style={styles.seasonLockIcon}>📍</Text>
+              <Text style={styles.seasonLockTitle}>Set your location to see Season view</Text>
+              <Text style={styles.seasonLockBody}>
+                The season timeline is built around your real frost dates — add your location to
+                unlock it.
+              </Text>
+              <Text style={styles.seasonLockCta}>Set location ›</Text>
             </TouchableOpacity>
           )
         ) : (
