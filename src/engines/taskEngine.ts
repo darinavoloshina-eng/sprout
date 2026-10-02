@@ -36,7 +36,7 @@ export const CATEGORY_LABEL: Record<TaskCategory, string> = {
 export function categorize(text: string): TaskCategory {
   const t = text.toLowerCase();
   if (/collect seed|save seed/.test(t)) return 'seed';
-  if (/harvest|pick|ripen/.test(t)) return 'harvest';
+  if (/harvest|pick|ripen|\bpull\b/.test(t)) return 'harvest';
   if (/feed|fertiliz/.test(t)) return 'feed';
   if (/prune|pinch|sucker/.test(t)) return 'prune';
   return 'tend';
