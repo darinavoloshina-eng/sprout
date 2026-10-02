@@ -425,8 +425,15 @@ export default function HomeScreen({
           </View>
         ) : null}
 
-        <TouchableOpacity onPress={onOpenTriage} accessibilityRole="button">
-          <Text style={styles.triageLink}>Something look wrong? Diagnose a plant ›</Text>
+        <TouchableOpacity style={styles.diagnoseRow} onPress={onOpenTriage} accessibilityRole="button">
+          <View style={styles.diagnoseIconWrap}>
+            <Text style={styles.diagnoseIconText}>🔍</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.diagnoseTitle}>Diagnose a plant</Text>
+            <Text style={styles.diagnoseSub}>Something look wrong? Figure out what's going on.</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -688,11 +695,27 @@ const styles = StyleSheet.create({
   nextUpTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
   nextUpBody: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 17, color: colors.inkSoft, marginTop: 3 },
   spacer: { height: space.sm },
-  triageLink: {
-    textAlign: 'center',
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 12.5,
-    color: colors.mossGreen,
-    paddingVertical: space.sm,
+  diagnoseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    padding: 13,
+    paddingHorizontal: 14,
   },
+  diagnoseIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.selectedBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diagnoseIconText: { fontSize: 17 },
+  diagnoseTitle: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  diagnoseSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+  chevron: { fontFamily: fonts.body, fontSize: 15, color: colors.inkSoft },
 });
