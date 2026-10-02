@@ -24,7 +24,7 @@ import CalendarScreen from './src/screens/CalendarScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 import SeasonRecapScreen from './src/screens/SeasonRecapScreen';
 import { clearProfile, loadProfile, saveProfile } from './src/api/storage';
-import { pickPlantPhoto } from './src/api/photos';
+import { deletePhotoFile, pickPlantPhoto } from './src/api/photos';
 import { CropNote, GardenProfile, PlantPhoto } from './src/types';
 import { CropKey } from './src/engines/scheduleEngine';
 import { effectiveBackdate, effectiveBucket, plantedAgoLabel } from './src/engines/taskEngine';
@@ -258,6 +258,26 @@ export default function App() {
     });
   }
 
+  // Removes every photo logged for this crop today (there's usually just
+  // one, but a same-day retake appends rather than overwrites, so a stray
+  // earlier shot from today could otherwise survive on disk unseen).
+  function handleDeletePhoto(crop: CropKey) {
+    setProfile((current) => {
+      if (!current) return current;
+      const today = new Date();
+      const keep: PlantPhoto[] = [];
+      const removed: PlantPhoto[] = [];
+      for (const p of current.photos ?? []) {
+        if (p.crop === crop && sameDay(new Date(p.dateISO), today)) removed.push(p);
+        else keep.push(p);
+      }
+      removed.forEach((p) => deletePhotoFile(p.uri));
+      const updated: GardenProfile = { ...current, photos: keep };
+      saveProfile(updated).catch(() => {});
+      return updated;
+    });
+  }
+
   function handleAddNote(crop: CropKey, text: string) {
     setProfile((current) => {
       if (!current) return current;
@@ -417,6 +437,8 @@ export default function App() {
           {...plantDetailProps(profile, selectedCrop)}
           onBack={() => setScreen('garden')}
           onAddPhoto={() => handleAddPhoto(selectedCrop)}
+          onRetakePhoto={() => handleAddPhoto(selectedCrop)}
+          onDeletePhoto={() => handleDeletePhoto(selectedCrop)}
           onAddNote={(text) => handleAddNote(selectedCrop, text)}
           onEditNote={handleEditNote}
           onDeleteNote={handleDeleteNote}

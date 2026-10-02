@@ -34,6 +34,12 @@ export interface PlantDetailScreenProps {
   heroDateLabel?: string;
   /** Today's captured photo, if any — shown filling the hero box. */
   heroPhotoUri?: string;
+  /** Replaces today's photo with a newly taken/picked one — same picker
+   * flow as onAddPhoto, just named separately so the hero can offer both
+   * "Retake" and "Delete" once a photo already exists today, rather than
+   * a single ambiguous tap-to-replace. */
+  onRetakePhoto?: () => void;
+  onDeletePhoto?: () => void;
   photoCountLabel?: string;
   timeline?: PhotoTile[];
   instructionTitle?: string;
@@ -74,6 +80,8 @@ export default function PlantDetailScreen({
   metaLine,
   heroDateLabel = 'AUG 20 · DAY 111',
   heroPhotoUri,
+  onRetakePhoto,
+  onDeletePhoto,
   photoCountLabel = '31 photos since May 2',
   timeline = DEFAULT_TIMELINE,
   instructionTitle = 'Feed 5-10-10, and pinch suckers if indeterminate',
@@ -129,6 +137,13 @@ export default function PlantDetailScreen({
     ]);
   }
 
+  function confirmDeletePhoto() {
+    Alert.alert("Delete today's photo?", "This can't be undone.", [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: onDeletePhoto },
+    ]);
+  }
+
   return (
     <View style={styles.screen}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -145,20 +160,30 @@ export default function PlantDetailScreen({
           <Text style={styles.headerIcon}>{cropIcon}</Text>
         </View>
 
-        <TouchableOpacity style={styles.hero} onPress={onAddPhoto} accessibilityRole="button">
+        <View style={styles.hero}>
           {heroPhotoUri ? (
-            <Image source={{ uri: heroPhotoUri }} style={styles.heroImage} />
-          ) : (
             <>
+              <Image source={{ uri: heroPhotoUri }} style={styles.heroImage} />
+              <View style={styles.heroActions}>
+                <TouchableOpacity style={styles.heroActionBtn} onPress={onRetakePhoto} accessibilityRole="button">
+                  <Text style={styles.heroActionText}>Retake</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.heroActionBtn} onPress={confirmDeletePhoto} accessibilityRole="button">
+                  <Text style={styles.heroActionText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.heroEmpty} onPress={onAddPhoto} accessibilityRole="button">
               <Text style={styles.heroIcon}>🌿</Text>
               <Text style={styles.heroTitle}>Today's photo</Text>
               <Text style={styles.heroSub}>Tap to add</Text>
-            </>
+            </TouchableOpacity>
           )}
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeText}>{heroDateLabel}</Text>
           </View>
-        </TouchableOpacity>
+        </View>
 
         <View>
           <View style={styles.timelineHeadRow}>
@@ -216,8 +241,14 @@ export default function PlantDetailScreen({
           ))}
         </View>
 
-        <TouchableOpacity style={styles.cta} onPress={onAddPhoto} accessibilityRole="button">
-          <Text style={styles.ctaText}>📷 Add today's photo</Text>
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={heroPhotoUri ? onRetakePhoto : onAddPhoto}
+          accessibilityRole="button"
+        >
+          <Text style={styles.ctaText}>
+            {heroPhotoUri ? "📷 Retake today's photo" : "📷 Add today's photo"}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.notesSection}>
@@ -324,16 +355,37 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: 18,
     height: 186,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  heroEmpty: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    position: 'relative',
-    overflow: 'hidden',
   },
   heroImage: { ...StyleSheet.absoluteFillObject, resizeMode: 'cover' },
   heroIcon: { fontSize: 26, opacity: 0.35 },
   heroTitle: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.inkSoft },
   heroSub: { fontFamily: fonts.body, fontSize: 10.5, color: colors.inkSoft },
+  heroActions: {
+    position: 'absolute',
+    bottom: 11,
+    right: 12,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  heroActionBtn: {
+    backgroundColor: 'rgba(31,61,43,0.86)',
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+  },
+  heroActionText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12,
+    color: colors.onPine,
+  },
   heroBadge: {
     position: 'absolute',
     top: 11,

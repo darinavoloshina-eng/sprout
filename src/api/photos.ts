@@ -57,3 +57,10 @@ export function pickPlantPhoto(): Promise<string | null> {
     ]);
   });
 }
+
+/** Removes a previously saved photo file. Safe to call even if the file is
+ * already gone (e.g. the user deleted it twice in a row). */
+export function deletePhotoFile(uri: string) {
+  const file = new File(uri);
+  if (file.exists) file.delete();
+}
