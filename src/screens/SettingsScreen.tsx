@@ -4,9 +4,10 @@
 // than wired to a feature that doesn't exist. Subscription is real (see
 // purchases.ts/PaywallScreen.tsx); crops, location, units, email, the
 // notification toggle, and the Watering section below are all real too and
-// read/write the saved profile. Email is a local field only — see
-// types.ts — editable here in case onboarding's email step was skipped or
-// the address changes.
+// read/write the saved profile. Email is editable here in case onboarding's
+// email step was skipped or the address changes — see types.ts for why
+// having an email on file and opting into marketing (the toggle below) are
+// two separate, independently-tracked things.
 //
 // Watering method used to be asked during onboarding; the redesign's setup
 // flow deliberately drops that question (see OnboardingScreen.tsx), so new
@@ -18,7 +19,7 @@
 // metric branch; only the labels here and elsewhere convert.
 
 import React, { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   EMITTER_GPH_OPTIONS,
   EMITTER_SPACING_OPTIONS,
@@ -29,6 +30,7 @@ import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { cropLabel } from '../cropMeta';
 import { saveProfile } from '../api/storage';
+import { subscribeEmail } from '../api/subscribe';
 import { formatFlowGph, formatLengthIn, UnitSystem } from '../utils/units';
 import { TabBar, TabKey } from '../components/ui';
 import { PRIVACY_POLICY_URL } from '../legal';
@@ -108,6 +110,19 @@ export default function SettingsScreen({
     }
   }
 
+  const EMAIL_RE = /\S+@\S+\.\S+/;
+
+  function toggleEmailOptIn() {
+    const email = (emailDraft.trim() || profile.email || '').trim();
+    if (!profile.emailOptIn && !EMAIL_RE.test(email)) {
+      Alert.alert('Add your email first', 'Enter a valid email above, then turn this on.');
+      return;
+    }
+    const next = !profile.emailOptIn;
+    updateWatering({ emailOptIn: next });
+    if (next) subscribeEmail(email);
+  }
+
   const cropNames = profile.crops.filter((c) => c !== 'other').map(cropLabel);
   const units: UnitSystem = profile.units ?? 'imperial';
 
@@ -146,6 +161,21 @@ export default function SettingsScreen({
               accessibilityLabel="Email address"
             />
           </View>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.row}
+            onPress={toggleEmailOptIn}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: !!profile.emailOptIn }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Email updates</Text>
+              <Text style={styles.rowSub}>Occasional garden tips and product news</Text>
+            </View>
+            <View style={[styles.switch, profile.emailOptIn && styles.switchOn]}>
+              <View style={[styles.knob, profile.emailOptIn && styles.knobOn]} />
+            </View>
+          </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity style={styles.row} onPress={onOpenPaywall} accessibilityRole="button">
             <Text style={styles.rowLabel}>Subscription</Text>

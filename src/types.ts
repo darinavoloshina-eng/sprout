@@ -105,11 +105,17 @@ export interface GardenProfile {
   // formulas never need unit-aware branches.
   units?: 'imperial' | 'metric';
   // Optional — collected at the end of onboarding, same fallback reasoning
-  // as harvests above. Local field only: no auth, no backend, nothing sent
-  // anywhere. See OnboardingScreen's 'email' step and README's note on why
-  // the old account system (an unauthenticated, guessable userId) was
-  // removed rather than fixed.
+  // as harvests above. Stored locally either way; only reaches our mailing
+  // list (via api/subscribe.ts) if emailOptIn below is also true. See
+  // OnboardingScreen's 'email' step and README's note on why the old
+  // account system (an unauthenticated, guessable userId) was removed
+  // rather than fixed.
   email?: string;
+  // Explicit, separate consent for marketing emails. Someone can save an
+  // email locally (e.g. to find their way back here) without opting into
+  // anything — this only becomes true from an actual opt-in tap in
+  // onboarding or Settings, never implied by just having an email on file.
+  emailOptIn?: boolean;
   // Mirrors the real RevenueCat/App Store entitlement once purchases are
   // configured (see purchases.ts) — kept in sync by App.tsx's
   // fetchCurrentEntitlement/onEntitlementChange listeners. Before a real

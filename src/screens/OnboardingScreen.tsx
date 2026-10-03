@@ -50,6 +50,7 @@ import { PlantedBackdate } from '../engines/alertsEngine';
 import { assumedPlantedDateForBucket } from '../engines/taskEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { saveProfile } from '../api/storage';
+import { subscribeEmail } from '../api/subscribe';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
@@ -194,6 +195,7 @@ export default function OnboardingScreen({
   const [gardenType, setGardenType] = useState<'raised' | 'ground'>(existing?.gardenType ?? 'raised');
   const [notificationsEnabled, setNotificationsEnabled] = useState(existing?.notificationsEnabled ?? true);
   const [email, setEmail] = useState(existing?.email ?? '');
+  const [emailOptIn, setEmailOptIn] = useState(existing?.emailOptIn ?? false);
 
   const [location, setLocation] = useState<LocationInfo | null>(existing?.location ?? null);
   const [locating, setLocating] = useState(false);
@@ -274,7 +276,12 @@ export default function OnboardingScreen({
   const step1Valid = !!location && !!sun;
   const emailValid = /\S+@\S+\.\S+/.test(email.trim());
 
-  async function finish(finalSun: SunExposure, finalLocation: LocationInfo | null, finalEmail?: string) {
+  async function finish(
+    finalSun: SunExposure,
+    finalLocation: LocationInfo | null,
+    finalEmail?: string,
+    finalEmailOptIn?: boolean
+  ) {
     setSaving(true);
     try {
       let weather = null;
@@ -317,11 +324,14 @@ export default function OnboardingScreen({
         photos: existing?.photos ?? [],
         units: existing?.units,
         email: finalEmail?.trim() || existing?.email,
+        emailOptIn: finalEmailOptIn ?? existing?.emailOptIn,
         isPro: existing?.isPro,
         savedAt: new Date().toISOString(),
       };
 
       await saveProfile(profile);
+      const trimmedEmail = finalEmail?.trim();
+      if (trimmedEmail && finalEmailOptIn) subscribeEmail(trimmedEmail);
       onDone(profile);
     } catch {
       Alert.alert('Could not save your garden', 'Something went wrong writing to this device. Try again.');
@@ -871,8 +881,8 @@ export default function OnboardingScreen({
             <Text style={styles.eyebrow}>Almost there</Text>
             <Text style={styles.h1}>Add your email</Text>
             <Text style={styles.sub}>
-              Optional. Your garden is already saved on this phone either way, and we don't send
-              anything to it: no digest, no marketing.
+              Optional. Your garden is already saved on this phone either way — add an email if
+              you'd like a way to find your way back here, or opt into occasional updates below.
             </Text>
 
             <TextInput
@@ -887,10 +897,28 @@ export default function OnboardingScreen({
               accessibilityLabel="Email address"
             />
 
+            <TouchableOpacity
+              style={styles.emailOptInRow}
+              onPress={() => setEmailOptIn((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: emailOptIn }}
+            >
+              <View style={[styles.checkbox, emailOptIn && styles.checkboxChecked]}>
+                {emailOptIn ? <Text style={styles.checkboxMark}>✓</Text> : null}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.emailOptInTitle}>Send me occasional tips and updates</Text>
+                <Text style={styles.emailOptInSub}>
+                  Garden tips and product news, a few times a season at most. Unchecked, your
+                  email stays only on this phone.
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             <View style={styles.spacer} />
             <TouchableOpacity
               style={[styles.cta, !emailValid && styles.ctaDisabled]}
-              onPress={() => finish(sun ?? 'full', location, email)}
+              onPress={() => finish(sun ?? 'full', location, email, emailOptIn)}
               disabled={saving || !emailValid}
               accessibilityRole="button"
               accessibilityState={{ disabled: saving || !emailValid }}
@@ -1214,6 +1242,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.ink,
   },
+  emailOptInRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    padding: space.md,
+    marginTop: space.md,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.mossGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: { backgroundColor: colors.mossGreen },
+  checkboxMark: { color: colors.onPine, fontFamily: fonts.bodyBold, fontSize: 12 },
+  emailOptInTitle: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  emailOptInSub: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: 2 },
   findButton: {
     backgroundColor: colors.pine,
     borderRadius: 13,
