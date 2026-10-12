@@ -57,3 +57,10 @@ export function parseWeightToLbs(value: number, units: UnitSystem): number {
   if (units === 'imperial') return value;
   return value / KG_PER_LB;
 }
+
+// The reverse of parseWeightToLbs — prefills AddHarvestScreen's weight
+// input when editing an existing pick, in the unit the user types in.
+export function weightLbsToInput(lbs: number, units: UnitSystem): string {
+  const value = units === 'imperial' ? lbs : lbs * KG_PER_LB;
+  return `${Math.round(value * 100) / 100}`;
+}

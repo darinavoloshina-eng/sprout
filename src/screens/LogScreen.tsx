@@ -77,6 +77,8 @@ export interface LogScreenProps {
   onOpenRecap: () => void;
   onEditNote?: (id: string, text: string) => void;
   onDeleteNote?: (id: string) => void;
+  onEditHarvest?: (id: string) => void;
+  onDeleteHarvest?: (id: string) => void;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
@@ -88,6 +90,8 @@ export default function LogScreen({
   onOpenRecap,
   onEditNote,
   onDeleteNote,
+  onEditHarvest,
+  onDeleteHarvest,
   activeTab = 'log',
   onTabPress,
 }: LogScreenProps) {
@@ -123,6 +127,13 @@ export default function LogScreen({
           onDeleteNote?.(id);
         },
       },
+    ]);
+  }
+
+  function confirmDeleteHarvest(id: string) {
+    Alert.alert('Delete this pick?', "It'll come off your season totals. This can't be undone.", [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDeleteHarvest?.(id) },
     ]);
   }
 
@@ -230,6 +241,14 @@ export default function LogScreen({
                     {' · '}
                     {formatWeightLbs(h.weightLbs, units)}
                   </Text>
+                  <View style={styles.noteActions}>
+                    <TouchableOpacity onPress={() => onEditHarvest?.(h.id)} accessibilityRole="button">
+                      <Text style={styles.noteActionText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => confirmDeleteHarvest(h.id)} accessibilityRole="button">
+                      <Text style={styles.noteActionTextDelete}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 <Text style={styles.pickDate}>
                   {new Date(h.dateISO)

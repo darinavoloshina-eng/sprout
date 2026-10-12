@@ -3,6 +3,10 @@
 // no destination screen designed (form validation was explicitly called out
 // as not-yet-designed in the README). Built to match the new screens'
 // visual language so it doesn't look like a bolt-on.
+//
+// Also doubles as the edit form for an already-logged pick (LogScreen's
+// "Edit" link): passing `existing` prefills every field and keeps its id
+// and date, so editing a pick never moves it to today.
 
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -11,33 +15,37 @@ import { GardenProfile, HarvestEntry } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { cropLabel } from '../cropMeta';
 import { CropIcon } from '../components/ui';
-import { parseWeightToLbs, UnitSystem } from '../utils/units';
+import { parseWeightToLbs, UnitSystem, weightLbsToInput } from '../utils/units';
 
 export interface AddHarvestScreenProps {
   profile: GardenProfile;
+  existing?: HarvestEntry;
   onCancel: () => void;
   onSave: (entry: HarvestEntry) => void;
 }
 
-export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarvestScreenProps) {
-  const crops = profile.crops.filter((c): c is CropKey => c !== 'other');
-  const [crop, setCrop] = useState<CropKey | null>(crops[0] ?? null);
-  const [weightText, setWeightText] = useState('');
-  const [note, setNote] = useState('');
-  const [isFinalHarvest, setIsFinalHarvest] = useState(false);
-
+export default function AddHarvestScreen({ profile, existing, onCancel, onSave }: AddHarvestScreenProps) {
   const units: UnitSystem = profile.units ?? 'imperial';
+  const crops = profile.crops.filter((c): c is CropKey => c !== 'other');
+  // A pick logged for a crop that's since been removed from the garden
+  // still needs its own pill, or editing it would silently switch crops.
+  if (existing && existing.crop !== 'other' && !crops.includes(existing.crop)) crops.unshift(existing.crop);
+  const [crop, setCrop] = useState<CropKey | null>(existing?.crop ?? crops[0] ?? null);
+  const [weightText, setWeightText] = useState(existing ? weightLbsToInput(existing.weightLbs, units) : '');
+  const [note, setNote] = useState(existing?.note ?? '');
+  const [isFinalHarvest, setIsFinalHarvest] = useState(existing?.isFinalHarvest ?? false);
+
   const weight = parseFloat(weightText);
   const canSave = !!crop && !Number.isNaN(weight) && weight > 0;
 
   function save() {
     if (!crop || !canSave) return;
     onSave({
-      id: `${Date.now()}`,
+      id: existing?.id ?? `${Date.now()}`,
       crop,
       weightLbs: parseWeightToLbs(weight, units),
       note: note.trim(),
-      dateISO: new Date().toISOString(),
+      dateISO: existing?.dateISO ?? new Date().toISOString(),
       isFinalHarvest,
     });
   }
@@ -49,7 +57,7 @@ export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarve
           <Text style={styles.back}>‹ Back to log</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Log a pick</Text>
+        <Text style={styles.title}>{existing ? 'Edit pick' : 'Log a pick'}</Text>
 
         <Text style={styles.fieldLabel}>Crop</Text>
         <View style={styles.pillRow}>
@@ -116,7 +124,7 @@ export default function AddHarvestScreen({ profile, onCancel, onSave }: AddHarve
           accessibilityRole="button"
           accessibilityState={{ disabled: !canSave }}
         >
-          <Text style={styles.saveButtonText}>Save pick</Text>
+          <Text style={styles.saveButtonText}>{existing ? 'Save changes' : 'Save pick'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

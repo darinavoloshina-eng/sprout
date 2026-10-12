@@ -116,6 +116,18 @@ export interface GardenProfile {
   // anything — this only becomes true from an actual opt-in tap in
   // onboarding or Settings, never implied by just having an email on file.
   emailOptIn?: boolean;
+  // The weekly "your garden this week" email (see api/gardenSync.ts and
+  // subscribe-worker). Separate from emailOptIn above — that's marketing,
+  // this is reminders — and the only thing that ever sends this garden to
+  // a server. Off (undefined) means nothing about the garden leaves the
+  // phone.
+  emailRemindersEnabled?: boolean;
+  // True only once that email is actually arriving: the address is
+  // confirmed and sending is switched on server-side. Set from the
+  // Worker's sync response (see App.tsx), never by the user. Until then
+  // the Sunday push watering summary keeps going (see nudgeEngine.ts), so
+  // signing up early never means losing a reminder.
+  emailDigestActive?: boolean;
   // Mirrors the real RevenueCat/App Store entitlement once purchases are
   // configured (see purchases.ts) — kept in sync by App.tsx's
   // fetchCurrentEntitlement/onEntitlementChange listeners. Before a real

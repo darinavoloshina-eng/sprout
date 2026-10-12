@@ -4,6 +4,12 @@
     "strict": true,
     "noUncheckedIndexedAccess": false
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "subscribe-worker"
+  ]
 }

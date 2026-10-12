@@ -30,7 +30,8 @@ import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { cropLabel } from '../cropMeta';
 import { saveProfile } from '../api/storage';
-import { subscribeEmail } from '../api/subscribe';
+import { recordEmailOptIn } from '../api/subscribe';
+import { syncGarden } from '../api/gardenSync';
 import { formatFlowGph, formatLengthIn, UnitSystem } from '../utils/units';
 import { TabBar, TabKey } from '../components/ui';
 import { PRIVACY_POLICY_URL } from '../legal';
@@ -120,7 +121,37 @@ export default function SettingsScreen({
     }
     const next = !profile.emailOptIn;
     updateWatering({ emailOptIn: next });
-    if (next) subscribeEmail(email);
+    // Recorded both ways, so the list knows who opted out — not just who
+    // never opted in.
+    recordEmailOptIn(email, next);
+  }
+
+  async function toggleEmailReminders() {
+    const email = (emailDraft.trim() || profile.email || '').trim();
+    if (!profile.emailRemindersEnabled && !EMAIL_RE.test(email)) {
+      Alert.alert('Add your email first', 'Enter a valid email above, then turn this on.');
+      return;
+    }
+    const next = !profile.emailRemindersEnabled;
+    const updated: GardenProfile = { ...profile, email, emailRemindersEnabled: next };
+    onProfileChange(updated);
+    saveProfile(updated).catch(() => {});
+    if (!next) return;
+    // Synced right away (App's own sync is debounced) so the confirmation
+    // email is already on its way when this alert says it is.
+    const result = await syncGarden(updated);
+    if (result && !result.sending) {
+      // Sending isn't switched on server-side yet — see EMAIL_SENDING_ENABLED
+      // in subscribe-worker/wrangler.toml. Don't promise an inbox link.
+      Alert.alert(
+        "You're on the list",
+        "The weekly garden email is starting soon. We'll send a quick confirmation to " + email + ' first.'
+      );
+    } else if (result && !result.confirmed) {
+      Alert.alert('Check your inbox', `We sent a link to ${email}. Tap it to start getting your Sunday garden email.`);
+    } else if (!result) {
+      Alert.alert("Couldn't reach GardenWise", "We'll keep trying in the background. Your weekly email starts once you confirm the link we send.");
+    }
   }
 
   const cropNames = profile.crops.filter((c) => c !== 'other').map(cropLabel);
@@ -174,6 +205,21 @@ export default function SettingsScreen({
             </View>
             <View style={[styles.switch, profile.emailOptIn && styles.switchOn]}>
               <View style={[styles.knob, profile.emailOptIn && styles.knobOn]} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.row}
+            onPress={toggleEmailReminders}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: !!profile.emailRemindersEnabled }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowLabel}>Weekly garden email</Text>
+              <Text style={styles.rowSub}>Sunday evening: the week's jobs and watering plan</Text>
+            </View>
+            <View style={[styles.switch, profile.emailRemindersEnabled && styles.switchOn]}>
+              <View style={[styles.knob, profile.emailRemindersEnabled && styles.knobOn]} />
             </View>
           </TouchableOpacity>
           <View style={styles.divider} />
@@ -319,7 +365,7 @@ export default function SettingsScreen({
           >
             <View style={{ flex: 1 }}>
               <Text style={styles.rowLabel}>Task reminders</Text>
-              <Text style={styles.rowSub}>Reminders for tasks you schedule from Home</Text>
+              <Text style={styles.rowSub}>Only on days something needs doing, plus a Sunday watering plan</Text>
             </View>
             <View style={[styles.switch, profile.notificationsEnabled && styles.switchOn]}>
               <View style={[styles.knob, profile.notificationsEnabled && styles.knobOn]} />

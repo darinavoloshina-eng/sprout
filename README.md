@@ -1,7 +1,9 @@
 # GardenWise
 
 A watering-schedule and plant-triage app for raised-bed gardeners. React Native
-+ Expo, iOS-first. All logic runs on the device; there is no backend.
++ Expo, iOS-first. All logic runs on the device. The only server is a small
+Cloudflare Worker (`subscribe-worker/`) for the mailing list and the opt-in
+weekly garden email.
 
 ## Structure
 

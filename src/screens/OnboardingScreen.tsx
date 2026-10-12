@@ -50,7 +50,7 @@ import { PlantedBackdate } from '../engines/alertsEngine';
 import { assumedPlantedDateForBucket } from '../engines/taskEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { saveProfile } from '../api/storage';
-import { subscribeEmail } from '../api/subscribe';
+import { recordEmailOptIn } from '../api/subscribe';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
@@ -331,7 +331,7 @@ export default function OnboardingScreen({
 
       await saveProfile(profile);
       const trimmedEmail = finalEmail?.trim();
-      if (trimmedEmail && finalEmailOptIn) subscribeEmail(trimmedEmail);
+      if (trimmedEmail && finalEmailOptIn) recordEmailOptIn(trimmedEmail, true);
       onDone(profile);
     } catch {
       Alert.alert('Could not save your garden', 'Something went wrong writing to this device. Try again.');
@@ -817,8 +817,8 @@ export default function OnboardingScreen({
               accessibilityState={{ checked: notificationsEnabled }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={styles.notifTitle}>Daily task reminder</Text>
-                <Text style={styles.notifSub}>One morning nudge when something needs doing</Text>
+                <Text style={styles.notifTitle}>Task reminders</Text>
+                <Text style={styles.notifSub}>Only on days something needs doing, plus a Sunday watering plan</Text>
               </View>
               <View style={[styles.switch, notificationsEnabled && styles.switchOn]}>
                 <View style={[styles.knob, notificationsEnabled && styles.knobOn]} />

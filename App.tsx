@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
@@ -34,7 +34,9 @@ import { cropLabel, cropIcon as getCropIcon, CropCategory } from './src/cropMeta
 import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/plantStageContent';
 import { plantingGuidanceFor } from './src/engines/plantingGuide';
 import { useFrostDates } from './src/hooks/useFrostDates';
-import { syncDailyReminder } from './src/notifications';
+import { syncNudges } from './src/notifications';
+import { syncGarden, unsyncGarden } from './src/api/gardenSync';
+import { planNudges } from './src/engines/nudgeEngine';
 import {
   fetchCurrentEntitlement,
   initPurchases,
@@ -152,6 +154,9 @@ export default function App() {
   // cutting away mid-animation, and a fast load doesn't skip the beat.
   const [splashDone, setSplashDone] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState<CropKey | null>(null);
+  // Set when AddHarvestScreen is opened from a pick's "Edit" link on the
+  // Log screen; null means it's logging a new pick.
+  const [editingHarvestId, setEditingHarvestId] = useState<string | null>(null);
   // Which tab "+ Add a crop" was opened from, so EditCropsScreen shows the
   // right tab highlighted and `onBack` returns to the right place.
   const [editCropsFrom, setEditCropsFrom] = useState<TabKey>('garden');
@@ -239,12 +244,46 @@ export default function App() {
     };
   }, [profile !== null]);
 
-  // Keeps the actual scheduled notification in sync with the toggle,
-  // regardless of which screen changed it (Settings or onboarding) — see
-  // notifications.ts for why this used to be a no-op flag.
+  // Keeps scheduled notifications in sync with the toggle and with the
+  // garden itself — a crop added, a task checked off early, a new planted
+  // date — regardless of which screen changed it. Keyed on the plan's
+  // content rather than the profile object, so unrelated saves (a photo, a
+  // weather refresh that changes nothing) don't reschedule everything.
+  const nudgePlan = useMemo(() => (profile ? planNudges(profile) : []), [profile]);
+  const nudgeKey = profile
+    ? `${profile.notificationsEnabled}|${nudgePlan.map((n) => `${n.id}:${n.title}:${n.body}`).join('|')}`
+    : null;
   useEffect(() => {
-    if (profile) syncDailyReminder(profile.notificationsEnabled);
-  }, [profile?.notificationsEnabled]);
+    if (profile) syncNudges(profile.notificationsEnabled, nudgePlan);
+  }, [nudgeKey]);
+
+  // Keeps the Worker's copy of the garden (for the weekly email) current,
+  // or deletes it once the email is turned off. Same content-keyed idea as
+  // the nudges above — weather and savedAt are left out of the key since
+  // the server fetches its own weather, so a refresh doesn't trigger an
+  // upload. Debounced so a burst of edits is one request.
+  const gardenSyncKey = profile
+    ? profile.emailRemindersEnabled && profile.email
+      ? JSON.stringify({ ...profile, weather: null, weatherFetchedAt: null, savedAt: null, photos: null, emailDigestActive: null })
+      : 'off'
+    : null;
+  useEffect(() => {
+    if (!profile || gardenSyncKey === null) return;
+    const handle = setTimeout(async () => {
+      const result = gardenSyncKey === 'off' ? (await unsyncGarden(), null) : await syncGarden(profile);
+      // Mirrors whether the email is really arriving (see types.ts) — a
+      // failed request (null while on) leaves the last known value alone.
+      if (gardenSyncKey !== 'off' && !result) return;
+      const active = !!result && result.confirmed && result.sending;
+      setProfile((current) => {
+        if (!current || !!current.emailDigestActive === active) return current;
+        const updated: GardenProfile = { ...current, emailDigestActive: active };
+        saveProfile(updated).catch(() => {});
+        return updated;
+      });
+    }, 2000);
+    return () => clearTimeout(handle);
+  }, [gardenSyncKey]);
 
   async function handleAddPhoto(crop: CropKey) {
     const uri = await pickPlantPhoto();
@@ -306,6 +345,23 @@ export default function App() {
       const updated: GardenProfile = {
         ...current,
         notes: (current.notes ?? []).filter((n) => n.id !== id),
+      };
+      saveProfile(updated).catch(() => {});
+      return updated;
+    });
+  }
+
+  function openAddHarvest() {
+    setEditingHarvestId(null);
+    setScreen('addHarvest');
+  }
+
+  function handleDeleteHarvest(id: string) {
+    setProfile((current) => {
+      if (!current) return current;
+      const updated: GardenProfile = {
+        ...current,
+        harvests: (current.harvests ?? []).filter((h) => h.id !== id),
       };
       saveProfile(updated).catch(() => {});
       return updated;
@@ -376,7 +432,7 @@ export default function App() {
           onOpenTriage={() => setScreen('triage')}
           onOpenMyGarden={() => setScreen('garden')}
           onOpenLog={() => setScreen('log')}
-          onOpenAddHarvest={() => setScreen('addHarvest')}
+          onOpenAddHarvest={openAddHarvest}
           onAddPhotoFor={(crop) => {
             setSelectedCrop(crop);
             setScreen('plant');
@@ -472,6 +528,7 @@ export default function App() {
           profile={profile}
           onBack={() => setScreen('settings')}
           onConfirmDelete={async () => {
+            await unsyncGarden();
             await clearProfile();
             setProfile(null);
             setScreen('onboarding');
@@ -482,11 +539,16 @@ export default function App() {
       {screen === 'log' && profile && (
         <LogScreen
           profile={profile}
-          onAddHarvest={() => setScreen('addHarvest')}
+          onAddHarvest={openAddHarvest}
           onOpenPaywall={openPaywall}
           onOpenRecap={() => setRecapOpen(true)}
           onEditNote={handleEditNote}
           onDeleteNote={handleDeleteNote}
+          onEditHarvest={(id) => {
+            setEditingHarvestId(id);
+            setScreen('addHarvest');
+          }}
+          onDeleteHarvest={handleDeleteHarvest}
           activeTab="log"
           onTabPress={handleTabPress}
         />
@@ -494,12 +556,17 @@ export default function App() {
 
       {screen === 'addHarvest' && profile && (
         <AddHarvestScreen
+          key={editingHarvestId ?? 'new'}
           profile={profile}
+          existing={(profile.harvests ?? []).find((h) => h.id === editingHarvestId)}
           onCancel={() => setScreen('log')}
           onSave={(entry) => {
+            const harvests = profile.harvests ?? [];
             const updated: GardenProfile = {
               ...profile,
-              harvests: [...(profile.harvests ?? []), entry],
+              harvests: harvests.some((h) => h.id === entry.id)
+                ? harvests.map((h) => (h.id === entry.id ? entry : h))
+                : [...harvests, entry],
             };
             setProfile(updated);
             saveProfile(updated).catch(() => {});

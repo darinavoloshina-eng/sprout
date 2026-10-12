@@ -1,42 +1,46 @@
 // notifications.ts
-// The "Daily task reminder" toggle (Settings, and onboarding's save step)
-// used to just be a stored flag — permission was requested on Home's
-// mount, but nothing ever actually scheduled a notification, so turning
-// it on did nothing. This is the real scheduling half of that toggle.
-//
-// A local notification's content is fixed at schedule time, not
-// recomputed each morning against that day's real task list — there's no
-// background task infra here to do that — so the copy stays deliberately
-// generic ("check GardenWise for what's due") rather than promising a
-// specific count it can't actually deliver.
+// Schedules the local notifications nudgeEngine.ts plans. The "Daily task
+// reminder" toggle (Settings, and onboarding's save step) used to schedule
+// one fixed 8am notification every single day with generic copy ("check
+// GardenWise for what's due") — a local notification's content is fixed at
+// schedule time, and there's no background task infra to recompute it each
+// morning. Instead, the whole next few weeks are planned up front, each
+// notification naming that day's actual jobs, and the plan is rebuilt
+// whenever the app opens or the garden changes. See nudgeEngine.ts for what
+// does and doesn't earn a notification.
 
 import * as Notifications from 'expo-notifications';
+import { PlannedNudge } from './engines/nudgeEngine';
 
-const DAILY_REMINDER_ID = 'daily-task-reminder';
+// The id the old always-daily reminder was scheduled under. Still cancelled
+// on every sync so it doesn't keep firing for people upgrading from a build
+// that scheduled it.
+const LEGACY_DAILY_REMINDER_ID = 'daily-task-reminder';
+const NUDGE_ID_PREFIX = 'nudge-';
 
-/** Keeps the daily local reminder in sync with the user's preference —
- * cancels any existing one and, if enabled, reschedules fresh. Cancelling
- * first (rather than only scheduling when going from off to on) means this
- * is safe to call on every relevant profile change without stacking
- * duplicate notifications, and actually turns notifications off when the
- * toggle is switched off rather than leaving a stale one queued. */
-export async function syncDailyReminder(enabled: boolean): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(DAILY_REMINDER_ID).catch(() => {});
-  if (!enabled) return;
+/** Replaces every scheduled nudge with `plan` (or with nothing, if
+ * disabled). Cancelling first means this is safe to call on every relevant
+ * profile change without stacking duplicates, and a task checked off early
+ * in the app stops its notification from firing. */
+export async function syncNudges(enabled: boolean, plan: PlannedNudge[]): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(LEGACY_DAILY_REMINDER_ID).catch(() => {});
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync().catch(() => []);
+  await Promise.all(
+    scheduled
+      .filter((n) => n.identifier.startsWith(NUDGE_ID_PREFIX))
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+  );
+  if (!enabled || plan.length === 0) return;
 
   const { status } = await Notifications.requestPermissionsAsync();
   if (status !== 'granted') return;
 
-  await Notifications.scheduleNotificationAsync({
-    identifier: DAILY_REMINDER_ID,
-    content: {
-      title: 'Your garden today',
-      body: "Check GardenWise for what's due today — watering, planting, or a stage alert.",
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: 8,
-      minute: 0,
-    },
-  }).catch(() => {});
+  for (const nudge of plan) {
+    if (nudge.fireAt.getTime() <= Date.now()) continue;
+    await Notifications.scheduleNotificationAsync({
+      identifier: nudge.id,
+      content: { title: nudge.title, body: nudge.body },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: nudge.fireAt },
+    }).catch(() => {});
+  }
 }

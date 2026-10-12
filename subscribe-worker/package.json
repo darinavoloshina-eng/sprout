@@ -3,9 +3,13 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "migrate": "wrangler d1 migrations apply gardenwise --remote"
   },
   "devDependencies": {
-    "wrangler": "^3.90.0"
+    "wrangler": "^3.90.0",
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "typescript": "~5.9.2"
   }
 }

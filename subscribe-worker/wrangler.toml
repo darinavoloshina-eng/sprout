@@ -1,6 +1,31 @@
 name = "gardenwise-subscribe"
-main = "src/index.js"
+main = "src/index.ts"
 compatibility_date = "2024-11-01"
 
 [observability]
 enabled = true
+
+# Hourly: each run sends the weekly digest to whichever gardens are on
+# Sunday evening in their own timezone right now. See reminders.ts.
+[triggers]
+crons = ["0 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gardenwise"
+# Paste the id printed by `npx wrangler d1 create gardenwise` — see README.
+database_id = "f3212214-8bfd-4e52-8a0d-8b260b5f6e71"
+
+[vars]
+# Master switch for sending any email at all. While "false", sign-ups,
+# opt-outs, and gardens are all saved in D1, but nothing is emailed and
+# Loops isn't touched — no Loops account or API key needed. Flip to "true"
+# and redeploy when you're ready; see README "Turning email on".
+EMAIL_SENDING_ENABLED = "false"
+# This Worker's own public URL — used to build the confirm/unsubscribe
+# links in emails. Same URL as SUBSCRIBE_ENDPOINT in src/api/subscribe.ts.
+WORKER_URL = "https://gardenwise-subscribe.darinavoloshina.workers.dev"
+# The two transactional email IDs from Loops (Transactional → each email's
+# "API" tab). Not secret — they're useless without LOOPS_API_KEY.
+LOOPS_CONFIRM_TRANSACTIONAL_ID = "REPLACE_ME"
+LOOPS_DIGEST_TRANSACTIONAL_ID = "REPLACE_ME"
