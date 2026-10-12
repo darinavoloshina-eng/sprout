@@ -49,6 +49,7 @@ import { UnitSystem } from '../utils/units';
 import { PlantedBackdate } from '../engines/alertsEngine';
 import { assumedPlantedDateForBucket } from '../engines/taskEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
+import { getCurrentPositionWithTimeout } from '../api/location';
 import { saveProfile } from '../api/storage';
 import { recordEmailOptIn } from '../api/subscribe';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
@@ -236,10 +237,7 @@ export default function OnboardingScreen({
         setLocationHint('No problem, type your city instead and everything still works.');
         return;
       }
-      // High (not Balanced) forces an actual GPS fix instead of a coarse
-      // WiFi/cell-tower estimate — the latter tends to snap to the nearest
-      // heavily-mapped metro (e.g. San Francisco) for a rural address.
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const pos = await getCurrentPositionWithTimeout();
       const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude, label });
     } catch {

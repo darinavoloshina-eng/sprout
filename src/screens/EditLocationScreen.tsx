@@ -25,6 +25,7 @@ import {
 import * as Location from 'expo-location';
 import { SunExposure } from '../engines/scheduleEngine';
 import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
+import { getCurrentPositionWithTimeout } from '../api/location';
 import { saveProfile } from '../api/storage';
 import { GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
@@ -43,12 +44,6 @@ export interface EditLocationScreenProps {
   activeTab: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
-
-// expo-location's getCurrentPositionAsync has no built-in timeout, and with
-// Accuracy.High it can hang indefinitely indoors or on a weak signal, leaving
-// the card stuck on "Locating..." with no way out. Race it against this so a
-// bad GPS fix always falls back to manual entry instead of hanging forever.
-const GPS_TIMEOUT_MS = 10000;
 
 export default function EditLocationScreen({
   profile,
@@ -83,12 +78,7 @@ export default function EditLocationScreen({
         setLocationHint('No problem, type your city instead and everything still works.');
         return;
       }
-      const pos = await Promise.race([
-        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Location request timed out')), GPS_TIMEOUT_MS)
-        ),
-      ]);
+      const pos = await getCurrentPositionWithTimeout();
       const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude, label });
     } catch {
