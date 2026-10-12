@@ -11,12 +11,19 @@ type Step = 'crop' | 'symptom' | 'q1' | 'q2' | 'result';
 export default function TriageScreen({
   profile,
   onDone,
+  initialCrop,
+  backLabel = 'Back to my garden',
 }: {
   profile: GardenProfile;
   onDone: () => void;
+  /** Opened from a plant's own page: skip "Which plant?" and start at its
+   * symptoms. Back from there returns to that page rather than to the
+   * plant picker it never showed. */
+  initialCrop?: string;
+  backLabel?: string;
 }) {
-  const [step, setStep] = useState<Step>('crop');
-  const [crop, setCrop] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>(initialCrop ? 'symptom' : 'crop');
+  const [crop, setCrop] = useState<string | null>(initialCrop ?? null);
   const [symptom, setSymptom] = useState<string | null>(null);
   const [q1, setQ1] = useState<string | null>(null);
   const [results, setResults] = useState<TriageCause[]>([]);
@@ -28,7 +35,10 @@ export default function TriageScreen({
 
   function goBack() {
     if (step === 'crop') onDone();
-    else if (step === 'symptom') setStep('crop');
+    else if (step === 'symptom') {
+      if (initialCrop) onDone();
+      else setStep('crop');
+    }
     else if (step === 'q1') setStep('symptom');
     else if (step === 'q2') setStep('q1');
     else setStep('q2');
@@ -40,7 +50,7 @@ export default function TriageScreen({
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={goBack} accessibilityRole="button">
-        <Text style={styles.back}>{step === 'crop' ? '‹ Back to my garden' : '‹ Back'}</Text>
+        <Text style={styles.back}>{step === 'crop' || (step === 'symptom' && initialCrop) ? `‹ ${backLabel}` : '‹ Back'}</Text>
       </TouchableOpacity>
 
       <Text style={styles.eyebrow}>Plant check</Text>

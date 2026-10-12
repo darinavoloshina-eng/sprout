@@ -155,6 +155,10 @@ export default function App() {
   // cutting away mid-animation, and a fast load doesn't skip the beat.
   const [splashDone, setSplashDone] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState<CropKey | null>(null);
+  // Set when the plant check is opened from a plant's page (see
+  // PlantDetailScreen's onDiagnose), so it starts on that crop and Back
+  // returns there; null means it was opened from Home.
+  const [triageCrop, setTriageCrop] = useState<CropKey | null>(null);
   // Set when AddHarvestScreen is opened from a pick's "Edit" link on the
   // Log screen; null means it's logging a new pick.
   const [editingHarvestId, setEditingHarvestId] = useState<string | null>(null);
@@ -433,7 +437,10 @@ export default function App() {
         <HomeScreen
           profile={profile}
           onProfileChange={handleProfileChange}
-          onOpenTriage={() => setScreen('triage')}
+          onOpenTriage={() => {
+            setTriageCrop(null);
+            setScreen('triage');
+          }}
           onOpenMyGarden={() => setScreen('garden')}
           onOpenLog={() => setScreen('log')}
           onOpenAddHarvest={openAddHarvest}
@@ -447,7 +454,13 @@ export default function App() {
       )}
 
       {screen === 'triage' && profile && (
-        <TriageScreen profile={profile} onDone={() => setScreen('home')} />
+        <TriageScreen
+          key={triageCrop ?? 'home'}
+          profile={profile}
+          initialCrop={triageCrop ?? undefined}
+          backLabel={triageCrop ? `Back to ${cropLabel(triageCrop)}` : undefined}
+          onDone={() => setScreen(triageCrop ? 'plant' : 'home')}
+        />
       )}
 
       {screen === 'garden' && profile && (
@@ -502,6 +515,10 @@ export default function App() {
           onAddNote={(text) => handleAddNote(selectedCrop, text)}
           onEditNote={handleEditNote}
           onDeleteNote={handleDeleteNote}
+          onDiagnose={() => {
+            setTriageCrop(selectedCrop);
+            setScreen('triage');
+          }}
           activeTab="garden"
           onTabPress={handleTabPress}
         />

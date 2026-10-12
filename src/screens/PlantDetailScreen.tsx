@@ -53,6 +53,8 @@ export interface PlantDetailScreenProps {
   onBack: () => void;
   onAddPhoto?: () => void;
   onPlayTimeline?: () => void;
+  /** Opens the plant check (TriageScreen) already set to this crop. */
+  onDiagnose?: () => void;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
@@ -94,6 +96,7 @@ export default function PlantDetailScreen({
   onBack,
   onAddPhoto,
   onPlayTimeline,
+  onDiagnose,
   activeTab = 'garden',
   onTabPress,
 }: PlantDetailScreenProps) {
@@ -250,6 +253,19 @@ export default function PlantDetailScreen({
             {heroPhotoUri ? "📷 Retake today's photo" : "📷 Add today's photo"}
           </Text>
         </TouchableOpacity>
+
+        {onDiagnose ? (
+          <TouchableOpacity style={styles.diagnoseRow} onPress={onDiagnose} accessibilityRole="button">
+            <View style={styles.diagnoseIconWrap}>
+              <Text style={styles.diagnoseIconText}>🔍</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.diagnoseTitle}>Diagnose this plant</Text>
+              <Text style={styles.diagnoseSub}>Something look wrong? Figure out what's going on.</Text>
+            </View>
+            <Text style={styles.diagnoseChevron}>›</Text>
+          </TouchableOpacity>
+        ) : null}
 
         <View style={styles.notesSection}>
           <Text style={styles.notesHeading}>Notes & learnings</Text>
@@ -493,6 +509,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   ctaText: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.pine },
+  // Same card as Home's "Diagnose a plant" row, so the two read as one feature.
+  diagnoseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: 15,
+    padding: 13,
+    paddingHorizontal: 14,
+  },
+  diagnoseIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.selectedBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diagnoseIconText: { fontSize: 17 },
+  diagnoseTitle: { fontFamily: fonts.bodyBold, fontSize: 13.5, color: colors.ink },
+  diagnoseSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+  diagnoseChevron: { fontFamily: fonts.body, fontSize: 15, color: colors.inkSoft },
   notesSection: {
     backgroundColor: colors.card,
     borderWidth: 1.5,
