@@ -22,6 +22,7 @@ import LogScreen from './src/screens/LogScreen';
 import AddHarvestScreen from './src/screens/AddHarvestScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
+import ProWelcomeScreen from './src/screens/ProWelcomeScreen';
 import SeasonRecapScreen from './src/screens/SeasonRecapScreen';
 import { clearProfile, loadProfile, saveProfile } from './src/api/storage';
 import { deletePhotoFile, pickPlantPhoto } from './src/api/photos';
@@ -172,6 +173,9 @@ export default function App() {
   // would unmount whatever's underneath (losing onboarding's in-progress
   // wizard state, mid-step) every time it opened.
   const [paywallOpen, setPaywallOpen] = useState(false);
+  // Set right after a purchase to show ProWelcomeScreen; isPreview mirrors
+  // PaywallScreen's unconfigured-purchases fallback.
+  const [proWelcome, setProWelcome] = useState<{ isPreview: boolean } | null>(null);
   const [recapOpen, setRecapOpen] = useState(false);
 
   const [fontsLoaded] = useFonts({
@@ -594,6 +598,22 @@ export default function App() {
             profile={profile}
             onProfileChange={handleProfileChange}
             onClose={() => setPaywallOpen(false)}
+            onPurchased={(isPreview) => {
+              setPaywallOpen(false);
+              // Nothing to ask someone who's already getting the weekly email.
+              if (!(profile.email && profile.emailRemindersEnabled)) setProWelcome({ isPreview });
+            }}
+          />
+        </SafeAreaView>
+      )}
+
+      {proWelcome && profile && (
+        <SafeAreaView style={StyleSheet.absoluteFill}>
+          <ProWelcomeScreen
+            profile={profile}
+            isPreview={proWelcome.isPreview}
+            onProfileChange={handleProfileChange}
+            onDone={() => setProWelcome(null)}
           />
         </SafeAreaView>
       )}

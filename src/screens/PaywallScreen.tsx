@@ -56,9 +56,13 @@ export interface PaywallScreenProps {
   profile: GardenProfile;
   onProfileChange: (p: GardenProfile) => void;
   onClose: () => void;
+  /** After a successful purchase (or preview unlock), instead of onClose —
+   * App shows ProWelcomeScreen next. Not called for Restore: that's a
+   * returning customer, not a new one. */
+  onPurchased: (isPreview: boolean) => void;
 }
 
-export default function PaywallScreen({ profile, onProfileChange, onClose }: PaywallScreenProps) {
+export default function PaywallScreen({ profile, onProfileChange, onClose, onPurchased }: PaywallScreenProps) {
   const [plan, setPlan] = useState<'monthly' | 'yearly' | 'lifetime'>('yearly');
   const [plans, setPlans] = useState<SubscriptionPlans>({ monthly: null, yearly: null, lifetime: null });
   const [busy, setBusy] = useState(false);
@@ -77,11 +81,8 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
   async function handlePurchase() {
     if (!real) {
       setPro(true, plan === 'lifetime');
-      Alert.alert(
-        "You're on GardenWise Pro",
-        "This is a local preview, not a real purchase. There's no payment behind it. All the crops, the season view, and year-over-year comparisons are unlocked now."
-      );
-      onClose();
+      // ProWelcomeScreen says this is a preview, not a real purchase.
+      onPurchased(true);
       return;
     }
     const pkg = plan === 'yearly' ? plans.yearly : plan === 'lifetime' ? plans.lifetime : plans.monthly;
@@ -94,7 +95,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose }: Pay
     setBusy(false);
     if (outcome === 'success') {
       setPro(true, plan === 'lifetime');
-      onClose();
+      onPurchased(false);
     } else if (outcome === 'error') {
       Alert.alert('Purchase failed', 'Something went wrong completing the purchase. Check your connection and try again.');
     }
