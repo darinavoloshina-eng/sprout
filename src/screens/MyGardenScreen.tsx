@@ -124,13 +124,6 @@ const CATEGORY_OPTIONS: { key: GardenCategoryFilter; label: string; icon: string
   { key: 'all', label: 'All', icon: '🌱' },
 ];
 
-function joinNames(names: string[]): string {
-  if (names.length === 0) return '';
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
-}
-
 export interface MyGardenScreenProps {
   profile: GardenProfile;
   onProfileChange: (p: GardenProfile) => void;
@@ -204,13 +197,12 @@ export default function MyGardenScreen({
     .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
   // Free is a count, not a fixed crop list, so the full catalog is always
   // browsable/addable here — EditCropsScreen is what actually opens the
-  // paywall once a free garden hits FREE_CROP_LIMIT (see atFreeLimit).
+  // paywall once a free garden hits FREE_CROP_LIMIT.
   const availableCrops = [...FREE_CROPS, ...PRO_CROPS];
-  const atFreeLimit = !profile.isPro && crops.length >= FREE_CROP_LIMIT;
   // Scoped to the active category tab — the "+ Add a crop" card opens the
-  // picker to this same category, so its count needs to match what's
-  // actually available there, not the total across every category. "All"
-  // is the one exception, matching its own unfiltered crop list above.
+  // picker to this same category, so it only shows when there's something
+  // left to add there. "All" is the one exception, matching its own
+  // unfiltered crop list above.
   const missingCrops = availableCrops.filter(
     (c) => !profile.crops.includes(c) && (category === 'all' || CROP_CATEGORY[c] === category)
   );
@@ -417,15 +409,6 @@ export default function MyGardenScreen({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.addTitle}>Add a crop</Text>
-              <Text style={styles.addSub}>
-                {profile.isPro
-                  ? `${missingCrops.length} more available`
-                  : atFreeLimit
-                  ? 'Free limit reached. Upgrade for more.'
-                  : `${FREE_CROP_LIMIT - crops.length} free ${
-                      FREE_CROP_LIMIT - crops.length === 1 ? 'slot' : 'slots'
-                    } left: ${joinNames(missingCrops.map(cropLabel).map((l) => l.toLowerCase()))}`}
-              </Text>
             </View>
           </TouchableOpacity>
         ) : null}
@@ -633,7 +616,6 @@ const styles = StyleSheet.create({
   },
   addIconText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.mossGreen },
   addTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.ink },
-  addSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.inkSoft, marginTop: 1 },
   logRow: {
     flexDirection: 'row',
     alignItems: 'center',
