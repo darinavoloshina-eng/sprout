@@ -44,6 +44,7 @@ interface GardenRow {
   confirmed_at: string | null;
   confirm_sent_at: string | null;
   last_digest_week: string | null;
+  updated_at: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -105,17 +106,31 @@ async function sendLoops(env: Env, transactionalId: string, email: string, dataV
   }
 }
 
-async function maybeSendConfirmation(env: Env, gardenId: string, email: string, linkToken: string) {
-  if (!sendingEnabled(env)) return;
+/** Returns true when the garden ends up confirmed without an email (the
+ * address was already confirmed from another device). */
+async function maybeSendConfirmation(env: Env, gardenId: string, email: string, linkToken: string): Promise<boolean> {
+  if (!sendingEnabled(env)) return false;
+  // Same person, second device (an iPad next to their iPhone): they've
+  // already proven they own this address, so don't make them do it again.
+  const alreadyConfirmed = await env.DB.prepare(
+    'SELECT 1 FROM gardens WHERE email = ? AND confirmed_at IS NOT NULL AND id != ? LIMIT 1'
+  )
+    .bind(email, gardenId)
+    .first();
+  if (alreadyConfirmed) {
+    await env.DB.prepare('UPDATE gardens SET confirmed_at = ? WHERE id = ?').bind(new Date().toISOString(), gardenId).run();
+    return true;
+  }
   const cutoff = new Date(Date.now() - CONFIRM_COOLDOWN_MS).toISOString();
   const recent = await env.DB.prepare('SELECT 1 FROM gardens WHERE email = ? AND confirm_sent_at > ? LIMIT 1')
     .bind(email, cutoff)
     .first();
-  if (recent) return;
+  if (recent) return false;
   await sendLoops(env, env.LOOPS_CONFIRM_TRANSACTIONAL_ID, email, {
     confirmUrl: `${env.WORKER_URL}/confirm?t=${encodeURIComponent(linkToken)}`,
   });
   await env.DB.prepare('UPDATE gardens SET confirm_sent_at = ? WHERE id = ?').bind(new Date().toISOString(), gardenId).run();
+  return false;
 }
 
 /** POST /garden — create or update this phone's garden. Returns the write
@@ -156,8 +171,8 @@ export async function handleSyncGarden(request: Request, env: Env): Promise<Resp
     )
       .bind(email, timezone, profileJson, now, emailChanged ? 1 : 0, emailChanged ? 1 : 0, row.id)
       .run();
-    const confirmed = !!row.confirmed_at && !emailChanged;
-    if (!confirmed) await maybeSendConfirmation(env, row.id, email, row.link_token).catch(() => {});
+    let confirmed = !!row.confirmed_at && !emailChanged;
+    if (!confirmed) confirmed = await maybeSendConfirmation(env, row.id, email, row.link_token).catch(() => false);
     return json({ ok: true, confirmed, sending: sendingEnabled(env) });
   }
 
@@ -170,8 +185,8 @@ export async function handleSyncGarden(request: Request, env: Env): Promise<Resp
   )
     .bind(id, await sha256(newToken), linkToken, email, timezone, profileJson, now, now)
     .run();
-  await maybeSendConfirmation(env, id, email, linkToken).catch(() => {});
-  return json({ ok: true, token: newToken, confirmed: false, sending: sendingEnabled(env) });
+  const confirmed = await maybeSendConfirmation(env, id, email, linkToken).catch(() => false);
+  return json({ ok: true, token: newToken, confirmed, sending: sendingEnabled(env) });
 }
 
 /** DELETE /garden — the app turned the email off, or deleted everything. */
@@ -204,7 +219,13 @@ export async function handleEmailLink(request: Request, url: URL, env: Env): Pro
       ? page('You’re all set', 'Your first “garden this week” email arrives Sunday evening.')
       : page('Link expired', 'Turn the weekly email off and on again in GardenWise’s Settings to get a fresh link.');
   }
-  await env.DB.prepare('UPDATE gardens SET unsubscribed_at = ? WHERE link_token = ?').bind(now, t).run();
+  // By address, not just this device's garden — one unsubscribe link
+  // should stop the email, however many devices signed up.
+  await env.DB.prepare(
+    'UPDATE gardens SET unsubscribed_at = ? WHERE email = (SELECT email FROM gardens WHERE link_token = ?)'
+  )
+    .bind(now, t)
+    .run();
   return page('Unsubscribed', 'You won’t get the weekly garden email any more. You can turn it back on any time in GardenWise’s Settings.');
 }
 
@@ -285,12 +306,21 @@ export async function runScheduled(env: Env): Promise<void> {
   await env.DB.prepare('DELETE FROM gardens WHERE confirmed_at IS NULL AND confirm_sent_at < ?').bind(unconfirmedCutoff).run();
 
   const { results } = await env.DB.prepare(
-    `SELECT id, link_token, email, timezone, profile_json, confirmed_at, confirm_sent_at, last_digest_week
+    `SELECT id, link_token, email, timezone, profile_json, confirmed_at, confirm_sent_at, last_digest_week, updated_at
      FROM gardens WHERE confirmed_at IS NOT NULL AND unsubscribed_at IS NULL`
   ).all<GardenRow>();
 
+  // One digest per inbox, not per device: someone with GardenWise on two
+  // devices gets the garden they touched most recently.
+  const { results: newest } = await env.DB.prepare(
+    `SELECT email, MAX(updated_at) AS updated_at FROM gardens
+     WHERE confirmed_at IS NOT NULL AND unsubscribed_at IS NULL GROUP BY email`
+  ).all<{ email: string; updated_at: string }>();
+  const newestByEmail = new Map(newest.map((r) => [r.email, r.updated_at]));
+
   const instant = new Date();
   for (const row of results) {
+    if (newestByEmail.get(row.email) !== row.updated_at) continue;
     const local = localParts(instant, row.timezone);
     if (local.weekday !== 'Sun' || local.hour < DIGEST_HOUR) continue;
     const weekKey = `${local.year}-${String(local.month).padStart(2, '0')}-${String(local.day).padStart(2, '0')}`;
