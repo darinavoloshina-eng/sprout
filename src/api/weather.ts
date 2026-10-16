@@ -45,6 +45,7 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherSna
   const upcomingTemps = tempMaxArr.slice(2).filter((v): v is number => v !== null && v !== undefined);
   const todayHigh = tempMaxArr[TODAY_INDEX];
   const todayLow = tempMinArr[TODAY_INDEX];
+  const tonightLow = tempMinArr[TODAY_INDEX + 1];
 
   return {
     recentRainIn: Number(recentRainIn.toFixed(2)),
@@ -53,6 +54,7 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherSna
     forecastMaxTempF: upcomingTemps.length ? Math.round(Math.max(...upcomingTemps)) : null,
     todayHighF: todayHigh != null ? Math.round(todayHigh) : null,
     todayLowF: todayLow != null ? Math.round(todayLow) : null,
+    tonightLowF: tonightLow != null ? Math.round(tonightLow) : null,
     weatherCode: data?.current?.weather_code ?? null,
   };
 }

@@ -882,6 +882,9 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
+    for (const t of [frostProtectionTask(profile, today), pickGreensTask(profile, today, today)]) {
+      if (t && !isTaskComplete(profile, t.id)) tasks.push(t);
+    }
   } else if (profile.isPro) {
     for (const crop of profile.crops) {
       if (crop === 'other') continue;
@@ -932,8 +935,93 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
+    const greens = pickGreensTask(profile, date, today);
+    if (greens && !isTaskComplete(profile, greens.id)) tasks.push(greens);
   }
   return tasks;
+}
+
+// ---- Cold-weather care ---------------------------------------------------
+// What crops already in the ground need through the cold months. Pro, like
+// the other care alerts (see getAlerts' "Stage & harvest alerts").
+
+// Overnight low (°F) at or below which a planted crop should be covered.
+// Rough, conservative garden-guide numbers, not a promise about any one
+// variety: tender summer crops are hurt by any frost, cool-season crops
+// shrug off a light one, and the hardiest greens are fine into the 20s.
+const FROST_COVER_AT_F: Partial<Record<CropKey, number>> = {
+  tomatoes: 34, peppers: 34, eggplant: 34, cucumbers: 34, squash: 34, zucchini: 34, pumpkin: 34,
+  watermelon: 34, cantaloupe: 34, beans: 34, corn: 34, okra: 34, basil: 34, sweetpotatoes: 34,
+  marigold: 34, zinnia: 34, cosmos: 34, dahlias: 34,
+  lemon: 32, lime: 32, orange: 32, kumquat: 32, avocado: 32,
+  lettuce: 28, chard: 28, bokchoy: 28, arugula: 28, broccoli: 28, cauliflower: 28, cabbage: 28,
+  kohlrabi: 28, peas: 28, cilantro: 28,
+  kale: 20, collards: 20, spinach: 20, brusselssprouts: 20,
+};
+
+const POTTED_TREES = new Set<CropKey>(['lemon', 'lime', 'orange', 'kumquat', 'avocado']);
+
+function joinCrops(crops: CropKey[]): string {
+  const names = crops.map(cropLabel);
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** One combined task for tonight, naming every planted crop the forecast
+ * low will hurt — or null if nothing needs covering. Weather-driven, so
+ * today only: there's no forecast for a day browsed weeks ahead. */
+function frostProtectionTask(profile: GardenProfile, today: Date): DailyTask | null {
+  const low = profile.weather?.tonightLowF;
+  if (low == null) return null;
+  const atRisk = profile.crops.filter((c): c is CropKey => {
+    const limit = FROST_COVER_AT_F[c as CropKey];
+    return limit != null && low <= limit && effectiveBucket(profile, c as CropKey, today) !== 'w0';
+  });
+  if (atRisk.length === 0) return null;
+  const inBeds = atRisk.filter((c) => !POTTED_TREES.has(c));
+  const trees = atRisk.filter((c) => POTTED_TREES.has(c));
+  const parts = [`Tonight's low is ${low}°F.`];
+  if (inBeds.length) {
+    parts.push(`Cover ${joinCrops(inBeds)} with frost cloth or an old sheet before sunset, and uncover in the morning.`);
+  }
+  if (trees.length) {
+    parts.push(`Move potted ${joinCrops(trees)} into a garage or against the house.`);
+  }
+  return {
+    id: `frost-${dateKey(today)}`,
+    icon: '🥶',
+    iconBg: colors.selectedBg,
+    title: 'Protect your plants from frost tonight',
+    detail: parts.join(' '),
+    category: 'tend',
+  };
+}
+
+// Long-producing, cut-and-come-again greens with no harvest reminder of
+// their own (their stage alerts are informational). Lettuce, spinach,
+// arugula, and bok choy already get a "harvest soon" alert, so they're
+// left out rather than nudged twice.
+const PICK_GREENS: CropKey[] = ['kale', 'chard', 'collards'];
+const PICK_GREENS_DAY = 6; // Saturday
+
+/** A weekly "pick your greens" task on PICK_GREENS_DAY, listing every one
+ * of PICK_GREENS that's planted and big enough to harvest. */
+function pickGreensTask(profile: GardenProfile, date: Date, today: Date): DailyTask | null {
+  if (date.getDay() !== PICK_GREENS_DAY) return null;
+  const ready = PICK_GREENS.filter((c) => {
+    if (!profile.crops.includes(c)) return false;
+    const bucket = effectiveBucket(profile, c, sameDay(date, today) ? today : date);
+    return bucket === 'w4' || bucket === 'w8';
+  });
+  if (ready.length === 0) return null;
+  return {
+    id: `pickgreens-${dateKey(date)}`,
+    icon: '🥬',
+    iconBg: colors.selectedBg,
+    title: `Pick your ${joinCrops(ready)}`,
+    detail: 'Take the biggest outer leaves and leave the center to keep growing. Regular picking keeps new leaves coming all winter.',
+    category: 'harvest',
+  };
 }
 
 // ---- Seed starting -------------------------------------------------------
@@ -1131,6 +1219,10 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
     tasks.push(...getFeedReminders(profile, today));
     tasks.push(...getTreeWateringReminders(profile, today));
     tasks.push(...getSeedCollectionReminders(profile, today));
+    const frost = frostProtectionTask(profile, today);
+    if (frost) tasks.push(frost);
+    const greens = pickGreensTask(profile, today, today);
+    if (greens) tasks.push(greens);
   }
   return tasks;
 }

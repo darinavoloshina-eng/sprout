@@ -85,6 +85,10 @@ export interface WeatherSnapshot {
   forecastMaxTempF: number | null; // max forecast high, next few days
   todayHighF: number | null; // today's forecast high
   todayLowF: number | null; // today's forecast low
+  // Tomorrow's daily minimum, which in practice is tonight's overnight
+  // low — what frost protection has to plan for. Optional: snapshots
+  // saved before this existed don't have it.
+  tonightLowF?: number | null;
   weatherCode: number | null; // current WMO weather interpretation code
 }
 
