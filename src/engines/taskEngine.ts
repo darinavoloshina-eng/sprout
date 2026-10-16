@@ -9,7 +9,7 @@
 
 import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { CARE_BUCKET_FOR, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
-import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor } from './plantingGuide';
+import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor, SeedStartPlan, seedStartPlan } from './plantingGuide';
 import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
 import { bedCrops, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
@@ -54,6 +54,9 @@ export interface DailyTask {
   // real affiliate link or a specific product; wiring in an actual
   // affiliate tag and per-crop product picks is a separate, later step.
   buyUrl?: string;
+  // Set on seed-starting tasks — the task row links to the Seed starting
+  // 101 guide (SeedStartingGuideScreen) for the how-to.
+  guide?: boolean;
 }
 
 /** A generic, unaffiliated Amazon search for the fertilizer a feed task
@@ -837,10 +840,21 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       category: 'harvest',
     });
   }
+  // Seed starting isn't Pro-gated — see the Seed starting section above.
+  // Today's cell mirrors Home (steps carry over until done); any other
+  // day shows only the steps dated for it.
+  if (sameDay(date, today)) {
+    tasks.push(...seedStepsForToday(profile, today).filter((t) => !isTaskComplete(profile, t.id)));
+  } else {
+    tasks.push(...seedStepsOnDate(profile, date, today));
+  }
   if (profile.isPro && sameDay(date, today)) {
     const alerts = getAlerts(profile.crops, resolvedPlantedWeeks(profile, today), profile.weather, profile.frostDates);
     for (const a of alerts) {
       if (a.severity !== 'soon') continue;
+      // A crop being started from seed gets its own dated steps instead
+      // of the generic "plant it now" alert.
+      if (activeSeedStartPlan(profile, a.crop, today)) continue;
       const id = `alert-${a.crop}-${a.headline}-${dateKey(today)}`;
       if (isTaskComplete(profile, id)) continue;
       tasks.push({
@@ -873,6 +887,8 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       if (crop === 'other') continue;
       const bucket = effectiveBucket(profile, crop, today);
       if (bucket === 'w0') {
+        // Its start/harden/transplant steps replace this single date.
+        if (activeSeedStartPlan(profile, crop, today)) continue;
         const guidance = plantingGuidanceFor(crop, profile.frostDates, today);
         if (guidance.date && sameDay(guidance.date, date)) {
           tasks.push({
@@ -920,6 +936,146 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
   return tasks;
 }
 
+// ---- Seed starting -------------------------------------------------------
+// Crops that can be started indoors get three dated steps instead of one
+// "plant it" date: start seeds indoors → start hardening off → transplant.
+// Free for everyone (the dates are the feature); push and email reminders
+// for them are Pro, like every other reminder — see nudgeEngine.ts.
+
+const SEED_STEP_PREFIXES = ['seedstart-', 'hardenoff-', 'transplant-'];
+
+export function isSeedStartTask(taskId: string): boolean {
+  return SEED_STEP_PREFIXES.some((p) => taskId.startsWith(p));
+}
+
+/** The crop a transplant- task id belongs to, or null for any other id.
+ * Ids are `transplant-${crop}-${YYYY-MM-DD}`. */
+function transplantTaskCrop(taskId: string): CropKey | null {
+  const m = taskId.match(/^transplant-(.+)-\d{4}-\d{2}-\d{2}$/);
+  return m ? (m[1] as CropKey) : null;
+}
+
+/** This crop's seed-start dates, if the user is starting it from seed:
+ * null once it's planted, when they've chosen to buy seedlings instead
+ * (profile.skipIndoorStart), or when it isn't started indoors this season. */
+export function activeSeedStartPlan(profile: GardenProfile, crop: CropKey, today: Date = new Date()): SeedStartPlan | null {
+  if (crop === 'other') return null;
+  if (profile.skipIndoorStart?.includes(crop)) return null;
+  if (effectiveBucket(profile, crop, today) !== 'w0') return null;
+  return seedStartPlan(crop, profile.frostDates, today);
+}
+
+function shortDate(d: Date): string {
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+export type SeedStep = 'start' | 'harden' | 'transplant';
+
+/** The task for one step of a crop's plan. Ids are keyed by the season's
+ * transplant date, so a check-off sticks for that season only. */
+export function seedStepTask(crop: CropKey, plan: SeedStartPlan, step: SeedStep): DailyTask {
+  const label = cropLabel(crop);
+  const key = dateKey(plan.transplant);
+  const base = { icon: cropIcon(crop), iconBg: cropIconBg(crop), category: 'tend' as const };
+  if (step === 'start') {
+    return {
+      ...base,
+      id: `seedstart-${crop}-${key}`,
+      title: `Sow ${label} indoors`,
+      detail: `Sow in a tray under a grow light. They'll move outside around ${shortDate(plan.transplant)}.`,
+      guide: true,
+    };
+  }
+  if (step === 'harden') {
+    return {
+      ...base,
+      id: `hardenoff-${crop}-${key}`,
+      title: `Start hardening off ${label}`,
+      detail: `Set seedlings outside a little longer each day this week, starting with an hour in shade. Transplant around ${shortDate(plan.transplant)}.`,
+      guide: true,
+    };
+  }
+  return {
+    ...base,
+    id: `transplant-${crop}-${key}`,
+    title: `Transplant ${label} into the garden`,
+    detail: `Plant at the same depth they sat in their pots, then water well. ${plan.note}`,
+  };
+}
+
+/** Seed-start steps due exactly on `date` — Calendar's view, and what
+ * reminders are planned from. */
+function seedStepsOnDate(profile: GardenProfile, date: Date, today: Date): DailyTask[] {
+  const tasks: DailyTask[] = [];
+  for (const crop of profile.crops) {
+    const plan = activeSeedStartPlan(profile, crop, today);
+    if (!plan) continue;
+    const steps: [SeedStep, Date][] = [['start', plan.startIndoors], ['harden', plan.hardenOff], ['transplant', plan.transplant]];
+    for (const [step, when] of steps) {
+      if (!sameDay(when, date)) continue;
+      const task = seedStepTask(crop, plan, step);
+      if (!isTaskComplete(profile, task.id)) tasks.push(task);
+    }
+  }
+  return tasks;
+}
+
+/** Home's view: each step stays on the list from its date until it's
+ * checked off or the next step's date arrives — like watering, a missed
+ * day doesn't make a job vanish. Transplant stays until done, since that's
+ * what marks the crop as planted. */
+function seedStepsForToday(profile: GardenProfile, today: Date): DailyTask[] {
+  const tasks: DailyTask[] = [];
+  for (const crop of profile.crops) {
+    const plan = activeSeedStartPlan(profile, crop, today);
+    if (!plan) continue;
+    const step = activeSeedStep(plan, today);
+    if (step) tasks.push(seedStepTask(crop, plan, step));
+  }
+  return tasks;
+}
+
+/** Which step's date has most recently arrived, or null before the
+ * start-indoors date. */
+function activeSeedStep(plan: SeedStartPlan, today: Date): SeedStep | null {
+  const reached = (d: Date) => today.getTime() >= d.getTime() || sameDay(today, d);
+  if (reached(plan.transplant)) return 'transplant';
+  if (reached(plan.hardenOff)) return 'harden';
+  if (reached(plan.startIndoors)) return 'start';
+  return null;
+}
+
+/** What a crop's own page should headline: the step that's due now, or —
+ * before the first one — the start-indoors step that's coming up. */
+export function currentSeedStep(
+  profile: GardenProfile,
+  crop: CropKey,
+  today: Date = new Date()
+): { task: DailyTask; date: Date; upcoming: boolean } | null {
+  const plan = activeSeedStartPlan(profile, crop, today);
+  if (!plan) return null;
+  const step = activeSeedStep(plan, today);
+  const dates: Record<SeedStep, Date> = { start: plan.startIndoors, harden: plan.hardenOff, transplant: plan.transplant };
+  if (!step) return { task: seedStepTask(crop, plan, 'start'), date: plan.startIndoors, upcoming: true };
+  return { task: seedStepTask(crop, plan, step), date: dates[step], upcoming: false };
+}
+
+/** The soonest seed-start step still ahead (after today) across the
+ * garden — Home's "Next up" line during the cold months. */
+export function nextSeedStep(profile: GardenProfile, today: Date = new Date()): { date: Date; task: DailyTask } | null {
+  let best: { date: Date; task: DailyTask } | null = null;
+  for (const crop of profile.crops) {
+    const plan = activeSeedStartPlan(profile, crop, today);
+    if (!plan) continue;
+    const steps: [SeedStep, Date][] = [['start', plan.startIndoors], ['harden', plan.hardenOff], ['transplant', plan.transplant]];
+    for (const [step, when] of steps) {
+      if (when.getTime() <= today.getTime() || sameDay(when, today)) continue;
+      if (!best || when.getTime() < best.date.getTime()) best = { date: when, task: seedStepTask(crop, plan, step) };
+    }
+  }
+  return best;
+}
+
 /** Today's checkable tasks — watering plus, for Pro, any crop-stage alert
  * urgent enough to act on today (the "Stage & harvest alerts" Pro benefit —
  * see PaywallScreen.tsx). Nothing here is ever from the future: watering
@@ -954,10 +1110,14 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
       category: 'tend',
     });
   }
+  tasks.push(...seedStepsForToday(profile, today));
   if (profile.isPro) {
     const alerts = getAlerts(profile.crops, resolvedPlantedWeeks(profile, today), profile.weather, profile.frostDates);
     for (const a of alerts) {
       if (a.severity !== 'soon') continue;
+      // A crop being started from seed gets its own dated steps instead
+      // of the generic "plant it now" alert.
+      if (activeSeedStartPlan(profile, a.crop, today)) continue;
       tasks.push({
         id: `alert-${a.crop}-${a.headline}-${dateKey(today)}`,
         icon: cropIcon(a.crop),
@@ -981,12 +1141,19 @@ export function isTaskComplete(profile: GardenProfile, taskId: string): string |
 
 export function toggleTask(profile: GardenProfile, taskId: string): GardenProfile {
   const completions = { ...(profile.taskCompletions ?? {}) };
-  if (completions[taskId]) {
-    delete completions[taskId];
-  } else {
+  const completing = !completions[taskId];
+  if (completing) {
     completions[taskId] = new Date().toISOString();
+  } else {
+    delete completions[taskId];
   }
-  return { ...profile, taskCompletions: completions };
+  const updated = { ...profile, taskCompletions: completions };
+  // Transplanting a seedling into the garden is planting it — the same as
+  // tapping "Mark as planted", so the crop moves on to its growing stages.
+  // Un-checking doesn't un-plant: by then it really is in the ground, and
+  // My Garden can still re-date it.
+  const crop = completing ? transplantTaskCrop(taskId) : null;
+  return crop ? markPlanted(updated, crop) : updated;
 }
 
 function completedDateSet(profile: GardenProfile): Set<string> {

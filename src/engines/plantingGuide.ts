@@ -83,8 +83,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   lettuce: {
     spring: {
-      method: 'Direct sow, or start seedlings in containers',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -6,
       note: 'Tolerates light frost, no need to wait for it to fully pass.',
     },
     fall: {
@@ -159,8 +160,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   onions: {
     spring: {
-      method: 'Plant sets or seedlings directly in the ground',
+      method: 'Start seeds indoors, or plant sets or seedlings',
       outdoorWeeksFromFrost: -3,
+      indoorWeeksFromFrost: -11,
       note: 'Get it in as early as the soil can be worked.',
     },
   },
@@ -208,8 +210,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   kale: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -7,
       note: 'Very cold-hardy, can go in weeks before last frost.',
     },
     fall: {
@@ -232,8 +235,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   chard: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -1,
+      indoorWeeksFromFrost: -5,
       note: 'More heat-tolerant than spinach and keeps producing leaves all season.',
     },
     fall: {
@@ -292,8 +296,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   kohlrabi: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -7,
       note: 'Harvest while the bulb is still small; oversized ones turn woody.',
     },
     fall: {
@@ -419,8 +424,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   collards: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -7,
       note: 'More cold- and heat-tolerant than most greens, a forgiving crop.',
     },
     fall: {
@@ -431,8 +437,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   bokchoy: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -6,
       note: 'Fast-growing but bolts quickly once heat arrives, so plant early.',
     },
     fall: {
@@ -467,8 +474,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   parsley: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -10,
       note: 'Slow to germinate; be patient, it can take a few weeks to sprout.',
     },
     fall: {
@@ -479,8 +487,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   chives: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -2,
+      indoorWeeksFromFrost: -8,
       note: 'Easygoing and cold-tolerant; comes back reliably once established.',
     },
   },
@@ -628,6 +637,7 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
     spring: {
       method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: 1,
+      indoorWeeksFromFrost: -6,
       note: 'Thrives in heat once established. A classic vegetable-garden companion, its scent is said to help keep some pests away.',
     },
   },
@@ -635,6 +645,7 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
     spring: {
       method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: 1,
+      indoorWeeksFromFrost: -4,
       note: 'Fast and prolific, one of the easiest cut flowers to grow from seed.',
     },
   },
@@ -649,6 +660,7 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
     spring: {
       method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: 1,
+      indoorWeeksFromFrost: -5,
       note: 'Thrives in poor soil and heat. Rich soil or heavy feeding gives lots of foliage but fewer flowers.',
     },
   },
@@ -661,8 +673,9 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
   },
   pansy: {
     spring: {
-      method: 'Direct sow, or start seedlings',
+      method: 'Direct sow, or start indoors for a head start',
       outdoorWeeksFromFrost: -3,
+      indoorWeeksFromFrost: -12,
       note: 'Tolerates light frost and cool weather, but struggles once summer heat arrives.',
     },
     fall: {
@@ -692,8 +705,13 @@ export function parseMonthDay(monthDay: string, year: number): Date {
   return new Date(year, m - 1, d);
 }
 
+/** Calendar weeks, not raw milliseconds: across a daylight-saving change a
+ * fixed 7×24h step lands an hour off — at 11pm the day before — which
+ * showed up as planting dates a day early. */
 export function addWeeks(date: Date, weeks: number): Date {
-  return new Date(date.getTime() + weeks * 7 * 86400000);
+  const d = new Date(date);
+  d.setDate(d.getDate() + weeks * 7);
+  return d;
 }
 
 function formatDate(date: Date): string {
@@ -761,11 +779,11 @@ export function effectiveFirstFrostMonthDay(frostDates: FrostEstimate | null | u
  * direct in the ground, spring vs. fall). Falls back to generic, date-free
  * guidance when no frost estimate exists yet (no location set) or the crop
  * has no window matching the frost data that is available. */
-export function plantingGuidanceFor(
-  crop: CropKey,
-  frostDates: FrostEstimate | null | undefined,
-  now: Date = new Date()
-): PlantingGuidance {
+/** Every dated planting window for `crop` around `now` — spring and fall,
+ * last/this/next year — nearest to `now` first. Empty when there's no
+ * frost estimate to time anything from. Shared by plantingGuidanceFor and
+ * seedStartPlan so the two always agree on which season is current. */
+function candidatesFor(crop: CropKey, frostDates: FrostEstimate | null | undefined, now: Date): Candidate[] {
   const info = PLANTING_METHOD[crop];
   const candidates: Candidate[] = [];
 
@@ -783,6 +801,25 @@ export function plantingGuidanceFor(
   addCandidates('spring', info.spring, frostDates?.lastFrostMonthDay);
   addCandidates('fall', info.fall, effectiveFirstFrostMonthDay(frostDates));
 
+  // Whichever window's target date is chronologically closest to today —
+  // spring or fall — is the one worth acting on right now. This is what
+  // hands guidance over to the fall window once spring's has passed,
+  // instead of a crop being stuck showing (or being "due for") its spring
+  // advice for the rest of the year.
+  candidates.sort(
+    (a, b) => Math.abs(a.outdoorDate.getTime() - now.getTime()) - Math.abs(b.outdoorDate.getTime() - now.getTime())
+  );
+  return candidates;
+}
+
+export function plantingGuidanceFor(
+  crop: CropKey,
+  frostDates: FrostEstimate | null | undefined,
+  now: Date = new Date()
+): PlantingGuidance {
+  const info = PLANTING_METHOD[crop];
+  const candidates = candidatesFor(crop, frostDates, now);
+
   if (candidates.length === 0) {
     const fallback = (info.spring ?? info.fall) as SeasonWindow;
     return {
@@ -793,14 +830,6 @@ export function plantingGuidanceFor(
     };
   }
 
-  // Whichever window's target date is chronologically closest to today —
-  // spring or fall — is the one worth acting on right now. This is what
-  // hands guidance over to the fall window once spring's has passed,
-  // instead of a crop being stuck showing (or being "due for") its spring
-  // advice for the rest of the year.
-  candidates.sort(
-    (a, b) => Math.abs(a.outdoorDate.getTime() - now.getTime()) - Math.abs(b.outdoorDate.getTime() - now.getTime())
-  );
   const chosen = candidates[0];
   const outdoorLabel = formatDate(chosen.outdoorDate);
   const isPastDue = now >= chosen.outdoorDate;
@@ -829,5 +858,55 @@ export function plantingGuidanceFor(
     detail,
     isPastDue,
     date: chosen.outdoorDate,
+  };
+}
+
+// Hardening off — a week of gradually longer time outdoors so indoor-grown
+// seedlings don't get shocked by sun, wind, and cold — is the step
+// beginners most often skip and the most common reason transplants die.
+// It ends on the transplant date.
+const HARDEN_OFF_DAYS = 7;
+
+export interface SeedStartPlan {
+  season: 'spring' | 'fall';
+  startIndoors: Date;
+  hardenOff: Date;
+  transplant: Date;
+  /** The season window's own care note, e.g. "Transplant seedlings out
+   * once nights stay reliably above 50°F." */
+  note: string;
+}
+
+// How long after a transplant date a season still counts as current —
+// a few weeks late is still worth doing; months late, the next season is
+// what to plan for.
+const TRANSPLANT_GRACE_WEEKS = 4;
+
+/** The start-indoors → harden-off → transplant dates for the next season
+ * that hasn't already passed, or null when this crop isn't started indoors
+ * in that season, or there's no frost estimate to date it from. Whether
+ * the user actually wants these steps (versus buying seedlings) is
+ * taskEngine's call, not this one's.
+ *
+ * Deliberately not plantingGuidanceFor's "nearest season" pick: in
+ * October, last spring is nearer than next spring, and a plan dated last
+ * spring would tell someone to transplant tomatoes into a frozen garden.
+ * Seed starting is planned forward. */
+export function seedStartPlan(
+  crop: CropKey,
+  frostDates: FrostEstimate | null | undefined,
+  now: Date = new Date()
+): SeedStartPlan | null {
+  const chosen = candidatesFor(crop, frostDates, now)
+    .sort((a, b) => a.outdoorDate.getTime() - b.outdoorDate.getTime())
+    .find((c) => addWeeks(c.outdoorDate, TRANSPLANT_GRACE_WEEKS).getTime() >= now.getTime());
+  if (!chosen || chosen.window.indoorWeeksFromFrost == null) return null;
+  const transplant = chosen.outdoorDate;
+  return {
+    season: chosen.season,
+    startIndoors: addWeeks(chosen.frostDate, chosen.window.indoorWeeksFromFrost),
+    hardenOff: new Date(transplant.getFullYear(), transplant.getMonth(), transplant.getDate() - HARDEN_OFF_DAYS),
+    transplant,
+    note: chosen.window.note,
   };
 }

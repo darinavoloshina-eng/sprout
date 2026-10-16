@@ -23,7 +23,7 @@
 // would only repeat what's on screen.
 
 import { GardenProfile } from '../types';
-import { DailyTask, getTasksForDate, getTreeWateringReminders, isTaskComplete } from './taskEngine';
+import { DailyTask, getTasksForDate, getTreeWateringReminders, isSeedStartTask, isTaskComplete } from './taskEngine';
 import { computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { bedCrops } from '../cropMeta';
 
@@ -37,7 +37,7 @@ export const WEEKLY_SUMMARY_HOUR = 18;
 // the day they're due. Notably absent: water- (the bed's routine watering)
 // and treewater- (a soil check every 3–5 days) — both folded into the
 // weekly summary — and harvested-, which is a record, not a task.
-const NUDGE_PREFIXES = ['plant-', 'succession-', 'feed-', 'seeds-', 'reminder-'];
+const NUDGE_PREFIXES = ['plant-', 'succession-', 'feed-', 'seeds-', 'reminder-', 'seedstart-', 'hardenoff-', 'transplant-'];
 
 export interface PlannedNudge {
   id: string;
@@ -46,7 +46,11 @@ export interface PlannedNudge {
   body: string;
 }
 
-function isNudgeWorthy(task: DailyTask): boolean {
+function isNudgeWorthy(profile: GardenProfile, task: DailyTask): boolean {
+  // Seed-starting dates are free to see in the app, but reminding someone
+  // of them is Pro, like every other reminder (the rest are Pro-only by
+  // construction in taskEngine).
+  if (isSeedStartTask(task.id) && !profile.isPro) return false;
   return NUDGE_PREFIXES.some((p) => task.id.startsWith(p));
 }
 
@@ -55,7 +59,7 @@ function isNudgeWorthy(task: DailyTask): boolean {
  * getTasksForDate doesn't completion-gate user-set reminders, so a job
  * checked off ahead of time is filtered out here too. */
 export function nudgeWorthyTasks(profile: GardenProfile, day: Date, now: Date): DailyTask[] {
-  return getTasksForDate(profile, day, now).filter((t) => isNudgeWorthy(t) && !isTaskComplete(profile, t.id));
+  return getTasksForDate(profile, day, now).filter((t) => isNudgeWorthy(profile, t) && !isTaskComplete(profile, t.id));
 }
 
 /** "Fertilize Tomatoes" → "fertilize tomatoes", for use mid-sentence. */

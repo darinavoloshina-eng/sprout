@@ -55,6 +55,13 @@ export interface PlantDetailScreenProps {
   onPlayTimeline?: () => void;
   /** Opens the plant check (TriageScreen) already set to this crop. */
   onDiagnose?: () => void;
+  /** This crop's start-indoors → harden-off → transplant dates, when it's
+   * a not-yet-planted crop that can be started from seed. Shown even when
+   * skipped (seedStartSkipped), so the choice can be undone. */
+  seedSteps?: { title: string; dateLabel: string; done: boolean }[];
+  seedStartSkipped?: boolean;
+  onToggleIndoorStart?: () => void;
+  onOpenSeedGuide?: () => void;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
@@ -97,6 +104,10 @@ export default function PlantDetailScreen({
   onAddPhoto,
   onPlayTimeline,
   onDiagnose,
+  seedSteps,
+  seedStartSkipped,
+  onToggleIndoorStart,
+  onOpenSeedGuide,
   activeTab = 'garden',
   onTabPress,
 }: PlantDetailScreenProps) {
@@ -234,6 +245,41 @@ export default function PlantDetailScreen({
           <Text style={styles.instructionTitle}>{instructionTitle}</Text>
           <Text style={styles.instructionDetail}>{instructionDetail}</Text>
         </View>
+
+        {seedSteps ? (
+          <View style={styles.seedCard}>
+            <Text style={styles.seedEyebrow}>Starting from seed</Text>
+            {seedStartSkipped ? (
+              <Text style={styles.seedSkippedText}>
+                You're buying seedlings or sowing outside, so there are no indoor steps for this crop.
+              </Text>
+            ) : (
+              <>
+                {seedSteps.map((s) => (
+                  <View key={s.title} style={styles.seedStepRow}>
+                    <View style={[styles.seedDot, s.done && styles.seedDotDone]}>
+                      {s.done ? <Text style={styles.seedDotMark}>✓</Text> : null}
+                    </View>
+                    <Text style={[styles.seedStepTitle, s.done && styles.seedStepDone]}>{s.title}</Text>
+                    <Text style={styles.seedStepDate}>{s.dateLabel}</Text>
+                  </View>
+                ))}
+                {onOpenSeedGuide ? (
+                  <TouchableOpacity onPress={onOpenSeedGuide} accessibilityRole="button">
+                    <Text style={styles.seedGuideLink}>How to start seeds →</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </>
+            )}
+            {onToggleIndoorStart ? (
+              <TouchableOpacity onPress={onToggleIndoorStart} accessibilityRole="button">
+                <Text style={styles.seedSkipLink}>
+                  {seedStartSkipped ? 'Start from seed indoors instead' : 'Buying seedlings instead? Skip indoor steps'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={styles.statsRow}>
           {stats.map((s) => (
@@ -490,6 +536,39 @@ const styles = StyleSheet.create({
     color: colors.pineFoot,
   },
   statsRow: { flexDirection: 'row', gap: 9 },
+  seedCard: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.xl,
+    padding: 14,
+    gap: 10,
+  },
+  seedEyebrow: {
+    fontFamily: fonts.monoSemiBold,
+    fontSize: 10.5,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.mossGreen,
+  },
+  seedStepRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  seedDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.mossGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seedDotDone: { backgroundColor: colors.mossGreen },
+  seedDotMark: { color: colors.onPine, fontFamily: fonts.bodyBold, fontSize: 10 },
+  seedStepTitle: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.ink },
+  seedStepDone: { color: colors.inkSoft, textDecorationLine: 'line-through' },
+  seedStepDate: { fontFamily: fonts.monoSemiBold, fontSize: 11, color: colors.inkSoft },
+  seedSkippedText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
+  seedGuideLink: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.mossGreen },
+  seedSkipLink: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.inkSoft, textDecorationLine: 'underline' },
   statTile: {
     flex: 1,
     backgroundColor: colors.card,

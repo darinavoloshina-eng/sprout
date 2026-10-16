@@ -69,7 +69,7 @@ describe('plantingGuidanceFor', () => {
     const frostDates = makeFrostDates('05-01');
     const now = new Date(2024, 0, 1);
     const guidance = plantingGuidanceFor('peppers', frostDates, now);
-    expect(guidance.detail).toContain('Start seeds indoors around March 5');
+    expect(guidance.detail).toContain('Start seeds indoors around March 6');
     expect(guidance.detail).toContain('Move outside around May 15');
   });
 

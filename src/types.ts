@@ -67,6 +67,12 @@ export interface GardenProfile {
   // reminders are timed from — a 4-week-wide bucket like "1-4 wks ago"
   // isn't precise enough to know when 2 weeks have actually passed.
   plantedDates?: Partial<Record<CropKey, string>>; // ISO date string
+  // Optional — crops the user is buying as seedlings (or sowing straight
+  // outside) instead of starting from seed indoors, so they skip the
+  // start-indoors and harden-off steps (see taskEngine.ts's
+  // activeSeedStartPlan). Absent means every crop that can be started
+  // indoors gets those steps.
+  skipIndoorStart?: CropKey[];
   sun: SunExposure;
   bedWidthFt: number;
   bedLengthFt: number;

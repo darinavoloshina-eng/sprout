@@ -246,6 +246,7 @@ export interface CalendarScreenProps {
   profile: GardenProfile;
   onOpenPaywall: () => void;
   onOpenLocation: () => void;
+  onOpenSeedGuide?: () => void;
   activeTab?: TabKey;
   onTabPress?: (tab: TabKey) => void;
 }
@@ -254,6 +255,7 @@ export default function CalendarScreen({
   profile,
   onOpenPaywall,
   onOpenLocation,
+  onOpenSeedGuide,
   activeTab = 'calendar',
   onTabPress,
 }: CalendarScreenProps) {
@@ -516,6 +518,11 @@ export default function CalendarScreen({
                           <Text style={styles.buyNowText}>Buy now →</Text>
                         </TouchableOpacity>
                       ) : null}
+                      {t.guide && onOpenSeedGuide ? (
+                        <TouchableOpacity onPress={onOpenSeedGuide} style={styles.guidePill} accessibilityRole="button">
+                          <Text style={styles.guideText}>How to start seeds →</Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   </View>
                 ))}
@@ -675,6 +682,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   buyNowText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.clay },
+  guidePill: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  guideText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.mossGreen },
   seasonLockCard: {
     backgroundColor: colors.card,
     borderWidth: 1.5,

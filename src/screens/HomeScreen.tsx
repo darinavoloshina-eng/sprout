@@ -33,6 +33,9 @@ import {
   computeStreak,
   effectiveBucket,
   getTodayTasks,
+  isSeedStartTask,
+  nextSeedStep,
+  activeSeedStartPlan,
   isTaskComplete,
   toggleTask,
 } from '../engines/taskEngine';
@@ -87,6 +90,18 @@ const COLD_START_TASKS: DailyTask[] = [
   },
 ];
 
+// Added to the cold-season "Get ready" list only when at least one crop is
+// being started from seed, so a buy-seedlings garden never sees it.
+const SEED_SUPPLIES_TASK: DailyTask = {
+  id: 'coldstart-seed-supplies',
+  icon: '🪴',
+  iconBg: colors.selectedBg,
+  title: 'Gather seed-starting supplies',
+  detail: 'A tray with a lid, seed-starting mix, a heat mat, and a grow light',
+  category: 'tend',
+  guide: true,
+};
+
 function todayMonthDay(d: Date): string {
   return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -124,6 +139,7 @@ export default function HomeScreen({
   profile,
   onProfileChange,
   onOpenTriage,
+  onOpenSeedGuide,
   onOpenMyGarden,
   onOpenLog,
   onOpenAddHarvest,
@@ -134,6 +150,7 @@ export default function HomeScreen({
   profile: GardenProfile;
   onProfileChange: (p: GardenProfile) => void;
   onOpenTriage: () => void;
+  onOpenSeedGuide: () => void;
   onOpenMyGarden: () => void;
   onOpenLog: () => void;
   onOpenAddHarvest: () => void;
@@ -174,8 +191,33 @@ export default function HomeScreen({
     return Math.round((target.getTime() - startOfToday.getTime()) / 86400000);
   }, [lastFrostMD, today]);
 
+  // Seed starting happens in exactly the cold weeks Home otherwise calls
+  // "not planting season yet", so its steps get their own section there.
+  const seedTasks = tasks.filter((t) => isSeedStartTask(t.id));
+  // Care for what's already in the ground — winter greens, overwintering
+  // garlic, perennials — keeps going through the cold months too, so it
+  // gets its own section rather than being hidden behind the frost
+  // countdown.
+  // Watering is scheduled from the garden's crop list whether or not
+  // anything's planted yet; in the cold months that would mean watering an
+  // empty bed, so it only shows once something is actually in the ground.
+  const anythingInBed = bedCrops(profile.crops).some((c) => effectiveBucket(profile, c, today) !== 'w0');
+  const careTasks = tasks.filter(
+    (t) => !isSeedStartTask(t.id) && (!isColdStart || anythingInBed || !t.id.startsWith('water-'))
+  );
+  const nextSeed = useMemo(() => nextSeedStep(profile, today), [profile, today]);
+  const startingFromSeed = profile.crops.some((c) => c !== 'other' && activeSeedStartPlan(profile, c as CropKey, today));
+  const coldStartTasks = startingFromSeed ? [SEED_SUPPLIES_TASK, ...COLD_START_TASKS] : COLD_START_TASKS;
+
+  // "Not planting season yet" only when there's genuinely nothing to do.
+  const coldShown = [...careTasks, ...seedTasks];
+  const coldLeft = coldShown.filter((t) => !isTaskComplete(profile, t.id)).length;
   const title = isColdStart
-    ? 'Not planting season yet'
+    ? coldLeft > 0
+      ? `${coldLeft} ${coldLeft === 1 ? 'thing' : 'things'} left`
+      : coldShown.length > 0
+        ? 'All done for today'
+        : 'Not planting season yet'
     : tasks.length === 0
       ? 'Nothing due today'
       : leftCount === 0
@@ -302,14 +344,62 @@ export default function HomeScreen({
               </Text>
             </View>
 
+            {careTasks.length > 0 ? (
+              <>
+                <Text style={styles.sectionLabel}>In your garden</Text>
+                <View style={{ gap: space.sm }}>
+                  {careTasks.map((t) => (
+                    <TaskRow
+                      key={t.id}
+                      task={t}
+                      completedAt={isTaskComplete(profile, t.id)}
+                      onToggle={() => handleToggle(t.id)}
+                      onOpenGuide={onOpenSeedGuide}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {seedTasks.length > 0 ? (
+              <>
+                <Text style={styles.sectionLabel}>Seed starting</Text>
+                <View style={{ gap: space.sm }}>
+                  {seedTasks.map((t) => (
+                    <TaskRow
+                      key={t.id}
+                      task={t}
+                      completedAt={isTaskComplete(profile, t.id)}
+                      onToggle={() => handleToggle(t.id)}
+                      onOpenGuide={onOpenSeedGuide}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {nextSeed ? (
+              <TouchableOpacity style={styles.nextUpCard} onPress={onOpenSeedGuide} accessibilityRole="button">
+                <View style={styles.nextUpHead}>
+                  <Text style={styles.nextUpLabel}>Next up</Text>
+                  <Text style={styles.nextUpDate}>
+                    {nextSeed.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.nextUpTitle}>{nextSeed.task.title}</Text>
+                <Text style={styles.nextUpBody}>{nextSeed.task.detail}</Text>
+              </TouchableOpacity>
+            ) : null}
+
             <Text style={styles.sectionLabel}>Get ready</Text>
             <View style={{ gap: space.sm }}>
-              {COLD_START_TASKS.map((t) => (
+              {coldStartTasks.map((t) => (
                 <TaskRow
                   key={t.id}
                   task={t}
                   completedAt={isTaskComplete(profile, t.id)}
                   onToggle={() => handleToggle(t.id)}
+                  onOpenGuide={onOpenSeedGuide}
                 />
               ))}
             </View>
@@ -336,7 +426,13 @@ export default function HomeScreen({
             <Text style={styles.sectionLabel}>Today</Text>
             <View style={{ gap: space.sm }}>
               {tasks.map((t) => (
-                <TaskRow key={t.id} task={t} completedAt={isTaskComplete(profile, t.id)} onToggle={() => handleToggle(t.id)} />
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  completedAt={isTaskComplete(profile, t.id)}
+                  onToggle={() => handleToggle(t.id)}
+                  onOpenGuide={onOpenSeedGuide}
+                />
               ))}
             </View>
 
@@ -524,10 +620,12 @@ function TaskRow({
   task,
   completedAt,
   onToggle,
+  onOpenGuide,
 }: {
   task: DailyTask;
   completedAt: string | null;
   onToggle: () => void;
+  onOpenGuide?: () => void;
 }) {
   const done = !!completedAt;
   return (
@@ -562,6 +660,11 @@ function TaskRow({
             accessibilityLabel="Buy now on Amazon"
           >
             <Text style={styles.buyNowText}>Buy now →</Text>
+          </TouchableOpacity>
+        ) : null}
+        {!done && task.guide && onOpenGuide ? (
+          <TouchableOpacity onPress={onOpenGuide} style={styles.guidePill} accessibilityRole="button">
+            <Text style={styles.guideText}>How to start seeds →</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -671,6 +774,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   buyNowText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.clay },
+  guidePill: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  guideText: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.mossGreen },
   weatherCard: {
     flexDirection: 'row',
     gap: 11,

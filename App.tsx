@@ -12,6 +12,7 @@ import SplashScreen from './src/screens/SplashScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import TriageScreen from './src/screens/TriageScreen';
+import SeedStartingGuideScreen from './src/screens/SeedStartingGuideScreen';
 import MyGardenScreen from './src/screens/MyGardenScreen';
 import EditCropsScreen from './src/screens/EditCropsScreen';
 import EditLocationScreen from './src/screens/EditLocationScreen';
@@ -28,12 +29,20 @@ import { clearProfile, loadProfile, saveProfile } from './src/api/storage';
 import { deletePhotoFile, pickPlantPhoto } from './src/api/photos';
 import { CropNote, GardenProfile, PlantPhoto } from './src/types';
 import { CropKey } from './src/engines/scheduleEngine';
-import { effectiveBackdate, effectiveBucket, plantedAgoLabel } from './src/engines/taskEngine';
+import {
+  currentSeedStep,
+  effectiveBackdate,
+  effectiveBucket,
+  isTaskComplete,
+  plantedAgoLabel,
+  SeedStep,
+  seedStepTask,
+} from './src/engines/taskEngine';
 import { formatWeightLbs, UnitSystem } from './src/utils/units';
 import { colors } from './src/theme';
 import { cropLabel, cropIcon as getCropIcon, CropCategory } from './src/cropMeta';
 import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/plantStageContent';
-import { plantingGuidanceFor } from './src/engines/plantingGuide';
+import { plantingGuidanceFor, seedStartPlan } from './src/engines/plantingGuide';
 import { useFrostDates } from './src/hooks/useFrostDates';
 import { syncNudges } from './src/notifications';
 import { syncGarden, unsyncGarden } from './src/api/gardenSync';
@@ -59,6 +68,7 @@ type Screen =
   | 'deleteAccount'
   | 'log'
   | 'addHarvest'
+  | 'seedGuide'
   | 'calendar';
 
 function sameDay(a: Date, b: Date) {
@@ -69,7 +79,32 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
   const bucket = effectiveBucket(profile, crop);
   const notPlanted = bucket === 'w0';
   const guidance = notPlanted ? plantingGuidanceFor(crop, profile.frostDates) : null;
-  const stage = notPlanted ? guidance!.headline : STAGE_HEADLINE[crop]?.[bucket] ?? '';
+  // A crop being started from seed headlines whichever of its steps is due
+  // (or coming up) instead of the single "plant around ..." date.
+  const seedStep = notPlanted ? currentSeedStep(profile, crop) : null;
+  const shortDate = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const stage = seedStep
+    ? seedStep.upcoming
+      ? `${seedStep.task.title} on ${shortDate(seedStep.date)}`
+      : seedStep.task.title
+    : notPlanted
+      ? guidance!.headline
+      : STAGE_HEADLINE[crop]?.[bucket] ?? '';
+  // The full three-step timeline — computed ignoring skipIndoorStart, so a
+  // skipped crop still shows the card (collapsed) with a way to undo it.
+  const plan = notPlanted ? seedStartPlan(crop, profile.frostDates) : null;
+  const seedSteps = plan
+    ? (
+        [
+          ['start', plan.startIndoors],
+          ['harden', plan.hardenOff],
+          ['transplant', plan.transplant],
+        ] as [SeedStep, Date][]
+      ).map(([step, date]) => {
+        const task = seedStepTask(crop, plan, step);
+        return { title: task.title, dateLabel: shortDate(date), done: !!isTaskComplete(profile, task.id) };
+      })
+    : undefined;
   // The precise elapsed time (see taskEngine.ts's plantedAgoLabel) when a
   // real planted date is tracked, same as My Garden — falls back to the
   // coarse bucket/backdate label otherwise, so this header doesn't show
@@ -128,7 +163,9 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
     cropIcon: getCropIcon(crop),
     metaLine: notPlanted ? stage.toUpperCase() : `${bucketLabel} · ${stage.toUpperCase()}`,
     instructionTitle: stage,
-    instructionDetail: notPlanted ? guidance!.detail : NEXT_ACTION[crop]?.[bucket] ?? '',
+    instructionDetail: seedStep ? seedStep.task.detail : notPlanted ? guidance!.detail : NEXT_ACTION[crop]?.[bucket] ?? '',
+    seedSteps,
+    seedStartSkipped: !!profile.skipIndoorStart?.includes(crop),
     heroDateLabel: `TODAY · ${bucketLabel}`,
     heroPhotoUri: todaysPhoto?.uri,
     photoCountLabel,
@@ -159,6 +196,25 @@ export default function App() {
   // PlantDetailScreen's onDiagnose), so it starts on that crop and Back
   // returns there; null means it was opened from Home.
   const [triageCrop, setTriageCrop] = useState<CropKey | null>(null);
+  // Where Seed starting 101 was opened from, so Back returns there.
+  const [seedGuideFrom, setSeedGuideFrom] = useState<'home' | 'calendar' | 'plant'>('home');
+  function openSeedGuide(from: 'home' | 'calendar' | 'plant') {
+    setSeedGuideFrom(from);
+    setScreen('seedGuide');
+  }
+
+  function toggleIndoorStart(crop: CropKey) {
+    setProfile((current) => {
+      if (!current) return current;
+      const skipped = current.skipIndoorStart ?? [];
+      const updated: GardenProfile = {
+        ...current,
+        skipIndoorStart: skipped.includes(crop) ? skipped.filter((c) => c !== crop) : [...skipped, crop],
+      };
+      saveProfile(updated).catch(() => {});
+      return updated;
+    });
+  }
   // Set when AddHarvestScreen is opened from a pick's "Edit" link on the
   // Log screen; null means it's logging a new pick.
   const [editingHarvestId, setEditingHarvestId] = useState<string | null>(null);
@@ -441,6 +497,7 @@ export default function App() {
             setTriageCrop(null);
             setScreen('triage');
           }}
+          onOpenSeedGuide={() => openSeedGuide('home')}
           onOpenMyGarden={() => setScreen('garden')}
           onOpenLog={() => setScreen('log')}
           onOpenAddHarvest={openAddHarvest}
@@ -450,6 +507,19 @@ export default function App() {
           }}
           activeTab="home"
           onTabPress={handleTabPress}
+        />
+      )}
+
+      {screen === 'seedGuide' && (
+        <SeedStartingGuideScreen
+          backLabel={
+            seedGuideFrom === 'plant' && selectedCrop
+              ? `Back to ${cropLabel(selectedCrop)}`
+              : seedGuideFrom === 'calendar'
+                ? 'Back to calendar'
+                : 'Back to today'
+          }
+          onBack={() => setScreen(seedGuideFrom)}
         />
       )}
 
@@ -519,6 +589,8 @@ export default function App() {
             setTriageCrop(selectedCrop);
             setScreen('triage');
           }}
+          onToggleIndoorStart={() => toggleIndoorStart(selectedCrop)}
+          onOpenSeedGuide={() => openSeedGuide('plant')}
           activeTab="garden"
           onTabPress={handleTabPress}
         />
@@ -604,6 +676,7 @@ export default function App() {
             setEditLocationFrom('calendar');
             setScreen('editLocation');
           }}
+          onOpenSeedGuide={() => openSeedGuide('calendar')}
           activeTab="calendar"
           onTabPress={handleTabPress}
         />
