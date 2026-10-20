@@ -449,6 +449,17 @@ article.post-body p { margin-bottom: 16px; color: var(--ink); }
 article.post-body ul, article.post-body ol { margin: 0 0 16px; padding-left: 22px; }
 article.post-body li { margin-bottom: 8px; }
 article.post-body strong { color: var(--pine); }
+.table-wrap { overflow-x: auto; margin: 8px 0 20px; }
+.timing-table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; }
+.timing-table th {
+  text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--moss);
+  padding: 10px 12px; border-bottom: 1.5px solid var(--line);
+}
+.timing-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--ink); }
+.timing-table td:first-child { font-weight: 600; }
+.timing-table tbody tr:nth-child(odd) td { background: var(--card); }
+article.post-body ol li { margin-bottom: 10px; }
 .pull-note {
   background: var(--card);
   border: 1.5px solid var(--line);
