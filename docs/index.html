@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GardenWise: Care Reminders</title>
-<meta name="description" content="GardenWise figures out exactly when to plant, water, and feed each of your plants based on real frost dates for where you actually live, then nudges you the moment something's due.">
+<meta name="description" content="GardenWise works out when to start seeds indoors, plant, water, and feed each of your plants from real frost history for where you live, then nudges you only when there's a real job to do.">
 <link rel="canonical" href="https://gardenwise.io/">
 <meta property="og:title" content="GardenWise">
-<meta property="og:description" content="Always know what your garden needs. Real frost dates, gentle nudges, no generic zone chart.">
+<meta property="og:description" content="Garden advice for your exact backyard, not your zone. Seed-starting dates, real frost history, and gentle nudges.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://gardenwise.io/">
 <meta name="twitter:card" content="summary">
@@ -22,6 +22,7 @@
   <header class="site-header on-dark">
     <a class="nav-brand" href="/"><svg class="brand-icon" viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#F7EFD9"/><path transform="translate(39.65,33.96) rotate(-32)" d="M0,0 C-5,-1.93 -5,-9.08 0,-11 C5,-9.08 5,-1.93 0,0 Z" fill="#4C7A52"/><path transform="translate(60.35,33.96) rotate(32)" d="M0,0 C-5,-1.93 -5,-9.08 0,-11 C5,-9.08 5,-1.93 0,0 Z" fill="#1F3D2B"/><path d="M50,32 C27.5,32 23.45,68.75 34.25,81 C43.25,85.41 50,85.41 50,81.49 Z" fill="#1F3D2B"/><path d="M50,32 C72.5,32 76.55,68.75 65.75,81 C56.75,85.41 50,85.41 50,81.49 Z" fill="#4C7A52"/><circle cx="40.55" cy="53.56" r="7.5" fill="#F7F5EC"/><circle cx="59.45" cy="53.56" r="7.5" fill="#F7F5EC"/><circle cx="40.55" cy="53.56" r="3.2" fill="#1F3D2B"/><circle cx="59.45" cy="53.56" r="3.2" fill="#1F3D2B"/><path d="M47.6,57.97 L52.4,57.97 L50,60.91 Z" fill="#E3B94C"/></svg> GardenWise</a>
     <nav class="nav-links">
+      <a href="/#seed-starting">Seed starting</a>
       <a href="/#features">Features</a>
       <a href="/#pricing">Pricing</a>
       <a href="/blog/">Blog</a>
@@ -29,29 +30,40 @@
   </header>
   <div class="wrap">
     <div>
-      <h1>Always know what your garden needs.</h1>
-      <p class="hero-sub">GardenWise figures out exactly when to plant, water, and feed each of your plants based on where you actually live, not a generic zone map. Then it gives you a gentle nudge the moment something's due, so nothing gets forgotten.</p>
-      <div class="hero-actions">
-        <a class="btn-primary" href="#features">See how it works ↓</a>
-        <span class="coming-soon">Coming soon to iOS</span>
-      </div>
+      <h1>Garden advice for your exact backyard, <em>not your zone.</em></h1>
+      <p class="hero-sub">GardenWise works out when to start seeds, plant, water, and feed each of your plants from real frost history for where you live. Then it nudges you only when there's a real job to do.</p>
+      <form class="waitlist" data-waitlist novalidate>
+        <label class="sr-only" for="waitlist-email-top">Email address</label>
+        <div class="waitlist-row">
+          <input id="waitlist-email-top" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+          <button type="submit">Get notified at launch</button>
+        </div>
+        <p class="waitlist-note">Coming to iPhone this winter. We'll email you at launch, plus the occasional garden tip. Unsubscribe anytime.</p>
+        <p class="waitlist-status" role="status" aria-live="polite"></p>
+      </form>
     </div>
-    <div class="hero-icon">
-      <svg viewBox="0 0 1024 1024" width="100%" height="100%" role="img" aria-label="GardenWise app icon">
-        <defs><linearGradient id="heroOwlBg" x1="15%" y1="0%" x2="85%" y2="100%"><stop offset="0%" stop-color="#F7EFD9"/><stop offset="100%" stop-color="#EDDCAE"/></linearGradient><clipPath id="heroOwlClip"><rect width="1024" height="1024" rx="229.07" ry="229.07"/></clipPath></defs>
-        <rect width="1024" height="1024" rx="229.07" ry="229.07" fill="url(#heroOwlBg)"/>
-        <g clip-path="url(#heroOwlClip)">
-          <path transform="translate(406.02,347.75) rotate(-32)" d="M0,0 C-51.2,-19.71 -51.2,-92.93 0,-112.64 C51.2,-92.93 51.2,-19.71 0,0 Z" fill="#4C7A52"/>
-          <path transform="translate(617.98,347.75) rotate(32)" d="M0,0 C-51.2,-19.71 -51.2,-92.93 0,-112.64 C51.2,-92.93 51.2,-19.71 0,0 Z" fill="#1F3D2B"/>
-          <path d="M512,327.68 C281.6,327.68 240.13,704.0 350.72,829.44 C442.88,874.6 512,874.6 512,834.46 Z" fill="#1F3D2B"/>
-          <path d="M512,327.68 C742.4,327.68 782.87,704.0 673.28,829.44 C581.12,874.6 512,874.6 512,834.46 Z" fill="#4C7A52"/>
-          <circle cx="415.23" cy="548.45" r="76.8" fill="#F7F5EC"/>
-          <circle cx="608.77" cy="548.45" r="76.8" fill="#F7F5EC"/>
-          <circle cx="415.23" cy="548.45" r="32.77" fill="#1F3D2B"/>
-          <circle cx="608.77" cy="548.45" r="32.77" fill="#1F3D2B"/>
-          <path d="M487.42,593.61 L536.58,593.61 L512,623.72 Z" fill="#E3B94C"/>
-        </g>
-      </svg>
+    <div class="hero-phone">
+      <div class="phone"><img src="/img/app-home.jpg" width="660" height="1435" alt="GardenWise's Today screen in January: a frost countdown, watering for what's already growing, and a reminder to sow peppers indoors."></div>
+    </div>
+  </div>
+</section>
+
+<section class="seeds" id="seed-starting">
+  <div class="wrap">
+    <div class="seeds-copy reveal">
+      <div class="eyebrow">Seed starting</div>
+      <h2>Know exactly when to start seeds indoors.</h2>
+      <p>Peppers want about eight weeks indoors before they go out. Tomatoes want six. Squash barely needs a head start at all. GardenWise works out the date for every crop from your last frost, then walks you through it.</p>
+      <ol class="step-list">
+        <li><span class="step-icon">🌱</span><div><strong>Sow indoors</strong><span>The exact week, for your frost date.</span></div></li>
+        <li><span class="step-icon">🌤️</span><div><strong>Harden off</strong><span>A week of easing seedlings outside, the step most beginners miss.</span></div></li>
+        <li><span class="step-icon">🪴</span><div><strong>Transplant</strong><span>Into the garden once it's safe.</span></div></li>
+      </ol>
+      <p>Never started a seed? The built-in <strong>Seed starting 101</strong> guide covers what to buy and how to do it, in five short steps. Seed-starting dates are free.</p>
+    </div>
+    <div class="seeds-phones reveal">
+      <div class="phone phone-back"><img src="/img/app-guide.jpg" width="660" height="1435" alt="The Seed starting 101 guide: seed-starting mix, a tray with a clear lid, a heat mat, a grow light, and a timer." loading="lazy"></div>
+      <div class="phone phone-front"><img src="/img/app-plant.jpg" width="660" height="1435" alt="The Peppers page: sow indoors Jan 8, start hardening off Mar 12, transplant Mar 19." loading="lazy"></div>
     </div>
   </div>
 </section>
@@ -60,7 +72,7 @@
   <div class="wrap">
     <div class="split-head reveal">
       <div class="eyebrow">Why GardenWise</div>
-      <h2>Hardiness zones don't really tell you much.</h2>
+      <h2>Hardiness zones only tell half the story.</h2>
     </div>
     <div class="split-grid">
       <div class="split-col no reveal">
@@ -71,7 +83,7 @@
       <div class="split-col yes reveal">
         <div class="eyebrow">What GardenWise does</div>
         <h3>Your exact location, not a rough guess.</h3>
-        <p>GardenWise looks up real, historical frost dates for the spot you actually garden in. And if that data looks off (say, a mild coastal spot pushing a fall frost date months later than it should be), GardenWise catches it and falls back to something sensible instead of quietly giving you bad advice.</p>
+        <p>GardenWise uses real frost history for your exact spot, so every date fits the garden you actually have.</p>
       </div>
     </div>
   </div>
@@ -87,12 +99,12 @@
       <div class="feature-card reveal">
         <div class="feature-icon">🔔</div>
         <h3>A nudge, right when it matters</h3>
-        <p>GardenWise isn't just a checklist you have to manage yourself. It keeps an eye on your plants' actual stage and today's weather, then tells you exactly what to do: water now, plant more arugula, feed the lemon tree. A daily reminder means nothing sneaks up on you.</p>
+        <p>GardenWise isn't just a checklist you have to manage yourself. It keeps an eye on your plants' actual stage and the weather, then tells you exactly what to do: start the peppers indoors, sow more arugula, feed the lemon tree. It only pings you on days there's a real job. Watering comes as one short plan on Sunday, not a buzz every morning.</p>
       </div>
       <div class="feature-card reveal">
         <div class="feature-icon">🌱</div>
         <h3>Replant reminders, but only when they matter</h3>
-        <p>Arugula grows fast and bolts within two weeks, so GardenWise reminds you to plant more before you run out. Carrots get a reminder every three weeks. Peas don't get one at all, since they stop growing well once summer heat hits, and no frost date can predict that.</p>
+        <p>Arugula grows fast and bolts within two weeks, so GardenWise reminds you to plant more before you run out. Carrots get a reminder every three weeks. Peas skip it, since summer heat ends their season anyway.</p>
       </div>
       <div class="feature-card reveal">
         <div class="feature-icon">🍋</div>
@@ -102,7 +114,7 @@
       <div class="feature-card reveal">
         <div class="feature-icon">🧺</div>
         <h3>A harvest log that remembers last year</h3>
-        <p>Every harvest you log adds up to a real recap of your season: how much you picked, your longest streak, which crop came in earlier than last year. Once you've logged two seasons, Pro compares them automatically.</p>
+        <p>Every harvest you log adds up to a real recap of your season: how much you picked, your longest streak, which crop came in earlier than last year. Once you've logged two seasons, GardenWise Pro compares them automatically.</p>
       </div>
     </div>
   </div>
@@ -112,7 +124,7 @@
   <div class="wrap">
     <div class="split-head reveal">
       <div class="eyebrow">Free to start</div>
-      <h2>Grow four crops for nothing. Grow the whole garden for $2.99.</h2>
+      <h2>Grow four crops for free. Grow the whole garden for $2.99 a month.</h2>
     </div>
     <div class="price-grid">
       <div class="price-card reveal">
@@ -122,6 +134,7 @@
           <div>Any 4 crops, your choice, from the full catalog</div>
           <div>Live watering schedule for your setup</div>
           <div>Real frost-date planting windows</div>
+          <div>Seed-starting dates and the Seed starting 101 guide</div>
         </div>
       </div>
       <div class="price-card pro reveal">
@@ -130,7 +143,8 @@
         <span class="price-save">or $24.99/yr, save 30%</span>
         <div class="price-list">
           <div>Every crop in the catalog: citrus, olive, avocado, pomegranate, fig, and 50+ more</div>
-          <div>Replant and fertilizer reminders, tailored to each plant</div>
+          <div>Reminders for every job: seed starting, feeding, and replanting</div>
+          <div>Frost and harvest alerts for what's already growing</div>
           <div>The season view and year-over-year comparison</div>
         </div>
       </div>
@@ -148,6 +162,21 @@
   </div>
 </section>
 
+<section class="cta-band" id="waitlist">
+  <div class="wrap reveal">
+    <div class="eyebrow">Coming this winter</div>
+    <h2>Be ready when seed-starting season starts.</h2>
+    <form class="waitlist" data-waitlist novalidate>
+      <label class="sr-only" for="waitlist-email-bottom">Email address</label>
+      <div class="waitlist-row">
+        <input id="waitlist-email-bottom" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+        <button type="submit">Get notified at launch</button>
+      </div>
+      <p class="waitlist-status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
 <footer class="site-footer">
   <div class="wordmark"><svg class="brand-icon" viewBox="0 0 100 100" width="26" height="26" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#F7EFD9"/><path transform="translate(39.65,33.96) rotate(-32)" d="M0,0 C-5,-1.93 -5,-9.08 0,-11 C5,-9.08 5,-1.93 0,0 Z" fill="#4C7A52"/><path transform="translate(60.35,33.96) rotate(32)" d="M0,0 C-5,-1.93 -5,-9.08 0,-11 C5,-9.08 5,-1.93 0,0 Z" fill="#1F3D2B"/><path d="M50,32 C27.5,32 23.45,68.75 34.25,81 C43.25,85.41 50,85.41 50,81.49 Z" fill="#1F3D2B"/><path d="M50,32 C72.5,32 76.55,68.75 65.75,81 C56.75,85.41 50,85.41 50,81.49 Z" fill="#4C7A52"/><circle cx="40.55" cy="53.56" r="7.5" fill="#F7F5EC"/><circle cx="59.45" cy="53.56" r="7.5" fill="#F7F5EC"/><circle cx="40.55" cy="53.56" r="3.2" fill="#1F3D2B"/><circle cx="59.45" cy="53.56" r="3.2" fill="#1F3D2B"/><path d="M47.6,57.97 L52.4,57.97 L50,60.91 Z" fill="#E3B94C"/></svg> GardenWise</div>
   <div class="tagline">Grow with the season, not against it.</div>
@@ -155,6 +184,43 @@
 </footer>
 
 <script>
+  // Launch waitlist. Posts to the same Cloudflare Worker the app's mailing
+  // list uses (subscribe-worker/), tagged as a website signup.
+  (function () {
+    var ENDPOINT = 'https://gardenwise-subscribe.darinavoloshina.workers.dev/';
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    document.querySelectorAll('[data-waitlist]').forEach(function (form) {
+      var input = form.querySelector('input[type="email"]');
+      var button = form.querySelector('button');
+      var status = form.querySelector('.waitlist-status');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = input.value.trim();
+        if (!EMAIL_RE.test(email)) {
+          status.textContent = 'That email doesn\u2019t look quite right.';
+          input.focus();
+          return;
+        }
+        button.disabled = true;
+        status.textContent = 'Adding you\u2026';
+        fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, source: 'website' })
+        })
+          .then(function (res) { if (!res.ok) throw new Error(); })
+          .then(function () {
+            form.classList.add('done');
+            status.textContent = 'You\u2019re on the list \uD83C\uDF31 We\u2019ll email you the day GardenWise launches.';
+          })
+          .catch(function () {
+            button.disabled = false;
+            status.textContent = 'Something went wrong. Please try again.';
+          });
+      });
+    });
+  })();
+
   (function () {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var els = document.querySelectorAll('.reveal');
