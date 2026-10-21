@@ -22,7 +22,7 @@ seed,starting,frost,vegetable,garden,planner,planting,calendar,watering,reminder
 - **Support URL:** https://gardenwise.io/support.html
 - **Marketing URL:** https://gardenwise.io
 - **Copyright:** 2026 Darina Voloshina
-- **Screenshots (6.9-inch display):** app-store/screenshots/GardenWise-6.9in-1.jpg … -5.jpg, in order
+- **Screenshots ("iPhone with Dynamic Island", 1206 × 2622):** app-store/screenshots/GardenWise-6.3in-1.jpg … -5.jpg, in order. The 6.9in set is kept in case a larger size slot is requested.
 
 ## Description (2116/4000)
 
