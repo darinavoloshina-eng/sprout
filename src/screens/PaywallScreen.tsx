@@ -36,7 +36,7 @@ const BENEFITS = [
   {
     icon: '🌱',
     title: 'Every crop in the catalogue',
-    body: '35 vegetables, 6 fruits, and 12 trees, each with its own stage guidance',
+    body: '35 vegetables, 10 herbs, 7 flowers, 6 fruits, and 12 trees, each with its own stage guidance',
   },
   {
     icon: '🗓',
@@ -46,7 +46,7 @@ const BENEFITS = [
   {
     icon: '📚',
     title: 'Year over year',
-    body: 'GardenWise remembers last season and moves your reminders to match what actually happened',
+    body: 'See how this season compares to last: what you picked, and which crops came in earlier',
   },
 ];
 
@@ -261,10 +261,10 @@ export default function PaywallScreen({ profile, onProfileChange, onClose, onPur
                   </Text>
                 ) : null}
                 <Text style={styles.finePrint}>
-                  {real ? 'Once' : 'Once billing is enabled:'} {plan === 'yearly' ? yearlyPrice + '/year' : monthlyPrice + '/month'}
-                  , charged to your Apple ID account. Subscriptions auto-renew unless turned off at least 24 hours
-                  before the current period ends, and can be managed or cancelled anytime in your device's Account
-                  Settings.
+                  {real ? '' : 'Once billing is enabled: '}
+                  {`Free for 14 days, then ${plan === 'yearly' ? yearlyPrice + '/year' : monthlyPrice + '/month'}, charged to your Apple ID account when the trial ends. `}
+                  Subscriptions auto-renew unless turned off at least 24 hours before the current period ends, and can
+                  be managed or cancelled anytime in your device's Account Settings.
                 </Text>
               </>
             )}
@@ -390,7 +390,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 10.5,
     lineHeight: 15,
-    color: colors.inkSoft,
+    // Light on pine, so the trial and renewal terms are easy to read.
+    color: colors.pineFoot,
     paddingVertical: 11,
     paddingBottom: 20,
   },

@@ -12,7 +12,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "GardenWise uses your location to fetch local rainfall and temperature so your watering schedule matches your garden. You can type your address instead."
       },
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "plugins": [
       [

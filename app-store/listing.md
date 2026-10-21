@@ -54,9 +54,9 @@ YOUR SEASON, REMEMBERED
 FREE AND PRO
 GardenWise is free for up to four crops, with a live watering schedule, real frost-date planting windows, and seed-starting dates and guide.
 
-GardenWise Pro unlocks all 70 crops (including citrus, figs, olives, and avocado), reminders for every job, frost and harvest alerts, the season view, and year-over-year comparison. Pro is available monthly, yearly, or as a one-time lifetime purchase.
+GardenWise Pro unlocks all 70 crops (including citrus, figs, olives, and avocado), reminders for every job, frost and harvest alerts, the season view, and year-over-year comparison. Pro is available monthly or yearly, each starting with a 14-day free trial, or as a one-time lifetime purchase.
 
-Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple ID settings.
+After the free trial, subscriptions are charged to your Apple ID account and renew automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple ID settings.
 
 Privacy Policy: https://gardenwise.io/privacy.html
 Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
