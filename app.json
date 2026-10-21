@@ -18,7 +18,10 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "GardenWise uses your location to fetch local rainfall and temperature so your watering schedule matches your garden. You can type your address instead."
+          "locationWhenInUsePermission": "GardenWise uses your location to fetch local rainfall and temperature so your watering schedule matches your garden. You can type your address instead.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "isIosBackgroundLocationEnabled": false
         }
       ],
       "expo-notifications",
