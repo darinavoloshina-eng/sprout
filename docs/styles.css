@@ -521,11 +521,18 @@ article.post-body ol li { margin-bottom: 10px; }
   .post-grid { grid-template-columns: 1fr; }
   .site-header { flex-wrap: wrap; gap: 14px; }
   .nav-links { gap: 16px; flex-wrap: wrap; }
+  /* On phones the menu runs out of room and the icon wrapped onto its own
+     line; the footer's Instagram link covers it there. */
+  .nav-links .nav-ig { display: none; }
 }
 
 @media (max-width: 520px) {
   .waitlist-row { flex-direction: column; }
   .waitlist button { width: 100%; }
+  /* Fit all four menu links on one line on a phone. */
+  .site-header { padding: 22px 20px 0; }
+  .nav-links { gap: 14px; }
+  .nav-links a { font-size: 10.5px; letter-spacing: 0.04em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
