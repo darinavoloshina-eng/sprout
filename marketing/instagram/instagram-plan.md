@@ -10,8 +10,14 @@ Garden advice for your exact backyard 🌱
 Seed & care dates timed to your frost
 📲 iPhone app coming soon ↓
 
-- **Link:** https://gardenwise.io
+- **Link:** https://gardenwise.io/?ref=instagram (the ?ref=instagram part tags waitlist signups that came from Instagram)
 - **Category:** App Page (Business or Creator account)
+
+## About highlight
+Files in highlight-about/: about-1.jpg … about-5.jpg (stories, 1080×1920) and about-cover.jpg.
+1. Post about-1 to about-5 as stories, in order (all within a minute or two).
+2. On about-5, optionally add a Link sticker → https://gardenwise.io/?ref=instagram, placed below the gardenwise.io button.
+3. Profile → + (New highlight) → select the five stories → name it "About" → Edit cover → choose about-cover.jpg from your photos.
 
 ## The grid: post in this order
 Instagram shows the newest post top-left, so post 1 goes first and ends up bottom-right. Post all nine in one sitting, in order, so the puzzle lines up. Upload at full 3:4 size (don't crop to square or 4:5). Five hashtags per post (Instagram's current limit).
