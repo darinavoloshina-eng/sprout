@@ -4,10 +4,10 @@
 - **Profile picture:** profile-picture.jpg
 - **Name** (27/30, searchable): GardenWise | Garden Planner
 - **Username ideas:** @gardenwise.app · @gardenwiseapp · @gardenwise.io
-- **Bio** (129/150):
+- **Bio** (104/150):
 
 Garden advice for your exact backyard 🌱
-Seed starting, planting & care, timed to your real frost dates
+Seed & care dates timed to your frost
 📲 iPhone app coming soon ↓
 
 - **Link:** https://gardenwise.io
