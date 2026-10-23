@@ -23,7 +23,7 @@ import {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function handleSubscribe(request: Request, env: Env): Promise<Response> {
-  let body: { email?: unknown; optIn?: unknown; source?: unknown };
+  let body: { email?: unknown; optIn?: unknown; source?: unknown; ref?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -37,8 +37,12 @@ async function handleSubscribe(request: Request, env: Env): Promise<Response> {
   // Older app builds only ever call this to opt in, without the field.
   const optIn = body.optIn !== false;
   // Where the signup came from: the app, or the landing page's launch
-  // waitlist (docs/index.html). Anything else is treated as the app.
-  const source = body.source === 'website' ? 'gardenwise-website' : 'gardenwise-app';
+  // waitlist (docs/index.html). Anything else is treated as the app. A
+  // website signup can carry a ref from the link the visitor arrived by
+  // (gardenwise.io/?ref=instagram → gardenwise-website-instagram).
+  const ref = typeof body.ref === 'string' && /^[a-z0-9_-]{1,32}$/.test(body.ref) ? body.ref : null;
+  const source =
+    body.source === 'website' ? (ref ? `gardenwise-website-${ref}` : 'gardenwise-website') : 'gardenwise-app';
 
   const now = new Date().toISOString();
   await env.DB.prepare(
