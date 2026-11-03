@@ -201,6 +201,15 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 .waitlist-status { margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--hero-mustard); min-height: 1em; }
 .waitlist.done .waitlist-row, .waitlist.done .waitlist-note { display: none; }
 
+/* ---------- App Store badge ---------- */
+.store-badge { display: inline-block; line-height: 0; transition: transform 0.15s ease; }
+.store-badge:hover { transform: translateY(-1px); }
+.store-badge img { display: block; width: 180px; height: auto; }
+.hero-cta { margin-top: 34px; opacity: 0; }
+.hero-cta-note { margin-top: 14px; font-size: 13.5px; line-height: 1.5; color: var(--hero-ink-soft); opacity: 0.9; }
+.cta-band .band-badge { margin-top: 26px; }
+.cta-band .tips-lead { margin-top: 30px; font-size: 14px; color: var(--hero-ink-soft); }
+
 /* ---------- app screenshots ---------- */
 .phone {
   border-radius: 40px;
@@ -214,12 +223,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 .hero-phone .phone { width: 100%; max-width: 290px; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-.hero h1, .hero-sub, .waitlist, .hero-phone {
+.hero h1, .hero-sub, .hero-cta, .hero-phone {
   animation: rise 0.7s cubic-bezier(0.2,0.7,0.2,1) forwards;
 }
 .hero h1 { animation-delay: 0.05s; }
 .hero-sub { animation-delay: 0.3s; }
-.hero .waitlist { animation-delay: 0.42s; }
+.hero-cta { animation-delay: 0.42s; }
 .hero-phone { animation-delay: 0.3s; }
 
 /* ---------- reveal-on-scroll ---------- */
@@ -320,7 +329,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 }
 .cta-band .eyebrow { color: var(--hero-mustard); }
 .cta-band h2 { font-size: clamp(24px, 3vw, 32px); margin-top: 12px; color: var(--hero-ink); }
-.cta-band .waitlist { opacity: 1; margin: 28px auto 0; }
+.cta-band .waitlist { opacity: 1; margin: 14px auto 0; }
 
 /* ---------- footer ---------- */
 footer.site-footer {
@@ -541,7 +550,7 @@ article.post-body ol li { margin-bottom: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero h1, .hero-sub, .waitlist, .hero-phone, .reveal {
+  .hero h1, .hero-sub, .hero-cta, .hero-phone, .reveal {
     animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;
   }
 }

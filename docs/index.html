@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-itunes-app" content="app-id=6817450373">
 <title>GardenWise: Care Reminders</title>
 <meta name="description" content="GardenWise works out when to start seeds indoors, plant, water, and feed each of your plants from real frost history for where you live, then nudges you only when there's a real job to do.">
 <link rel="canonical" href="https://gardenwise.io/">
@@ -17,6 +18,9 @@
 <link rel="stylesheet" href="/styles.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Organization","name":"GardenWise","url":"https://gardenwise.io/","logo":"https://gardenwise.io/img/app-home.jpg","sameAs":["https://www.instagram.com/gardenwise.io/","https://www.facebook.com/gardenwise.io","https://www.tiktok.com/@gardenwise.io"]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"MobileApplication","name":"GardenWise: Care Reminders","operatingSystem":"iOS","applicationCategory":"LifestyleApplication","downloadUrl":"https://apps.apple.com/us/app/gardenwise-care-reminders/id6817450373","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
 </head>
 <body>
@@ -36,15 +40,10 @@
     <div>
       <h1>Garden advice for your exact backyard, <em>not your zone.</em></h1>
       <p class="hero-sub">GardenWise uses your exact coordinates and real frost history to plan seed starting, planting, watering, and feeding for every plant in your garden. Then it pings you only when there’s a real job to do.</p>
-      <form class="waitlist" data-waitlist novalidate>
-        <label class="sr-only" for="waitlist-email-top">Email address</label>
-        <div class="waitlist-row">
-          <input id="waitlist-email-top" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
-          <button type="submit">Get notified at launch</button>
-        </div>
-        <p class="waitlist-note">Coming to iPhone this winter. We'll email you at launch, plus the occasional garden tip. Unsubscribe anytime.</p>
-        <p class="waitlist-status" role="status" aria-live="polite"></p>
-      </form>
+      <div class="hero-cta">
+        <a class="store-badge" href="https://apps.apple.com/us/app/gardenwise-care-reminders/id6817450373" aria-label="Download GardenWise on the App Store"><img src="/img/app-store-badge.svg" alt="Download on the App Store" width="180" height="60"></a>
+        <p class="hero-cta-note">Free on iPhone. GardenWise Pro unlocks every crop, with a 14-day free trial.</p>
+      </div>
     </div>
     <div class="hero-phone">
       <div class="phone"><img src="/img/app-home.jpg" width="660" height="1435" alt="GardenWise's Today screen in January: a frost countdown, watering for what's already growing, and a reminder to sow peppers indoors."></div>
@@ -168,13 +167,15 @@
 
 <section class="cta-band" id="waitlist">
   <div class="wrap reveal">
-    <div class="eyebrow">Coming this winter</div>
-    <h2>Be ready when seed-starting season starts.</h2>
+    <div class="eyebrow">Free on iPhone</div>
+    <h2>Start your garden plan today.</h2>
+    <div class="band-badge"><a class="store-badge" href="https://apps.apple.com/us/app/gardenwise-care-reminders/id6817450373" aria-label="Download GardenWise on the App Store"><img src="/img/app-store-badge.svg" alt="Download on the App Store" width="180" height="60"></a></div>
+    <p class="tips-lead">Not ready yet? Get seasonal garden tips by email.</p>
     <form class="waitlist" data-waitlist novalidate>
       <label class="sr-only" for="waitlist-email-bottom">Email address</label>
       <div class="waitlist-row">
         <input id="waitlist-email-bottom" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
-        <button type="submit">Get notified at launch</button>
+        <button type="submit">Send me tips</button>
       </div>
       <p class="waitlist-status" role="status" aria-live="polite"></p>
     </form>
@@ -226,7 +227,7 @@
           .then(function (res) { if (!res.ok) throw new Error(); })
           .then(function () {
             form.classList.add('done');
-            status.textContent = 'You\u2019re on the list \uD83C\uDF31 We\u2019ll email you the day GardenWise launches.';
+            status.textContent = 'You\u2019re in \uD83C\uDF31 We\u2019ll send seasonal garden tips a few times a season.';
           })
           .catch(function () {
             button.disabled = false;
