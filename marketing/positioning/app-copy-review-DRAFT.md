@@ -35,7 +35,7 @@ Nothing here is changed in the app yet. Mark up anything you'd like different.
 |---|---|---|
 | Headline | Grow the whole garden | **Grow more of your own food** |
 | Subtitle | The GardenWise free plan covers 4 crops. GardenWise Pro is for the garden you actually have. | **Free covers 4 crops. Pro is for the garden you dream of: every vegetable, herb, and fruit, with tips that help each one produce more.** |
-| Benefit 1 | Every crop in the catalogue · *35 vegetables, 10 herbs, 7 flowers, 6 fruits, and 12 trees…* | **Every crop** · *35 vegetables, 10 herbs, 6 fruits, and 12 fruit and nut trees, each with step-by-step guidance* (flowers removed) |
+| Benefit 1 | Every crop in the catalogue · *35 vegetables, 10 herbs, 7 flowers, 6 fruits, and 12 trees…* | **Every crop** · *35 vegetables, 10 herbs, 6 fruits, and 12 fruit trees, each with step-by-step guidance* (flowers removed) |
 | New benefit | (none) | **Grow-more tips** · *When to feed, prune, and pick each crop for a bigger, healthier harvest* |
 | Benefit 2 | The season view · *Know what to plant next and when to stop* | (keep) |
 | Benefit 3 | Year over year · *See how this season compares to last…* | (keep) |
