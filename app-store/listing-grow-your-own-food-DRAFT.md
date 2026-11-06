@@ -10,8 +10,8 @@ GardenWise: Grow Your Own Food
 - Seed starting & garden planner (30/30)
 - Plant, grow & harvest on time (29/30)
 
-## Keywords (104/100)
-vegetable,garden,planner,seed,starting,frost,planting,calendar,harvest,homegrown,organic,herb,raised,bed
+## Keywords (100/100)
+vegetable,garden,planner,seed,starting,frost,planting,calendar,harvest,homegrown,organic,herb,veggie
 
 ## Promotional text (147/170)
 Seed-starting season is coming. Find out exactly when to start peppers, tomatoes, and more indoors, timed to the real frost dates in your backyard.
