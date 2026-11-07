@@ -232,6 +232,21 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
 .hero-cta { animation-delay: 0.42s; }
 .hero-phone { animation-delay: 0.3s; }
 
+/* ---------- hero: My Garden auto-scroll ---------- */
+/* The screen is the real My Garden list stitched from simulator screenshots:
+   status bar and tab bar stay put, the list between them slowly scrolls. */
+.phone-scroll { position: relative; aspect-ratio: 1206 / 2622; }
+.phone-scroll .ps-top { position: absolute; top: 0; left: 0; width: 100%; height: 7.094%; object-fit: cover; z-index: 1; }
+.phone-scroll .ps-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 11.442%; object-fit: cover; z-index: 1; }
+.phone-scroll .ps-window { position: absolute; top: 7.094%; left: 0; width: 100%; height: 81.464%; overflow: hidden; background: #EDF0E2; }
+.phone-scroll .ps-strip { display: block; width: 100%; height: auto; animation: gw-garden-scroll 22s ease-in-out infinite; }
+@keyframes gw-garden-scroll {
+  0%, 8% { transform: translateY(0); }
+  82%, 92% { transform: translateY(-68.12%); }
+  100% { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .phone-scroll .ps-strip { animation: none; } }
+
 /* ---------- reveal-on-scroll ---------- */
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
 .reveal.in { opacity: 1; transform: translateY(0); }
