@@ -140,6 +140,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--moss); outline-
   opacity: 0;
 }
 .hero h1 em { font-style: italic; font-weight: 500; color: var(--hero-mustard); }
+.hero h1 .h1-line { display: block; white-space: nowrap; }
 .hero-sub {
   margin-top: 22px;
   font-size: 16.5px;
@@ -545,6 +546,10 @@ article.post-body ol li { margin-bottom: 10px; }
   /* On phones the menu runs out of room and the icon wrapped onto its own
      line; the footer's Instagram link covers it there. */
   .nav-links .nav-ig { display: none; }
+}
+
+@media (max-width: 400px) {
+  .hero h1 .h1-line { white-space: normal; }
 }
 
 @media (max-width: 520px) {
