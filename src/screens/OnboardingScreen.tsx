@@ -468,7 +468,7 @@ export default function OnboardingScreen({
                   </View>
                 ) : suggestions ? (
                   <>
-                    <Text style={styles.suggestHint}>What grows well in {location.label} right now:</Text>
+                    <Text style={styles.suggestHint}>Good picks for {location.label}:</Text>
                     <SuggestionsList suggestions={suggestions} isAdded={(c) => crops.has(c)} onToggle={toggleSuggested} />
                   </>
                 ) : (
