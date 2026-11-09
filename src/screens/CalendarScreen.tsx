@@ -254,14 +254,17 @@ export default function CalendarScreen({
                       <Text style={styles.taskTitle}>{t.title}</Text>
                       <Text style={styles.taskDetail}>{t.detail}</Text>
                       {t.buyUrl ? (
-                        <TouchableOpacity
-                          onPress={() => Linking.openURL(t.buyUrl!)}
-                          style={styles.buyNowPill}
-                          accessibilityRole="button"
-                          accessibilityLabel="Buy now on Amazon"
-                        >
-                          <Text style={styles.buyNowText}>Buy now →</Text>
-                        </TouchableOpacity>
+                        <View style={styles.buyRow}>
+                          <TouchableOpacity
+                            onPress={() => Linking.openURL(t.buyUrl!)}
+                            style={styles.buyNowPill}
+                            accessibilityRole="button"
+                            accessibilityLabel="Buy now on Amazon"
+                          >
+                            <Text style={styles.buyNowText}>Buy now →</Text>
+                          </TouchableOpacity>
+                          <Text style={styles.affiliateNote}>Affiliate link</Text>
+                        </View>
                       ) : null}
                       {t.guide && onOpenSeedGuide ? (
                         <TouchableOpacity onPress={onOpenSeedGuide} style={styles.guidePill} accessibilityRole="button">
@@ -282,6 +285,8 @@ export default function CalendarScreen({
 }
 
 const styles = StyleSheet.create({
+  buyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  affiliateNote: { fontFamily: fonts.body, fontSize: 11, color: colors.inkSoft, marginTop: 8 },
   screen: { flex: 1, backgroundColor: colors.paper },
   scroll: { flex: 1 },
   content: {

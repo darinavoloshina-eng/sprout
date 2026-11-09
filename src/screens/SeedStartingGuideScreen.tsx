@@ -5,18 +5,14 @@
 // The *when* lives in the tasks themselves, per crop, so nothing here is
 // dated.
 //
-// Buy links are plain Amazon searches for now, same as feed tasks'
-// placeholder links (see taskEngine.ts's placeholderFertilizerBuyUrl).
-// Once there's an Amazon Associates account, add the tag in amazonSearch()
-// and an affiliate disclosure line under the list.
+// Buy links are tagged Amazon links (see affiliate.ts), with Amazon's
+// required disclosure under the list.
 
 import React from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
+import { AFFILIATE_DISCLOSURE, amazonSearchUrl } from '../affiliate';
 
-function amazonSearch(query: string): string {
-  return `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
-}
 
 const SUPPLIES = [
   {
@@ -108,7 +104,7 @@ export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back' }: 
               <Text style={styles.supplyWhy}>{s.why}</Text>
             </View>
             <TouchableOpacity
-              onPress={() => Linking.openURL(amazonSearch(s.query))}
+              onPress={() => Linking.openURL(amazonSearchUrl(s.query))}
               style={styles.buyPill}
               accessibilityRole="button"
               accessibilityLabel={`Buy ${s.title} on Amazon`}
@@ -118,6 +114,7 @@ export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back' }: 
           </View>
         ))}
       </View>
+      <Text style={styles.disclosure}>{AFFILIATE_DISCLOSURE}</Text>
 
       <Text style={styles.sectionLabel}>How to do it</Text>
       <View style={{ gap: space.sm }}>
@@ -142,6 +139,7 @@ export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back' }: 
 }
 
 const styles = StyleSheet.create({
+  disclosure: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: -4 },
   screen: { flex: 1, backgroundColor: colors.paper },
   content: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xxl },
   back: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft, marginBottom: space.md },

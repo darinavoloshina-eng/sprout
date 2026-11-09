@@ -14,6 +14,7 @@ import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
 import { bedCrops, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
 import { SEASON_SHAPE } from '../plantStageContent';
+import { amazonSearchUrl } from '../affiliate';
 
 export type TaskCategory = 'tend' | 'harvest' | 'feed' | 'prune' | 'seed';
 
@@ -63,8 +64,7 @@ export interface DailyTask {
  * the crop a feed task is about — a placeholder "Buy now" destination
  * until real affiliate links and curated per-crop products exist. */
 function placeholderFertilizerBuyUrl(crop: CropKey): string {
-  const query = `organic ${cropLabel(crop)} fertilizer`;
-  return `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+  return amazonSearchUrl(`organic ${cropLabel(crop)} fertilizer`);
 }
 
 /** One organic way to do each feed task, appended to its note. A lot of

@@ -380,6 +380,7 @@ footer.site-footer .social-link:hover { color: var(--moss); }
 footer.site-footer .social-link svg { display: block; }
 footer.site-footer .copy { margin-top: 18px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-soft); opacity: 0.8; }
 footer.site-footer .copy a { color: var(--moss); text-decoration: underline; }
+footer.site-footer .copy.affiliate { margin-top: 6px; }
 
 /* ---------- simple page header (privacy, blog index) ---------- */
 .page-hero { padding: 56px 24px 44px; text-align: center; }

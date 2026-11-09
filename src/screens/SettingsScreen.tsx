@@ -37,6 +37,7 @@ import { formatFlowGph, formatLengthIn, UnitSystem } from '../utils/units';
 import { TabBar, TabKey } from '../components/ui';
 import { PRIVACY_POLICY_URL } from '../legal';
 import { isConfigured as isPurchasesConfigured } from '../purchases';
+import { AFFILIATE_DISCLOSURE } from '../affiliate';
 
 const METHOD_OPTIONS: { key: WateringMethod; icon: string; label: string }[] = [
   { key: 'drip', icon: '💧', label: 'Drip' },
@@ -406,6 +407,7 @@ export default function SettingsScreen({
         </View>
 
         <Text style={styles.footer}>GardenWise {Constants.expoConfig?.version ?? ''} · your garden data is never sold</Text>
+        <Text style={styles.footer}>{AFFILIATE_DISCLOSURE}</Text>
       </ScrollView>
 
       <TabBar active={activeTab} onPress={onTabPress} />
