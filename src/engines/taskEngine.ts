@@ -1175,7 +1175,16 @@ export function currentSeedStep(
   const step = activeSeedStep(plan, today);
   const dates: Record<SeedStep, Date> = { start: plan.startIndoors, harden: plan.hardenOff, transplant: plan.transplant };
   if (!step) return { task: seedStepTask(crop, plan, 'start'), date: plan.startIndoors, upcoming: true };
-  return { task: seedStepTask(crop, plan, step), date: dates[step], upcoming: false };
+  // The step in progress by date may already be checked off (seeds sown on
+  // day one): headline the next step instead, so the crop's page doesn't
+  // keep saying "Sow Peppers indoors" for the nine weeks until hardening
+  // off begins.
+  const order: SeedStep[] = ['start', 'harden', 'transplant'];
+  let i = order.indexOf(step);
+  while (i < order.length && isTaskComplete(profile, seedStepTask(crop, plan, order[i]).id)) i++;
+  if (i >= order.length) return null;
+  const next = order[i];
+  return { task: seedStepTask(crop, plan, next), date: dates[next], upcoming: next !== step && dates[next].getTime() > today.getTime() };
 }
 
 /** The soonest seed-start step still ahead (after today) across the

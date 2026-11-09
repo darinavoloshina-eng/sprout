@@ -97,6 +97,16 @@ describe('seed-start tasks', () => {
     expect(getTodayTasks(profile, JAN_15).filter((t) => t.id.startsWith('seedstart-'))).toHaveLength(0);
   });
 
+  it("moves the crop page's headline on to the next step once the current one is checked off", () => {
+    const profile = makeProfile();
+    const sow = getTasksForDate(profile, START, JAN_15).find((t) => t.id.startsWith('seedstart-'))!;
+    const dayAfter = new Date(START.getTime() + 86400000);
+    expect(currentSeedStep(profile, 'peppers', dayAfter)!.task.title).toBe('Sow Peppers indoors');
+    const next = currentSeedStep(toggleTask(profile, sow.id), 'peppers', dayAfter)!;
+    expect(next.task.title).toBe('Start hardening off Peppers');
+    expect(next.upcoming).toBe(true);
+  });
+
   it('drops the indoor steps for a crop the user is buying as seedlings', () => {
     const profile = makeProfile({ isPro: true, skipIndoorStart: ['peppers'] });
     expect(getTasksForDate(profile, START, JAN_15).filter((t) => t.id.startsWith('seedstart-'))).toHaveLength(0);

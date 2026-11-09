@@ -36,6 +36,7 @@ import {
   isSeedStartTask,
   nextSeedStep,
   activeSeedStartPlan,
+  dateKey,
   isTaskComplete,
   toggleTask,
 } from '../engines/taskEngine';
@@ -164,7 +165,18 @@ export default function HomeScreen({
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false);
 
   const today = useToday();
-  const tasks = useMemo(() => getTodayTasks(profile, today), [profile, today]);
+  // Something checked off on an earlier day drops off Home. Most tasks get
+  // a fresh id each day, but seed-starting steps and the "Get ready" prep
+  // list keep theirs for weeks, so they used to sit on Home crossed out
+  // ("Done 10:00 AM", no date) long after the day they were done.
+  const doneBeforeToday = (id: string) => {
+    const at = isTaskComplete(profile, id);
+    return !!at && dateKey(new Date(at)) !== dateKey(today);
+  };
+  const tasks = useMemo(
+    () => getTodayTasks(profile, today).filter((t) => !doneBeforeToday(t.id)),
+    [profile, today]
+  );
   const streak = computeStreak(profile, today);
   const longestStreak = computeLongestStreak(profile);
   const doneCount = tasks.filter((t) => isTaskComplete(profile, t.id)).length;
@@ -208,7 +220,9 @@ export default function HomeScreen({
   );
   const nextSeed = useMemo(() => nextSeedStep(profile, today), [profile, today]);
   const startingFromSeed = profile.crops.some((c) => c !== 'other' && activeSeedStartPlan(profile, c as CropKey, today));
-  const coldStartTasks = startingFromSeed ? [SEED_SUPPLIES_TASK, ...COLD_START_TASKS] : COLD_START_TASKS;
+  const coldStartTasks = (startingFromSeed ? [SEED_SUPPLIES_TASK, ...COLD_START_TASKS] : COLD_START_TASKS).filter(
+    (t) => !doneBeforeToday(t.id)
+  );
 
   // "Getting ready to grow" only when there's genuinely nothing to do.
   const coldShown = [...careTasks, ...seedTasks];
@@ -392,18 +406,22 @@ export default function HomeScreen({
               </TouchableOpacity>
             ) : null}
 
-            <Text style={styles.sectionLabel}>Get ready</Text>
-            <View style={{ gap: space.sm }}>
-              {coldStartTasks.map((t) => (
-                <TaskRow
-                  key={t.id}
-                  task={t}
-                  completedAt={isTaskComplete(profile, t.id)}
-                  onToggle={() => handleToggle(t.id)}
-                  onOpenGuide={onOpenSeedGuide}
-                />
-              ))}
-            </View>
+            {coldStartTasks.length > 0 ? (
+              <>
+                <Text style={styles.sectionLabel}>Get ready</Text>
+                <View style={{ gap: space.sm }}>
+                  {coldStartTasks.map((t) => (
+                    <TaskRow
+                      key={t.id}
+                      task={t}
+                      completedAt={isTaskComplete(profile, t.id)}
+                      onToggle={() => handleToggle(t.id)}
+                      onOpenGuide={onOpenSeedGuide}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
 
             <Text style={styles.frostFootnote}>
               Estimated from your area's weather history over the past few years. Check back as
