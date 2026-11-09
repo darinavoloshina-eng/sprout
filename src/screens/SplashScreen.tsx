@@ -145,9 +145,15 @@ const styles = StyleSheet.create({
     width: 280,
     textAlign: 'center',
   },
+  // Full-width and centered for the same reason as the wordmark above: an
+  // auto-sized box measured in the fallback font clipped the last letters
+  // ("Grow your own fo") once the real font swapped in.
   tagline: {
     position: 'absolute',
     bottom: space.xxl * 2,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.inkSoft,
