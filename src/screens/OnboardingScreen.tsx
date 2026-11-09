@@ -54,7 +54,7 @@ import { saveProfile } from '../api/storage';
 import { recordEmailOptIn } from '../api/subscribe';
 import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP_LIMIT, isOfferedCategory, isOfferedCrop, plantedBucketsFor } from '../cropMeta';
 import { CropIcon } from '../components/ui';
 import { NEXT_ACTION, STAGE_HEADLINE } from '../plantStageContent';
 import { PRIVACY_POLICY_URL } from '../legal';
@@ -365,10 +365,10 @@ export default function OnboardingScreen({
               ) : null}
             </View>
             <Text style={styles.eyebrow}>Getting Started</Text>
-            <Text style={styles.h1}>What are you growing?</Text>
+            <Text style={styles.h1}>What would you love to grow?</Text>
             <Text style={styles.sub}>
-              Pick what's planted or what you're planning to grow. We'll turn it into a personalized
-              garden to-do list.
+              Pick a few foods you'd love to eat from your garden. We'll show you when and how to grow
+              each one.
             </Text>
             {!existing?.isPro ? (
               <Text style={styles.freeCountText}>
@@ -393,14 +393,14 @@ export default function OnboardingScreen({
 
             {categoryMenuOpen ? (
               <View style={styles.categoryMenu}>
-                {CATEGORY_OPTIONS.map((opt, i) => {
+                {CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, existing?.crops ?? [])).map((opt, i, opts) => {
                   const sel = opt.key === category;
                   return (
                     <TouchableOpacity
                       key={opt.key}
                       style={[
                         styles.categoryMenuItem,
-                        i === CATEGORY_OPTIONS.length - 1 && styles.categoryMenuItemLast,
+                        i === opts.length - 1 && styles.categoryMenuItemLast,
                         sel && styles.categoryMenuItemSelected,
                       ]}
                       onPress={() => {
@@ -423,7 +423,7 @@ export default function OnboardingScreen({
 
             <View style={styles.cropGrid}>
               {[...FREE_CROPS, ...PRO_CROPS]
-                .filter((c) => CROP_CATEGORY[c] === category)
+                .filter((c) => CROP_CATEGORY[c] === category && isOfferedCrop(c, existing?.crops ?? []))
                 .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)))
                 .map((c) => {
                 const selected = crops.has(c);
@@ -546,7 +546,7 @@ export default function OnboardingScreen({
         {step === 'payoff' && (
           <>
             <Text style={styles.eyebrow}>Here's the idea</Text>
-            <Text style={styles.h1}>Your first month, already planned</Text>
+            <Text style={styles.h1}>Your first month of growing, planned</Text>
             <Text style={styles.sub}>
               Built from {cropList.map(cropLabel).join(' and ').toLowerCase() || 'your crops'} alone. Two
               more questions make the dates exact for your yard.
@@ -637,7 +637,7 @@ export default function OnboardingScreen({
             <Text style={styles.eyebrow}>Your yard</Text>
             <Text style={styles.h1}>Where's your garden?</Text>
             <Text style={styles.sub}>
-              Local frost dates and forecasts put your tasks on the right week, not a generic zone chart.
+              Your location tells us what grows well where you live, and the right week to plant it.
             </Text>
 
             <TouchableOpacity
@@ -815,8 +815,8 @@ export default function OnboardingScreen({
               accessibilityState={{ checked: notificationsEnabled }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={styles.notifTitle}>Task reminders</Text>
-                <Text style={styles.notifSub}>Only on days something needs doing, plus a Sunday watering plan</Text>
+                <Text style={styles.notifTitle}>Garden reminders</Text>
+                <Text style={styles.notifSub}>A heads-up when your plants need you, so they grow healthier and give you more food. Never a daily ping.</Text>
               </View>
               <View style={[styles.switch, notificationsEnabled && styles.switchOn]}>
                 <View style={[styles.knob, notificationsEnabled && styles.knobOn]} />
@@ -831,8 +831,8 @@ export default function OnboardingScreen({
             >
               {existing?.isPro ? null : <Text style={styles.lockIcon}>🔒</Text>}
               <View style={{ flex: 1 }}>
-                <Text style={styles.notifTitle}>Stage & harvest alerts</Text>
-                <Text style={styles.notifSub}>Feed, prune, and pick reminders per crop</Text>
+                <Text style={styles.notifTitle}>Grow-more tips</Text>
+                <Text style={styles.notifSub}>When to feed, prune, and pick each crop for a bigger harvest</Text>
               </View>
               <Text style={existing?.isPro ? styles.includedTag : styles.proTag}>
                 {existing?.isPro ? '✓ Included' : 'PRO'}
@@ -851,7 +851,7 @@ export default function OnboardingScreen({
                   <Text style={styles.trialCheck}>✓</Text> Every crop, not just the free four
                 </Text>
                 <Text style={styles.trialBullet}>
-                  <Text style={styles.trialCheck}>✓</Text> Stage & harvest alerts per crop
+                  <Text style={styles.trialCheck}>✓</Text> Grow-more tips for every crop
                 </Text>
                 <Text style={styles.trialBullet}>
                   <Text style={styles.trialCheck}>✓</Text> The season view and year-over-year comparison
@@ -864,7 +864,7 @@ export default function OnboardingScreen({
 
             <View style={styles.spacer} />
             <TouchableOpacity style={styles.cta} onPress={() => setStep('email')} accessibilityRole="button">
-              <Text style={styles.ctaText}>See your customized schedule</Text>
+              <Text style={styles.ctaText}>See your growing plan</Text>
             </TouchableOpacity>
           </>
         )}

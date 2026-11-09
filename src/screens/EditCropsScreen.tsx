@@ -30,7 +30,7 @@ import { CropKey } from '../engines/scheduleEngine';
 import { PlantedBackdate } from '../engines/alertsEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropLabel, FREE_CROP_LIMIT, isOfferedCategory, isOfferedCrop, plantedBucketsFor } from '../cropMeta';
 import { saveProfile } from '../api/storage';
 import { assumedPlantedDateForBucket, effectiveBackdate, effectiveBucket, markPlanted } from '../engines/taskEngine';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
@@ -185,6 +185,7 @@ export default function EditCropsScreen({
 
   const [category, setCategory] = useState<CropCategory>(initialCategory ?? 'vegetable');
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const categoryOptions = CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, profile.crops));
   const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
 
   const [justSaved, setJustSaved] = useState(false);
@@ -205,7 +206,7 @@ export default function EditCropsScreen({
   // crops total, not which specific ones are visible. See atFreeLimit
   // above for where that cap actually bites.
   const visibleCrops = [...FREE_CROPS, ...PRO_CROPS]
-    .filter((c) => CROP_CATEGORY[c] === category)
+    .filter((c) => CROP_CATEGORY[c] === category && isOfferedCrop(c, profile.crops))
     .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
 
   return (
@@ -235,14 +236,14 @@ export default function EditCropsScreen({
 
         {categoryMenuOpen ? (
           <View style={styles.categoryMenu}>
-            {CATEGORY_OPTIONS.map((opt, i) => {
+            {categoryOptions.map((opt, i) => {
               const sel = opt.key === category;
               return (
                 <TouchableOpacity
                   key={opt.key}
                   style={[
                     styles.categoryMenuItem,
-                    i === CATEGORY_OPTIONS.length - 1 && styles.categoryMenuItemLast,
+                    i === categoryOptions.length - 1 && styles.categoryMenuItemLast,
                     sel && styles.categoryMenuItemSelected,
                   ]}
                   onPress={() => {

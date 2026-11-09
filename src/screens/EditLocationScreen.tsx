@@ -154,7 +154,7 @@ export default function EditLocationScreen({
         </TouchableOpacity>
         <Text style={styles.title}>Location</Text>
         <Text style={styles.sub}>
-          Local frost dates and forecasts put your tasks on the right week, not a generic zone chart.
+          Your location tells us what grows well where you live, and the right week to plant it.
         </Text>
 
         <TouchableOpacity

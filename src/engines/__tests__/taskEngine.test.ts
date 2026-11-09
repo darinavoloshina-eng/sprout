@@ -924,7 +924,7 @@ describe('getFeedReminders', () => {
     });
     const tasks = getFeedReminders(profile, new Date(2024, 4, 8));
     expect(tasks[0].buyUrl).toContain('amazon.com');
-    expect(tasks[0].buyUrl).toContain(encodeURIComponent('Lemon tree fertilizer'));
+    expect(tasks[0].buyUrl).toContain(encodeURIComponent('organic Lemon tree fertilizer'));
   });
 
   describe('perennial trees (citrus etc.) — recurs every year, not just the planting year', () => {

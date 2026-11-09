@@ -23,7 +23,7 @@ import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { CropKey } from '../engines/scheduleEngine';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
-import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel, FREE_CROP_LIMIT, plantedBucketsFor } from '../cropMeta';
+import { CROP_CATEGORY, CropCategory, cropIconBg, cropLabel, FREE_CROP_LIMIT, isOfferedCategory, isOfferedCrop, plantedBucketsFor } from '../cropMeta';
 import { PlantedBackdate } from '../engines/alertsEngine';
 import { BUCKET_LABEL, NEXT_ACTION, NEXT_ACTION_ICON, SEASON_SHAPE, STAGE_HEADLINE } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
@@ -188,6 +188,7 @@ export default function MyGardenScreen({
   const [category, setCategory] = useState<GardenCategoryFilter>('all');
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [editingPlantedFor, setEditingPlantedFor] = useState<CropKey | null>(null);
+  const categoryOptions = CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, profile.crops));
   const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
 
   const totalLbs = (profile.harvests ?? []).reduce((sum, h) => sum + h.weightLbs, 0);
@@ -198,7 +199,7 @@ export default function MyGardenScreen({
   // Free is a count, not a fixed crop list, so the full catalog is always
   // browsable/addable here — EditCropsScreen is what actually opens the
   // paywall once a free garden hits FREE_CROP_LIMIT.
-  const availableCrops = [...FREE_CROPS, ...PRO_CROPS];
+  const availableCrops = [...FREE_CROPS, ...PRO_CROPS].filter((c) => isOfferedCrop(c, profile.crops));
   // Scoped to the active category tab — the "+ Add a crop" card opens the
   // picker to this same category, so it only shows when there's something
   // left to add there. "All" is the one exception, matching its own
@@ -237,7 +238,7 @@ export default function MyGardenScreen({
 
         {categoryMenuOpen ? (
           <View style={styles.categoryMenu}>
-            {CATEGORY_OPTIONS.map((opt, i) => {
+            {categoryOptions.map((opt, i) => {
               const sel = opt.key === category;
               const count = opt.key === 'all' ? crops.length : crops.filter((c) => CROP_CATEGORY[c] === opt.key).length;
               return (
@@ -245,7 +246,7 @@ export default function MyGardenScreen({
                   key={opt.key}
                   style={[
                     styles.categoryMenuItem,
-                    i === CATEGORY_OPTIONS.length - 1 && styles.categoryMenuItemLast,
+                    i === categoryOptions.length - 1 && styles.categoryMenuItemLast,
                     sel && styles.categoryMenuItemSelected,
                   ]}
                   onPress={() => {

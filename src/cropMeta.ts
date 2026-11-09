@@ -156,6 +156,20 @@ export const CROP_CATEGORY: Record<CropKey, CropCategory> = {
   other: 'vegetable',
 };
 
+/** Flowers were taken out of the catalog to keep GardenWise focused on
+ * growing food. Their crop data stays (alerts, feeding, planting windows),
+ * so anyone who already added one keeps it and its reminders; they just
+ * can't be newly picked. `owned` is the user's saved crop list. */
+export function isOfferedCrop(crop: CropKey, owned: readonly string[]): boolean {
+  return CROP_CATEGORY[crop] !== 'flower' || owned.includes(crop);
+}
+
+/** Whether a category belongs in a picker's menu: Flowers only shows for
+ * someone who already grows one (see isOfferedCrop). */
+export function isOfferedCategory(category: string, owned: readonly string[]): boolean {
+  return category !== 'flower' || owned.some((c) => CROP_CATEGORY[c as CropKey] === 'flower');
+}
+
 /** What a user can pick when backdating a crop's planting manually (no
  * tracked exact date) — see PlantedBackdate in alertsEngine.ts for why the
  * three long-duration rungs exist and why they're tree-only. Shared here

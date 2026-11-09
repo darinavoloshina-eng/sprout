@@ -35,8 +35,13 @@ import { fetchPlans, isConfigured, purchase, restore as restorePurchases, Subscr
 const BENEFITS = [
   {
     icon: '🌱',
-    title: 'Every crop in the catalogue',
-    body: '35 vegetables, 10 herbs, 7 flowers, 6 fruits, and 12 trees, each with its own stage guidance',
+    title: 'Every crop',
+    body: '35 vegetables, 10 herbs, 6 fruits, and 12 fruit trees and berry bushes, each with step-by-step guidance',
+  },
+  {
+    icon: '🧺',
+    title: 'Grow-more tips',
+    body: 'When to feed, prune, and pick each crop for a bigger, healthier harvest',
   },
   {
     icon: '🗓',
@@ -143,7 +148,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose, onPur
         <Text style={styles.headline}>
           {profile.isPro
             ? "You're on\nGardenWise Pro\nalready"
-            : 'Grow the\nwhole garden'}
+            : 'Grow more of\nyour own food'}
         </Text>
         <Text style={styles.sub}>
           {profile.isPro
@@ -152,7 +157,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose, onPur
                 ? 'Thanks for buying GardenWise Pro for life.'
                 : 'Thanks for subscribing.'
               : 'This is a local preview, not a real subscription.'
-            : 'The GardenWise free plan covers 4 crops. GardenWise Pro is for the garden you actually have.'}
+            : 'Free covers 4 crops. Pro is for the garden you dream of: every vegetable, herb, and fruit, with tips that help each one produce more.'}
         </Text>
 
         <View style={styles.benefits}>

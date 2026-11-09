@@ -209,7 +209,7 @@ export default function HomeScreen({
   const startingFromSeed = profile.crops.some((c) => c !== 'other' && activeSeedStartPlan(profile, c as CropKey, today));
   const coldStartTasks = startingFromSeed ? [SEED_SUPPLIES_TASK, ...COLD_START_TASKS] : COLD_START_TASKS;
 
-  // "Not planting season yet" only when there's genuinely nothing to do.
+  // "Getting ready to grow" only when there's genuinely nothing to do.
   const coldShown = [...careTasks, ...seedTasks];
   const coldLeft = coldShown.filter((t) => !isTaskComplete(profile, t.id)).length;
   const title = isColdStart
@@ -217,9 +217,9 @@ export default function HomeScreen({
       ? `${coldLeft} ${coldLeft === 1 ? 'thing' : 'things'} left`
       : coldShown.length > 0
         ? 'All done for today'
-        : 'Not planting season yet'
+        : 'Getting ready to grow'
     : tasks.length === 0
-      ? 'Nothing due today'
+      ? 'Nothing to do today. Enjoy the garden 🌱'
       : leftCount === 0
         ? 'All done for today'
         : `${leftCount} ${leftCount === 1 ? 'thing' : 'things'} left`;
@@ -415,7 +415,7 @@ export default function HomeScreen({
               <ProgressRing fraction={tasks.length ? doneCount / tasks.length : 0} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.progressTitle}>
-                  {leftCount === 0 ? "Nice, everything's done" : 'Finish today to keep the streak'}
+                  {leftCount === 0 ? "Nice, everything's done" : 'Finish today to keep your streak'}
                 </Text>
                 {longestStreak > 0 ? (
                   <Text style={styles.progressSub}>Your longest run is {longestStreak} days.</Text>

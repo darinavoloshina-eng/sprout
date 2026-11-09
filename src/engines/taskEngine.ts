@@ -59,12 +59,39 @@ export interface DailyTask {
   guide?: boolean;
 }
 
-/** A generic, unaffiliated Amazon search for the fertilizer a feed task
- * calls for — a placeholder "Buy now" destination until real affiliate
- * links and curated per-crop products exist. */
+/** A generic, unaffiliated Amazon search for an organic fertilizer for
+ * the crop a feed task is about — a placeholder "Buy now" destination
+ * until real affiliate links and curated per-crop products exist. */
 function placeholderFertilizerBuyUrl(crop: CropKey): string {
-  const query = `${cropLabel(crop)} fertilizer`;
+  const query = `organic ${cropLabel(crop)} fertilizer`;
   return `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+}
+
+/** One organic way to do each feed task, appended to its note. A lot of
+ * people grow their own food partly to know exactly what goes on it, so
+ * every feeding tip offers an organic route. Kept to a line per plant
+ * type: what suits fruiting crops (a balanced feed) differs from leafy,
+ * nitrogen-hungry ones (fish emulsion) and from acid lovers. */
+const ORGANIC_FEED_TIP: Partial<Record<CropKey, string>> = (() => {
+  const tips: Partial<Record<CropKey, string>> = {};
+  const set = (crops: CropKey[], tip: string) => crops.forEach((c) => (tips[c] = tip));
+  set(['lemon', 'lime', 'orange', 'kumquat'], 'Organic option: an organic citrus fertilizer, plus a layer of compost around the base in spring.');
+  set(['blueberries'], 'Organic option: an organic fertilizer made for acid-loving plants.');
+  set(['avocado', 'olive', 'pomegranate'], 'Organic option: spread compost around the base in spring, keeping it a few inches off the trunk.');
+  set(
+    ['strawberries', 'tomatoes', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
+    'Organic option: compost or worm castings around the plants, or a fish-and-kelp liquid feed.'
+  );
+  set(
+    ['corn', 'celery', 'onions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
+    'Organic option: fish emulsion, or compost worked in around the plants.'
+  );
+  return tips;
+})();
+
+function feedDetail(crop: CropKey, note: string): string {
+  const tip = ORGANIC_FEED_TIP[crop];
+  return tip ? `${note} ${tip}` : note;
 }
 
 export function dateKey(date: Date): string {
@@ -540,7 +567,7 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
           icon: cropIcon(crop),
           iconBg: cropIconBg(crop),
           title: `Fertilize ${cropLabel(crop)}`,
-          detail: info.note,
+          detail: feedDetail(crop, info.note),
           category: 'feed',
           buyUrl: placeholderFertilizerBuyUrl(crop),
         });
@@ -557,7 +584,7 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
         icon: cropIcon(crop),
         iconBg: cropIconBg(crop),
         title: `Fertilize ${cropLabel(crop)}`,
-        detail: info.note,
+        detail: feedDetail(crop, info.note),
         category: 'feed',
         buyUrl: placeholderFertilizerBuyUrl(crop),
       });

@@ -19,6 +19,7 @@
 // metric branch; only the labels here and elsewhere convert.
 
 import React, { useState } from 'react';
+import Constants from 'expo-constants';
 import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   EMITTER_GPH_OPTIONS,
@@ -169,7 +170,7 @@ export default function SettingsScreen({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.proTitle}>Try Pro free for 14 days</Text>
-              <Text style={styles.proSub}>All crops, season view, year-over-year · then $2.99/mo</Text>
+              <Text style={styles.proSub}>Every crop and grow-more tips · then $2.99/mo</Text>
             </View>
           </TouchableOpacity>
         ) : null}
@@ -364,8 +365,8 @@ export default function SettingsScreen({
             accessibilityState={{ checked: profile.notificationsEnabled }}
           >
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Task reminders</Text>
-              <Text style={styles.rowSub}>Only on days something needs doing, plus a Sunday watering plan</Text>
+              <Text style={styles.rowLabel}>Garden reminders</Text>
+              <Text style={styles.rowSub}>A heads-up when your plants need you, so they grow healthier and give you more food. Never a daily ping.</Text>
             </View>
             <View style={[styles.switch, profile.notificationsEnabled && styles.switchOn]}>
               <View style={[styles.knob, profile.notificationsEnabled && styles.knobOn]} />
@@ -379,8 +380,8 @@ export default function SettingsScreen({
           >
             {profile.isPro ? null : <Text style={styles.lockIcon}>🔒</Text>}
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowLabel}>Stage & harvest alerts</Text>
-              <Text style={styles.rowSub}>Feed, prune, and pick reminders</Text>
+              <Text style={styles.rowLabel}>Grow-more tips</Text>
+              <Text style={styles.rowSub}>When to feed, prune, and pick for a bigger harvest</Text>
             </View>
             <Text style={profile.isPro ? styles.includedTag : styles.proTag}>
               {profile.isPro ? '✓ Included' : 'PRO'}
@@ -404,7 +405,7 @@ export default function SettingsScreen({
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.footer}>GardenWise 0.1.0 · your garden data is never sold</Text>
+        <Text style={styles.footer}>GardenWise {Constants.expoConfig?.version ?? ''} · your garden data is never sold</Text>
       </ScrollView>
 
       <TabBar active={activeTab} onPress={onTabPress} />
