@@ -748,6 +748,31 @@ export interface HarvestWindow {
   end: Date;
 }
 
+/** Weeks past the first fall frost that a cold-hardy crop keeps giving a
+ * harvest. Leafy greens and brassicas planted for fall don't stop on a
+ * schedule: cool weather is what they like, and arugula, spinach, and
+ * kale (which even sweetens after frost) keep producing until hard freezes
+ * set in. A planted-date window alone ended arugula's harvest in early
+ * November, when it really goes on into December. */
+const FROST_HARDY_HARVEST_WEEKS: Partial<Record<CropKey, number>> = {
+  kale: 8, collards: 8, brusselssprouts: 6, spinach: 5, arugula: 4, greenonions: 4, parsley: 4,
+  chard: 3, bokchoy: 3, cabbage: 3, lettuce: 2, cilantro: 2, broccoli: 2, peas: 1,
+};
+
+/** A frost-hardy crop whose harvest runs into the fall keeps going until a
+ * few weeks after the first fall frost. A spring planting (one that wraps
+ * up long before fall) is left alone: those greens bolt in summer heat. */
+function hardyHarvestEnd(crop: CropKey, start: Date, end: Date, frostDates: FrostEstimate | null | undefined): Date {
+  const weeks = FROST_HARDY_HARVEST_WEEKS[crop];
+  const fallMonthDay = effectiveFirstFrostMonthDay(frostDates);
+  if (!weeks || !fallMonthDay) return end;
+  let frost = parseMonthDay(fallMonthDay, start.getFullYear());
+  if (frost.getTime() < start.getTime()) frost = parseMonthDay(fallMonthDay, start.getFullYear() + 1);
+  if (frost.getTime() - end.getTime() > 10 * 7 * 86400000) return end;
+  const extended = addWeeks(frost, weeks);
+  return extended.getTime() > end.getTime() ? extended : end;
+}
+
 /** Crops whose estimated harvest window covers `date` — a rough date-based
  * projection from SEASON_SHAPE's sow/grow/harvest proportions applied to
  * the crop's planted date, unlike getAlerts' severity='soon' "ready to
@@ -772,7 +797,7 @@ export function harvestWindowsFor(profile: GardenProfile, date: Date): HarvestWi
     const totalDays = shape.weeks * 7;
     const harvestStartDay = (totalDays * (shape.sow + shape.grow)) / 100;
     const start = new Date(planted.getTime() + harvestStartDay * 86400000);
-    const end = new Date(planted.getTime() + totalDays * 86400000);
+    const end = hardyHarvestEnd(crop, start, new Date(planted.getTime() + totalDays * 86400000), profile.frostDates);
     if (date.getTime() >= start.getTime() && date.getTime() <= end.getTime()) {
       windows.push({ crop, start, end });
     }

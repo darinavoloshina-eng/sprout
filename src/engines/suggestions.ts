@@ -94,13 +94,15 @@ function climateOk(crop: CropKey, frost: FrostEstimate, now: Date): boolean {
 
 function reasonFor(crop: CropKey, group: SuggestionGroup, warmWeather: boolean, date: Date, outdoorDate: Date, startIndoors: boolean): string {
   if (CROP_CATEGORY[crop] === 'tree') {
-    return group === 'soon' ? `Plant around ${shortDate(date)} · pick for years` : 'Plant once, pick for years';
+    return `Plant around ${shortDate(date)} · pick for years`;
   }
+  // Every line leads with its planting date, which is also what the list
+  // is sorted by, so the order reads as a to-do list.
   const weather = warmWeather ? 'loves warm weather' : 'loves cool weather';
-  if (group === 'indoors') return `Plant out around ${shortDate(outdoorDate)} · ${weather}`;
+  if (group === 'indoors') return `Start indoors around ${shortDate(date)} · plant out ${shortDate(outdoorDate)}`;
   if (group === 'soon') return `${startIndoors ? 'Start indoors' : 'Plant'} around ${shortDate(date)} · ${weather}`;
   const weeks = SEASON_SHAPE[crop]?.weeks;
-  return weeks ? `Harvest in about ${weeks} weeks · ${weather}` : weather.charAt(0).toUpperCase() + weather.slice(1);
+  return weeks ? `Plant around ${shortDate(date)} · harvest in about ${weeks} weeks` : `Plant around ${shortDate(date)} · ${weather}`;
 }
 
 /** What to suggest, or null when there's no frost estimate to time it by.
@@ -166,7 +168,11 @@ function collect(frost: FrostEstimate, owned: readonly string[], now: Date, soon
 
   const groups: Suggestions = { indoors: [], outside: [], soon: [] };
   for (const g of Object.keys(groups) as SuggestionGroup[]) {
-    groups[g] = mixCategories(found.filter((s) => s.group === g).sort(order)).slice(0, MAX_PER_GROUP);
+    // Choose a varied handful, then list it by date: the one to plant
+    // soonest first, so the list reads as "do this next".
+    groups[g] = mixCategories(found.filter((s) => s.group === g).sort(order))
+      .slice(0, MAX_PER_GROUP)
+      .sort((a, b) => a.date.getTime() - b.date.getTime() || cropLabel(a.crop).localeCompare(cropLabel(b.crop)));
   }
   return groups;
 }

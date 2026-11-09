@@ -116,7 +116,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         <Text style={styles.wordmark}>GardenWise</Text>
       </Animated.View>
       <Animated.Text style={[styles.tagline, { opacity: taglineOpacity }]}>
-        Grow with the season, not against it.
+        Grow your own food.
       </Animated.Text>
     </View>
   );

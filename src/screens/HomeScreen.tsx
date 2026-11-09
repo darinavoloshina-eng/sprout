@@ -712,24 +712,28 @@ function WateringCard({
     ...trees.map((t) => `${t.title.replace(/^Water /, '')}: check the soil, water if dry`),
     ...notes.map((n) => `${cropLabel(n.crop)}: ${lowerFirst(n.text)}`),
   ];
+  // The notes run the card's full width, starting under the 💧, so they
+  // don't wrap in a narrow column beside it.
   const body = (
     <>
-      <Text style={styles.waterIcon}>💧</Text>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={styles.waterEyebrow}>Today's watering</Text>
-        <Text style={[styles.waterTitle, done && styles.taskTitleDone]}>{title}</Text>
-        {sub ? <Text style={styles.waterSub}>{sub}</Text> : null}
-        {lines.map((l) => (
-          <Text key={l} style={styles.waterLine}>
-            • {l}
-          </Text>
-        ))}
-      </View>
-      {due ? (
-        <View style={[styles.checkCircle, done && styles.checkCircleDone]}>
-          {done ? <Text style={styles.checkMark}>✓</Text> : null}
+      <View style={styles.waterHead}>
+        <Text style={styles.waterIcon}>💧</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={styles.waterEyebrow}>Today's watering</Text>
+          <Text style={[styles.waterTitle, done && styles.taskTitleDone]}>{title}</Text>
+          {sub ? <Text style={styles.waterSub}>{sub}</Text> : null}
         </View>
-      ) : null}
+        {due ? (
+          <View style={[styles.checkCircle, done && styles.checkCircleDone]}>
+            {done ? <Text style={styles.checkMark}>✓</Text> : null}
+          </View>
+        ) : null}
+      </View>
+      {lines.map((l) => (
+        <Text key={l} style={styles.waterLine}>
+          • {l}
+        </Text>
+      ))}
     </>
   );
   return due ? (
@@ -806,15 +810,13 @@ function TaskRow({
 
 const styles = StyleSheet.create({
   waterCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
     backgroundColor: colors.selectedBg,
     borderWidth: 1.5,
     borderColor: colors.line,
     borderRadius: radius.lg,
     padding: 14,
   },
+  waterHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   waterIcon: { fontSize: 22, marginTop: 2 },
   waterEyebrow: {
     fontFamily: fonts.monoSemiBold,

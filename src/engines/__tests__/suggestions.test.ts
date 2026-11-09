@@ -14,7 +14,7 @@ describe('suggestCrops', () => {
   it('suggests starting peppers indoors in early March, ahead of a late-April frost', () => {
     const s = suggestCrops(chicago, [], new Date(2027, 2, 1))!;
     expect(crops(s.indoors)).toContain('peppers');
-    expect(s.indoors.find((x) => x.crop === 'peppers')!.reason).toMatch(/^Plant out around/);
+    expect(s.indoors.find((x) => x.crop === 'peppers')!.reason).toMatch(/^Start indoors around .* · plant out /);
   });
 
   it('suggests warm-weather crops outside in May and cool ones in August', () => {
@@ -55,10 +55,11 @@ describe('suggestCrops', () => {
     expect(s.indoors.length + s.outside.length + s.soon.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('caps each list and puts beginner crops first', () => {
+  it('caps each list and orders it by planting date, soonest first', () => {
     const s = suggestCrops(chicago, [], new Date(2027, 4, 10))!;
     expect(s.outside.length).toBeLessThanOrEqual(MAX_PER_GROUP);
-    expect(['basil', 'beans', 'cucumbers', 'tomatoes', 'zucchini']).toContain(s.outside[0].crop);
+    const times = s.outside.map((x) => x.date.getTime());
+    expect(times).toEqual([...times].sort((a, b) => a - b));
   });
 });
 

@@ -1450,3 +1450,21 @@ describe('dateKey', () => {
     expect(dateKey(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });
+
+describe('harvestWindowsFor, cold-hardy greens', () => {
+  const base = makeProfile({
+    crops: ['arugula'],
+    plantedWeeks: { arugula: 'w4' },
+    isPro: true,
+    frostDates: { lastFrostMonthDay: '03-05', firstFrostMonthDay: '11-24', isNorthernHemisphere: true, fetchedAt: '' },
+  });
+  it('keeps a fall arugula harvest going a few weeks past the first frost', () => {
+    const profile = { ...base, plantedDates: { arugula: new Date(2026, 8, 10).toISOString() } };
+    expect(harvestWindowsFor(profile, new Date(2026, 11, 10)).map((w) => w.crop)).toEqual(['arugula']);
+    expect(harvestWindowsFor(profile, new Date(2027, 0, 15))).toEqual([]);
+  });
+  it('leaves a spring planting on its own schedule', () => {
+    const profile = { ...base, plantedDates: { arugula: new Date(2026, 2, 20).toISOString() } };
+    expect(harvestWindowsFor(profile, new Date(2026, 7, 1))).toEqual([]);
+  });
+});
