@@ -34,6 +34,8 @@ import { CROP_CATEGORY, CropCategory, cropLabel, FREE_CROP_LIMIT, isOfferedCateg
 import { saveProfile } from '../api/storage';
 import { assumedPlantedDateForBucket, effectiveBackdate, effectiveBucket, markPlanted } from '../engines/taskEngine';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
+import { SuggestionsList } from '../components/Suggestions';
+import { suggestCrops } from '../engines/suggestions';
 
 const FREE_CROPS: CropKey[] = ['tomatoes', 'cucumbers', 'lettuce', 'carrots'];
 const PRO_CROPS: CropKey[] = [
@@ -145,7 +147,9 @@ export default function EditCropsScreen({
   const selectedCount = profile.crops.filter((c) => c !== 'other').length;
   const atFreeLimit = !profile.isPro && selectedCount >= FREE_CROP_LIMIT;
 
-  function toggleCrop(c: CropKey) {
+  // `bucket`: suggestions add crops as not-planted-yet; a tap in the
+  // catalog keeps assuming it's already in the ground.
+  function toggleCrop(c: CropKey, bucket: PlantedBackdate = 'w2') {
     if (profile.crops.includes(c)) {
       const { [c]: _removed, ...plantedWeeks } = profile.plantedWeeks;
       updateProfile({ crops: profile.crops.filter((x) => x !== c), plantedWeeks });
@@ -160,7 +164,7 @@ export default function EditCropsScreen({
     }
     updateProfile({
       crops: [...profile.crops, c],
-      plantedWeeks: { ...profile.plantedWeeks, [c]: 'w2' },
+      plantedWeeks: { ...profile.plantedWeeks, [c]: bucket },
     });
   }
 
@@ -187,6 +191,15 @@ export default function EditCropsScreen({
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const categoryOptions = CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, profile.crops));
   const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  // Computed once per open, so a crop doesn't vanish from the list the
+  // moment it's added (it shows as "✓ Added" instead).
+  const [suggestions, setSuggestions] = useState<ReturnType<typeof suggestCrops>>(null);
+  function toggleSuggestions() {
+    if (!showSuggestions) setSuggestions(suggestCrops(profile.frostDates, profile.crops));
+    setShowSuggestions((v) => !v);
+  }
 
   const [justSaved, setJustSaved] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -221,6 +234,29 @@ export default function EditCropsScreen({
           <Text style={styles.freeCountText}>
             {selectedCount} of {FREE_CROP_LIMIT} free crops selected
           </Text>
+        ) : null}
+
+        <TouchableOpacity style={styles.suggestToggle} onPress={toggleSuggestions} accessibilityRole="button">
+          <Text style={styles.suggestIcon}>🌱</Text>
+          <Text style={styles.suggestLabel}>Not sure? See what grows well near you right now</Text>
+          <Text style={styles.categoryDropdownChevron}>{showSuggestions ? '▴' : '▾'}</Text>
+        </TouchableOpacity>
+        {showSuggestions ? (
+          <View style={styles.suggestPanel}>
+            {suggestions ? (
+              <SuggestionsList
+                suggestions={suggestions}
+                isAdded={(c) => profile.crops.includes(c)}
+                onToggle={(c) => toggleCrop(c, 'w0')}
+              />
+            ) : (
+              <Text style={styles.sub}>
+                {profile.location
+                  ? 'Still looking up the frost history for your location. Try again in a moment.'
+                  : 'Add your location in Settings to see what grows well where you live.'}
+              </Text>
+            )}
+          </View>
         ) : null}
 
         <TouchableOpacity
@@ -374,6 +410,22 @@ const styles = StyleSheet.create({
   back: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
   title: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 26, color: colors.pine, marginTop: 4 },
   sub: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 20, color: colors.inkSoft, marginTop: 4, marginBottom: 8 },
+  suggestToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.selectedBg,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: radius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginTop: space.sm,
+    marginBottom: space.md,
+  },
+  suggestIcon: { fontSize: 18 },
+  suggestLabel: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13.5, lineHeight: 18, color: colors.pine },
+  suggestPanel: { marginBottom: space.lg },
   freeCountText: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 11.5,

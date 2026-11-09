@@ -812,6 +812,37 @@ function candidatesFor(crop: CropKey, frostDates: FrostEstimate | null | undefin
   return candidates;
 }
 
+export interface PlantingWindow {
+  season: 'spring' | 'fall';
+  /** When it goes in the ground outside (sown or transplanted). */
+  outdoorDate: Date;
+  /** When to sow indoors, for crops started indoors in this season. */
+  indoorDate: Date | null;
+  /** True for frost-hardy crops that also get a fall window (lettuce,
+   * kale, garlic...). Crops without one are frost-tender. */
+  coolSeason: boolean;
+  /** Goes out after the last spring frost, i.e. wants warm weather. */
+  warmWeather: boolean;
+}
+
+/** Every dated planting window for `crop` around `now` (spring and fall,
+ * last/this/next year). Empty without a frost estimate. Used by the
+ * "what grows well near you right now" suggestions. */
+export function plantingWindowsFor(
+  crop: CropKey,
+  frostDates: FrostEstimate | null | undefined,
+  now: Date = new Date()
+): PlantingWindow[] {
+  const coolSeason = !!PLANTING_METHOD[crop].fall;
+  return candidatesFor(crop, frostDates, now).map((c) => ({
+    season: c.season,
+    outdoorDate: c.outdoorDate,
+    indoorDate: c.window.indoorWeeksFromFrost != null ? addWeeks(c.frostDate, c.window.indoorWeeksFromFrost) : null,
+    coolSeason,
+    warmWeather: c.season === 'spring' && c.window.outdoorWeeksFromFrost >= 1,
+  }));
+}
+
 export function plantingGuidanceFor(
   crop: CropKey,
   frostDates: FrostEstimate | null | undefined,

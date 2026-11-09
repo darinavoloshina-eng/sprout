@@ -31,7 +31,7 @@
 // point — they no longer gate visibility. Kept in sync with the same rule
 // in EditCropsScreen.tsx.
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -52,10 +52,13 @@ import { fetchWeather, geocodeSearch, reverseGeocode } from '../api/weather';
 import { getCurrentPositionWithTimeout } from '../api/location';
 import { saveProfile } from '../api/storage';
 import { recordEmailOptIn } from '../api/subscribe';
-import { CURRENT_SCHEMA_VERSION, GardenProfile, LocationInfo } from '../types';
+import { CURRENT_SCHEMA_VERSION, FrostEstimate, GardenProfile, LocationInfo } from '../types';
 import { colors, fonts, radius, space } from '../theme';
 import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP_LIMIT, isOfferedCategory, isOfferedCrop, plantedBucketsFor } from '../cropMeta';
 import { CropIcon } from '../components/ui';
+import { SuggestionsList } from '../components/Suggestions';
+import { suggestCrops, Suggestions } from '../engines/suggestions';
+import { estimateFrostDates } from '../api/frost';
 import { NEXT_ACTION, STAGE_HEADLINE } from '../plantStageContent';
 import { PRIVACY_POLICY_URL } from '../legal';
 
@@ -207,6 +210,42 @@ export default function OnboardingScreen({
 
   const [saving, setSaving] = useState(false);
 
+  // "Not sure? See what grows well near you": needs the location before
+  // the location step, so it asks for it inline, then looks up the frost
+  // history to time suggestions by. That location carries on into the
+  // location step, and the frost estimate into the saved garden.
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestFrost, setSuggestFrost] = useState<{ lat: number; lon: number; frost: FrostEstimate | null } | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
+  const [frostLoading, setFrostLoading] = useState(false);
+
+  useEffect(() => {
+    if (!showSuggestions || !location) return;
+    if (suggestFrost && suggestFrost.lat === location.lat && suggestFrost.lon === location.lon) return;
+    let cancelled = false;
+    setFrostLoading(true);
+    (async () => {
+      const known =
+        existing?.frostDates && existing.location?.lat === location.lat && existing.location?.lon === location.lon
+          ? existing.frostDates
+          : null;
+      const frost = known ?? (await estimateFrostDates(location.lat, location.lon).catch(() => null));
+      if (cancelled) return;
+      setSuggestFrost({ lat: location.lat, lon: location.lon, frost });
+      // Computed once, so an added crop stays in the list as "✓ Added".
+      setSuggestions(suggestCrops(frost, existing?.crops ?? []));
+      setFrostLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showSuggestions, location?.lat, location?.lon]);
+
+  function toggleSuggested(c: CropKey) {
+    if (!crops.has(c) && !atFreeLimit) setPlantedWeeks((w) => ({ ...w, [c]: 'w0' }));
+    toggleCrop(c);
+  }
+
   // Free is a count, not a fixed list of named crops — see EditCropsScreen
   // for the same rule applied post-onboarding.
   const atFreeLimit = !existing?.isPro && crops.size >= FREE_CROP_LIMIT;
@@ -313,6 +352,12 @@ export default function OnboardingScreen({
         emitterSpacingIn: existing?.emitterSpacingIn,
         emitterGph: existing?.emitterGph,
         location: finalLocation,
+        // The estimate looked up for suggestions, when it's for this same
+        // spot, so it isn't fetched twice (see useFrostDates).
+        frostDates:
+          finalLocation && suggestFrost?.frost && suggestFrost.lat === finalLocation.lat && suggestFrost.lon === finalLocation.lon
+            ? suggestFrost.frost
+            : undefined,
         weather,
         weatherFetchedAt,
         scheduledReminders: existing?.scheduledReminders ?? [],
@@ -374,6 +419,65 @@ export default function OnboardingScreen({
               <Text style={styles.freeCountText}>
                 {crops.size} of {FREE_CROP_LIMIT} free crops selected
               </Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.suggestToggle}
+              onPress={() => setShowSuggestions((v) => !v)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.suggestIcon}>🌱</Text>
+              <Text style={styles.suggestLabel}>Not sure? See what grows well near you right now</Text>
+              <Text style={styles.categoryDropdownChevron}>{showSuggestions ? '▴' : '▾'}</Text>
+            </TouchableOpacity>
+
+            {showSuggestions ? (
+              <View style={styles.suggestPanel}>
+                {!location ? (
+                  <>
+                    <Text style={styles.suggestHint}>First, where's your garden?</Text>
+                    <TouchableOpacity style={styles.locationCard} onPress={useMyLocation} accessibilityRole="button">
+                      <Text style={styles.locationIcon}>📍</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.locationTitle}>{locating ? 'Locating…' : 'Use my location'}</Text>
+                        <Text style={styles.locationSub}>Or type your city below</Text>
+                      </View>
+                    </TouchableOpacity>
+                    <View style={styles.manualRow}>
+                      <TextInput
+                        style={styles.input}
+                        value={manualQuery}
+                        onChangeText={setManualQuery}
+                        placeholder="City or ZIP"
+                        placeholderTextColor={colors.inkSoft}
+                        autoCorrect={false}
+                        returnKeyType="search"
+                        onSubmitEditing={searchManualLocation}
+                        accessibilityLabel="City or ZIP"
+                      />
+                      <TouchableOpacity style={styles.findButton} onPress={searchManualLocation} disabled={searching} accessibilityRole="button">
+                        {searching ? <ActivityIndicator color={colors.onPine} /> : <Text style={styles.findButtonText}>Find</Text>}
+                      </TouchableOpacity>
+                    </View>
+                    {locationHint ? <Text style={styles.hint}>{locationHint}</Text> : null}
+                  </>
+                ) : frostLoading || !suggestFrost ? (
+                  <View style={styles.suggestLoading}>
+                    <ActivityIndicator />
+                    <Text style={styles.suggestHint}>Checking the weather history for {location.label}…</Text>
+                  </View>
+                ) : suggestions ? (
+                  <>
+                    <Text style={styles.suggestHint}>What grows well in {location.label} right now:</Text>
+                    <SuggestionsList suggestions={suggestions} isAdded={(c) => crops.has(c)} onToggle={toggleSuggested} />
+                  </>
+                ) : (
+                  <Text style={styles.suggestHint}>
+                    We couldn't find frost history for {location.label}. Pick anything you'd love to eat below, and
+                    GardenWise will work out the timing.
+                  </Text>
+                )}
+              </View>
             ) : null}
 
             <TouchableOpacity
@@ -989,6 +1093,23 @@ const styles = StyleSheet.create({
   },
   h1: { fontFamily: fonts.heading, fontSize: 25, lineHeight: 29, color: colors.pine, marginBottom: 6 },
   sub: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 20, color: colors.inkSoft, marginBottom: 15 },
+  suggestToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.selectedBg,
+    borderWidth: 1.5,
+    borderColor: colors.mossGreen,
+    borderRadius: radius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: space.md,
+  },
+  suggestIcon: { fontSize: 18 },
+  suggestLabel: { flex: 1, fontFamily: fonts.bodySemiBold, fontSize: 13.5, lineHeight: 18, color: colors.pine },
+  suggestPanel: { marginBottom: space.lg, gap: space.sm },
+  suggestHint: { fontFamily: fonts.bodySemiBold, fontSize: 13, lineHeight: 18, color: colors.ink },
+  suggestLoading: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
   categoryDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
