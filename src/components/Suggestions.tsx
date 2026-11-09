@@ -11,12 +11,15 @@ import { cropLabel } from '../cropMeta';
 import { colors, fonts, radius, space } from '../theme';
 import { CropIcon } from './ui';
 
-const GROUP_TITLE: Record<SuggestionGroup, string> = {
+const GROUP_TITLE: Record<'indoors' | 'outside', string> = {
   indoors: 'Start indoors now',
   outside: 'Plant outside now',
-  soon: 'Coming up',
 };
 
+/** Only what can go in now: "Coming up" is left out, so the list is a
+ * plain answer to "what should I plant?". In the quiet weeks when nothing
+ * is plantable right now, the nearest upcoming picks are shown instead
+ * (each reason carries its own date) rather than an empty list. */
 export function SuggestionsList({
   suggestions,
   isAdded,
@@ -26,21 +29,28 @@ export function SuggestionsList({
   isAdded: (crop: CropKey) => boolean;
   onToggle: (crop: CropKey) => void;
 }) {
-  const groups = (Object.keys(GROUP_TITLE) as SuggestionGroup[]).filter((g) => suggestions[g].length > 0);
+  const nowGroups = (Object.keys(GROUP_TITLE) as ('indoors' | 'outside')[]).filter((g) => suggestions[g].length > 0);
+  const groups: { title: string; items: Suggestions[SuggestionGroup] }[] =
+    nowGroups.length > 0
+      ? nowGroups.map((g) => ({ title: GROUP_TITLE[g], items: suggestions[g] }))
+      : suggestions.soon.length > 0
+        ? [{ title: 'Best to plant next', items: suggestions.soon }]
+        : [];
   if (groups.length === 0) {
     return (
       <Text style={styles.empty}>
-        Nothing new to plant right now. Pick anything you'd love to eat below, and GardenWise will tell you when.
+        Nothing new to plant right now. Tap "See all crops" to pick anything you'd love to eat, and GardenWise
+        will tell you when.
       </Text>
     );
   }
   return (
     <View style={{ gap: space.md }}>
       {groups.map((g) => (
-        <View key={g}>
-          <Text style={styles.groupTitle}>{GROUP_TITLE[g]}</Text>
+        <View key={g.title}>
+          <Text style={styles.groupTitle}>{g.title}</Text>
           <View style={styles.card}>
-            {suggestions[g].map((s, i) => {
+            {g.items.map((s, i) => {
               const added = isAdded(s.crop);
               return (
                 <View key={s.crop} style={[styles.row, i > 0 && styles.rowBorder]}>

@@ -232,14 +232,20 @@ export default function OnboardingScreen({
       const frost = known ?? (await estimateFrostDates(location.lat, location.lon).catch(() => null));
       if (cancelled) return;
       setSuggestFrost({ lat: location.lat, lon: location.lon, frost });
-      // Computed once, so an added crop stays in the list as "✓ Added".
-      setSuggestions(suggestCrops(frost, existing?.crops ?? []));
       setFrostLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [showSuggestions, location?.lat, location?.lon]);
+
+  // Worked out each time the list opens, leaving out anything already
+  // picked. Not while it's open, so a crop added from it stays put as
+  // "✓ Added" (tap again to undo) instead of vanishing.
+  useEffect(() => {
+    if (!showSuggestions || !suggestFrost) return;
+    setSuggestions(suggestCrops(suggestFrost.frost, [...new Set([...(existing?.crops ?? []), ...crops])]));
+  }, [showSuggestions, suggestFrost]);
 
   function toggleSuggested(c: CropKey) {
     if (!crops.has(c) && !atFreeLimit) setPlantedWeeks((w) => ({ ...w, [c]: 'w0' }));
@@ -426,9 +432,11 @@ export default function OnboardingScreen({
               onPress={() => setShowSuggestions((v) => !v)}
               accessibilityRole="button"
             >
-              <Text style={styles.suggestIcon}>🌱</Text>
-              <Text style={styles.suggestLabel}>Not sure? See what grows well near you right now</Text>
-              <Text style={styles.categoryDropdownChevron}>{showSuggestions ? '▴' : '▾'}</Text>
+              <Text style={styles.suggestIcon}>{showSuggestions ? '‹' : '🌱'}</Text>
+              <Text style={styles.suggestLabel}>
+                {showSuggestions ? 'See all crops' : 'Not sure? See what grows well near you right now'}
+              </Text>
+              {showSuggestions ? null : <Text style={styles.categoryDropdownChevron}>›</Text>}
             </TouchableOpacity>
 
             {showSuggestions ? (
@@ -481,7 +489,7 @@ export default function OnboardingScreen({
             ) : null}
 
             <TouchableOpacity
-              style={styles.categoryDropdown}
+              style={[styles.categoryDropdown, showSuggestions && styles.hidden]}
               onPress={() => setCategoryMenuOpen((o) => !o)}
               accessibilityRole="button"
               accessibilityLabel={`Category: ${CATEGORY_OPTIONS.find((o) => o.key === category)!.label}`}
@@ -495,7 +503,7 @@ export default function OnboardingScreen({
               <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
             </TouchableOpacity>
 
-            {categoryMenuOpen ? (
+            {categoryMenuOpen && !showSuggestions ? (
               <View style={styles.categoryMenu}>
                 {CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, existing?.crops ?? [])).map((opt, i, opts) => {
                   const sel = opt.key === category;
@@ -525,7 +533,7 @@ export default function OnboardingScreen({
               </View>
             ) : null}
 
-            <View style={styles.cropGrid}>
+            <View style={[styles.cropGrid, showSuggestions && styles.hidden]}>
               {[...FREE_CROPS, ...PRO_CROPS]
                 .filter((c) => CROP_CATEGORY[c] === category && isOfferedCrop(c, existing?.crops ?? []))
                 .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)))
@@ -1062,6 +1070,8 @@ function profileWeatherChips(location: LocationInfo | null) {
 }
 
 const styles = StyleSheet.create({
+  // The suggestions view replaces the full catalog until "See all crops".
+  hidden: { display: 'none' },
   screen: { flex: 1, backgroundColor: colors.paper },
   content: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xxl },
   topRow: { minHeight: 20, marginBottom: space.xs, justifyContent: 'center' },

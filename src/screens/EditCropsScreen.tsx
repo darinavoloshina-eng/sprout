@@ -237,9 +237,11 @@ export default function EditCropsScreen({
         ) : null}
 
         <TouchableOpacity style={styles.suggestToggle} onPress={toggleSuggestions} accessibilityRole="button">
-          <Text style={styles.suggestIcon}>🌱</Text>
-          <Text style={styles.suggestLabel}>Not sure? See what grows well near you right now</Text>
-          <Text style={styles.categoryDropdownChevron}>{showSuggestions ? '▴' : '▾'}</Text>
+          <Text style={styles.suggestIcon}>{showSuggestions ? '‹' : '🌱'}</Text>
+          <Text style={styles.suggestLabel}>
+            {showSuggestions ? 'See all crops' : 'Not sure? See what grows well near you right now'}
+          </Text>
+          {showSuggestions ? null : <Text style={styles.categoryDropdownChevron}>›</Text>}
         </TouchableOpacity>
         {showSuggestions ? (
           <View style={styles.suggestPanel}>
@@ -260,7 +262,7 @@ export default function EditCropsScreen({
         ) : null}
 
         <TouchableOpacity
-          style={styles.categoryDropdown}
+          style={[styles.categoryDropdown, showSuggestions && styles.hidden]}
           onPress={() => setCategoryMenuOpen((o) => !o)}
           accessibilityRole="button"
           accessibilityLabel={`Category: ${activeCategoryOption.label}`}
@@ -270,7 +272,7 @@ export default function EditCropsScreen({
           <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
         </TouchableOpacity>
 
-        {categoryMenuOpen ? (
+        {categoryMenuOpen && !showSuggestions ? (
           <View style={styles.categoryMenu}>
             {categoryOptions.map((opt, i) => {
               const sel = opt.key === category;
@@ -298,7 +300,7 @@ export default function EditCropsScreen({
           </View>
         ) : null}
 
-        <View style={styles.cropGrid}>
+        <View style={[styles.cropGrid, showSuggestions && styles.hidden]}>
           {visibleCrops.map((c) => {
             const selected = profile.crops.includes(c);
 
@@ -399,6 +401,8 @@ export default function EditCropsScreen({
 }
 
 const styles = StyleSheet.create({
+  // The suggestions view replaces the full catalog until "See all crops".
+  hidden: { display: 'none' },
   screen: { flex: 1, backgroundColor: colors.paper },
   scroll: { flex: 1 },
   content: {
