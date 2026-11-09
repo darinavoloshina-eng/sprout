@@ -45,6 +45,7 @@ import { BUCKET_LABEL, NEXT_ACTION, SEASON_SHAPE, STAGE_HEADLINE } from './src/p
 import { plantingGuidanceFor, seedStartPlan } from './src/engines/plantingGuide';
 import { useFrostDates } from './src/hooks/useFrostDates';
 import { syncNudges } from './src/notifications';
+import { useToday } from './src/hooks/useToday';
 import { syncGarden, unsyncGarden } from './src/api/gardenSync';
 import { planNudges } from './src/engines/nudgeEngine';
 import {
@@ -313,7 +314,10 @@ export default function App() {
   // date — regardless of which screen changed it. Keyed on the plan's
   // content rather than the profile object, so unrelated saves (a photo, a
   // weather refresh that changes nothing) don't reschedule everything.
-  const nudgePlan = useMemo(() => (profile ? planNudges(profile) : []), [profile]);
+  // Rebuilt each new day too (useToday), so a phone that keeps the app
+  // suspended overnight still gets a plan that starts from tomorrow.
+  const today = useToday();
+  const nudgePlan = useMemo(() => (profile ? planNudges(profile, new Date()) : []), [profile, today]);
   const nudgeKey = profile
     ? `${profile.notificationsEnabled}|${nudgePlan.map((n) => `${n.id}:${n.title}:${n.body}`).join('|')}`
     : null;

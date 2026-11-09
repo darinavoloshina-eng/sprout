@@ -23,7 +23,7 @@
 // would only repeat what's on screen.
 
 import { GardenProfile } from '../types';
-import { DailyTask, getTasksForDate, getTreeWateringReminders, isSeedStartTask, isTaskComplete } from './taskEngine';
+import { DailyTask, dateKey, getTasksForDate, getTreeWateringReminders, isSeedStartTask, isTaskComplete } from './taskEngine';
 import { computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { bedCrops } from '../cropMeta';
 
@@ -80,7 +80,7 @@ function firstSentence(text: string): string {
 }
 
 function actionNudge(tasks: DailyTask[], fireAt: Date): PlannedNudge {
-  const id = `nudge-${fireAt.toISOString().slice(0, 10)}`;
+  const id = `nudge-${dateKey(fireAt)}`;
   if (tasks.length === 1) {
     return { id, fireAt, title: tasks[0].title, body: firstSentence(tasks[0].detail) };
   }
@@ -173,7 +173,7 @@ export function planNudges(profile: GardenProfile, now: Date = new Date()): Plan
       const fireAt = new Date(day);
       fireAt.setHours(WEEKLY_SUMMARY_HOUR, 0, 0, 0);
       nudges.push({
-        id: `nudge-${fireAt.toISOString().slice(0, 10)}`,
+        id: `nudge-${dateKey(fireAt)}`,
         fireAt,
         title: 'Your garden this week',
         body: watering,

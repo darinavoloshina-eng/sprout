@@ -94,8 +94,14 @@ function feedDetail(crop: CropKey, note: string): string {
   return tip ? `${note} ${tip}` : note;
 }
 
+/** "YYYY-MM-DD" for `date` on the phone's own calendar (local time zone).
+ * This used to be toISOString().slice(0, 10), the UTC date: in the US
+ * that's already tomorrow from late afternoon on (5pm in California), so
+ * anything keyed on "today" in the evening was filed under the next day. */
 export function dateKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${m}-${d}`;
 }
 
 function sameDay(a: Date, b: Date) {
@@ -636,20 +642,22 @@ const TREE_WATER_INFO: Partial<Record<CropKey, TreeWaterInfo>> = {
 };
 
 function isTreeWaterDay(info: TreeWaterInfo, date: Date): boolean {
-  const daysSinceEpoch = Math.floor(date.getTime() / 86400000);
+  // Counted on the phone's own calendar: dividing the raw timestamp counts
+  // UTC days, which roll over mid-afternoon or evening in the Americas (and
+  // before dawn east of UTC), so the cadence slid a day depending on time.
+  const daysSinceEpoch = Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
   return ((daysSinceEpoch - info.offset) % info.everyDays + info.everyDays) % info.everyDays === 0;
 }
 
-/** Any planted tree crop due for a water check on `date` — Pro, same
- * gating as succession/feed (moot in practice since every tree crop is
- * itself Pro-only, but kept for the same reason those check it: a
- * profile that downgraded after adding one shouldn't keep getting Pro
- * task reminders for free). Works identically whether `date` is today or
+/** Any planted tree crop due for a water check on `date`. Free, like the
+ * bed's own watering task: this is a tree's equivalent of "water the
+ * garden", and the free plan is any 4 crops, trees included. It used to be
+ * Pro-only, so a free garden of just a lime tree had no tasks at all, on
+ * Home or the Calendar. Works identically whether `date` is today or
  * a day being browsed ahead on the Calendar, since the cadence is a fixed
  * calendar pattern rather than something anchored to a specific planting
  * date. */
 export function getTreeWateringReminders(profile: GardenProfile, date: Date): DailyTask[] {
-  if (!profile.isPro) return [];
   const tasks: DailyTask[] = [];
   for (const crop of profile.crops) {
     if (crop === 'other') continue;
@@ -837,6 +845,9 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       category: 'tend',
     });
   }
+  for (const t of getTreeWateringReminders(profile, date)) {
+    if (!isTaskComplete(profile, t.id)) tasks.push(t);
+  }
   for (const r of profile.scheduledReminders) {
     if (sameDay(new Date(r.dateISO), date)) {
       const crop = profile.crops.find((c) => c.toLowerCase() === r.cropLabel.toLowerCase());
@@ -901,10 +912,6 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
-    for (const t of getTreeWateringReminders(profile, today)) {
-      if (isTaskComplete(profile, t.id)) continue;
-      tasks.push(t);
-    }
     for (const t of getSeedCollectionReminders(profile, today)) {
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
@@ -951,10 +958,6 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       });
     }
     for (const t of getFeedReminders(profile, date)) {
-      if (isTaskComplete(profile, t.id)) continue;
-      tasks.push(t);
-    }
-    for (const t of getTreeWateringReminders(profile, date)) {
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
@@ -1225,6 +1228,7 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
       category: 'tend',
     });
   }
+  tasks.push(...getTreeWateringReminders(profile, today));
   tasks.push(...seedStepsForToday(profile, today));
   if (profile.isPro) {
     const alerts = getAlerts(profile.crops, resolvedPlantedWeeks(profile, today), profile.weather, profile.frostDates);
@@ -1244,7 +1248,6 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
     }
     tasks.push(...getSuccessionReminders(profile, today));
     tasks.push(...getFeedReminders(profile, today));
-    tasks.push(...getTreeWateringReminders(profile, today));
     tasks.push(...getSeedCollectionReminders(profile, today));
     const frost = frostProtectionTask(profile, today);
     if (frost) tasks.push(frost);
@@ -1277,7 +1280,7 @@ export function toggleTask(profile: GardenProfile, taskId: string): GardenProfil
 
 function completedDateSet(profile: GardenProfile): Set<string> {
   const completions = profile.taskCompletions ?? {};
-  return new Set(Object.values(completions).map((iso) => iso.slice(0, 10)));
+  return new Set(Object.values(completions).map((iso) => dateKey(new Date(iso))));
 }
 
 /** Consecutive days (walking back from today) with at least one completed

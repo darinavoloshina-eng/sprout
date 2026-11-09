@@ -75,6 +75,49 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
   }
 }
 
+const NOMINATIM_HEADERS = {
+  'User-Agent': 'GardenWise garden app (local-only, no backend) - github.com/darinavoloshina-eng/sprout',
+};
+
+/** "92101" or "92101-1234" — a US ZIP, which needs special handling (see
+ * geocodeSearch). Exported for tests. */
+export function usZip(query: string): string | null {
+  const m = query.trim().match(/^(\d{5})(?:-\d{4})?$/);
+  return m ? m[1] : null;
+}
+
+/** A US ZIP looked up as a ZIP. Zippopotam first (a plain ZIP table, so it
+ * also knows PO-box ZIPs like Atlanta's 30301 that OpenStreetMap lacks),
+ * then Nominatim's structured postcode search limited to the US. */
+async function geocodeUsZip(zip: string): Promise<LocationInfo | null> {
+  try {
+    const data = await getJson(`https://api.zippopotam.us/us/${zip}`);
+    const place = data?.places?.[0];
+    if (place) {
+      const name: string = place['place name'];
+      const state: string = place['state abbreviation'] || place.state || '';
+      return { lat: Number(place.latitude), lon: Number(place.longitude), label: state ? `${name}, ${state}` : name };
+    }
+  } catch {
+    // Unknown ZIP (404) or service down: try OpenStreetMap below.
+  }
+  const data = await getJson(
+    `https://nominatim.openstreetmap.org/search?postalcode=${zip}&countrycodes=us&format=json&addressdetails=1&limit=1`,
+    { headers: NOMINATIM_HEADERS }
+  );
+  return toLocation(data?.[0]);
+}
+
+function toLocation(top: any): LocationInfo | null {
+  if (!top) return null;
+  const addr = top.address ?? {};
+  const city: string | undefined = addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || addr.county;
+  const iso: string = addr['ISO3166-2-lvl4'] || '';
+  const region: string = addr.state_code || (iso.startsWith('US-') ? iso.slice(3) : '') || addr.state || '';
+  const label = city ? (region && region !== city ? `${city}, ${region}` : city) : top.display_name;
+  return { lat: Number(top.lat), lon: Number(top.lon), label };
+}
+
 /**
  * Typed address -> coordinates. This is the fallback when GPS is denied (or
  * the user just wants to type instead), so it needs to resolve a full
@@ -84,21 +127,18 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
  * API key, matching this file's "no backend" approach — its usage policy
  * just requires a descriptive User-Agent and no bulk/rapid-fire querying,
  * which a single search-on-submit easily satisfies.
+ *
+ * A bare 5-digit ZIP must NOT go through the free-text search: postcodes
+ * aren't unique worldwide, and Nominatim's top hit for "92101" is
+ * Klaipėda, Lithuania (10001 → Algeria, 33101 → Finland). A user typing
+ * their ZIP got another country's weather and frost dates.
  */
 export async function geocodeSearch(query: string): Promise<LocationInfo | null> {
+  const zip = usZip(query);
+  if (zip) return geocodeUsZip(zip);
   const data = await getJson(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1`,
-    { headers: { 'User-Agent': 'GardenWise garden app (local-only, no backend) - github.com/darinavoloshina-eng/sprout' } }
+    { headers: NOMINATIM_HEADERS }
   );
-  const top = data?.[0];
-  if (!top) return null;
-  const addr = top.address ?? {};
-  const city: string | undefined = addr.city || addr.town || addr.village || addr.hamlet || addr.county;
-  const region: string = addr.state_code || addr.state || '';
-  const label = city ? (region && region !== city ? `${city}, ${region}` : city) : top.display_name;
-  return {
-    lat: Number(top.lat),
-    lon: Number(top.lon),
-    label,
-  };
+  return toLocation(data?.[0]);
 }

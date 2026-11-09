@@ -32,6 +32,7 @@ import {
 import { cropIcon, cropLabel } from '../cropMeta';
 import { NEXT_ACTION, SEASON_SHAPE } from '../plantStageContent';
 import { TabBar, TabKey } from '../components/ui';
+import { useToday } from '../hooks/useToday';
 
 const WEEKDAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -260,9 +261,19 @@ export default function CalendarScreen({
   onTabPress,
 }: CalendarScreenProps) {
   const [view, setView] = useState<'month' | 'season'>('month');
-  const today = useMemo(() => new Date(), []);
+  const today = useToday();
   const [selected, setSelected] = useState(today);
   const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  // A new day arrived while Calendar was open (or suspended) on "today":
+  // follow it, rather than leaving the selection on yesterday.
+  const [shownToday, setShownToday] = useState(today);
+  if (shownToday !== today) {
+    setShownToday(today);
+    if (sameDay(selected, shownToday)) {
+      setSelected(today);
+      setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    }
+  }
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();

@@ -1135,9 +1135,12 @@ describe('getTreeWateringReminders', () => {
     expect(getTreeWateringReminders(profile, new Date(2024, 0, 3))).toEqual([]);
   });
 
-  it('is Pro-gated', () => {
-    const profile = makeProfile({ crops: ['lemon'], plantedWeeks: { lemon: 'w8' }, isPro: false });
-    expect(getTreeWateringReminders(profile, new Date(2024, 0, 3))).toEqual([]);
+  it('is free, like the bed watering task: a free garden of just a lime tree still has tasks', () => {
+    const profile = makeProfile({ crops: ['lime'], plantedWeeks: { lime: 'w8' }, isPro: false });
+    const days = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i));
+    expect(days.some((d) => getTreeWateringReminders(profile, d).length > 0)).toBe(true);
+    expect(days.some((d) => getTasksForDate(profile, d, days[0]).some((t) => t.id.startsWith('treewater-lime-')))).toBe(true);
+    expect(days.some((d) => getTodayTasks(profile, d).some((t) => t.id.startsWith('treewater-lime-')))).toBe(true);
   });
 
   it('is due on its cadence day and not on other days, backdated via a pill alone (no exact date needed)', () => {
@@ -1412,5 +1415,14 @@ describe('seedCollectionWindowsFor', () => {
       ],
     });
     expect(seedCollectionWindowsFor(profile, new Date(2024, 0, 22))).toEqual([]);
+  });
+});
+
+describe('dateKey', () => {
+  it("uses the phone's local calendar day, not the UTC one", () => {
+    // 11:30pm local is still that day, whatever the time zone.
+    expect(dateKey(new Date(2026, 10, 9, 23, 30))).toBe('2026-11-09');
+    expect(dateKey(new Date(2026, 10, 10, 0, 5))).toBe('2026-11-10');
+    expect(dateKey(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });

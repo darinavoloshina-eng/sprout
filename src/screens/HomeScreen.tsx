@@ -49,6 +49,7 @@ import { bedCrops, cropLabel } from '../cropMeta';
 import { NEXT_ACTION, STAGE_HEADLINE, BUCKET_LABEL } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
+import { useToday } from '../hooks/useToday';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -162,7 +163,7 @@ export default function HomeScreen({
   const { isOnline } = useNetworkStatus();
   const [photoPickerOpen, setPhotoPickerOpen] = useState(false);
 
-  const today = useMemo(() => new Date(), []);
+  const today = useToday();
   const tasks = useMemo(() => getTodayTasks(profile, today), [profile, today]);
   const streak = computeStreak(profile, today);
   const longestStreak = computeLongestStreak(profile);
