@@ -105,15 +105,13 @@ const PRO_CROPS: CropKey[] = [
   'pomegranate',
   'peach',
   'cherry',
+  'apple',
+  'pear',
+  'plum',
+  'greenonions',
+  'tomatillos',
 ];
 
-const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
-  { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
-  { key: 'fruit', label: 'Fruit', icon: '🍓' },
-  { key: 'herb', label: 'Herbs', icon: '🌿' },
-  { key: 'flower', label: 'Flowers', icon: '🌻' },
-  { key: 'tree', label: 'Trees', icon: '🌳' },
-];
 
 
 export interface EditCropsScreenProps {
@@ -123,9 +121,7 @@ export interface EditCropsScreenProps {
   onOpenPaywall: () => void;
   activeTab: TabKey;
   onTabPress?: (tab: TabKey) => void;
-  /** Which category tab to open on, e.g. when arriving from My Garden with
-   * a specific category already being browsed there. Defaults to
-   * Vegetables (first-run / Settings entry has no category context). */
+  /** Unused since the picker became one A–Z list; kept so callers compile. */
   initialCategory?: CropCategory;
 }
 
@@ -187,10 +183,6 @@ export default function EditCropsScreen({
     saveProfile(updated).catch(() => {});
   }
 
-  const [category, setCategory] = useState<CropCategory>(initialCategory ?? 'vegetable');
-  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
-  const categoryOptions = CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, profile.crops));
-  const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   // Computed once per open, so a crop doesn't vanish from the list the
@@ -219,7 +211,7 @@ export default function EditCropsScreen({
   // crops total, not which specific ones are visible. See atFreeLimit
   // above for where that cap actually bites.
   const visibleCrops = [...FREE_CROPS, ...PRO_CROPS]
-    .filter((c) => CROP_CATEGORY[c] === category && isOfferedCrop(c, profile.crops))
+    .filter((c) => isOfferedCrop(c, profile.crops))
     .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
 
   return (
@@ -229,7 +221,7 @@ export default function EditCropsScreen({
           <Text style={styles.back}>‹ Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Crops</Text>
-        <Text style={styles.sub}>Tap a crop to add it, then set when you planted it right there.</Text>
+        <Text style={styles.sub}>Tap a crop to add it, then set when you planted it.</Text>
         {!profile.isPro ? (
           <Text style={styles.freeCountText}>
             {selectedCount} of {FREE_CROP_LIMIT} free crops selected
@@ -258,45 +250,6 @@ export default function EditCropsScreen({
                   : 'Add your location in Settings to see what grows well where you live.'}
               </Text>
             )}
-          </View>
-        ) : null}
-
-        <TouchableOpacity
-          style={[styles.categoryDropdown, showSuggestions && styles.hidden]}
-          onPress={() => setCategoryMenuOpen((o) => !o)}
-          accessibilityRole="button"
-          accessibilityLabel={`Category: ${activeCategoryOption.label}`}
-        >
-          <Text style={styles.categoryDropdownIcon}>{activeCategoryOption.icon}</Text>
-          <Text style={styles.categoryDropdownLabel}>{activeCategoryOption.label}</Text>
-          <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
-        </TouchableOpacity>
-
-        {categoryMenuOpen && !showSuggestions ? (
-          <View style={styles.categoryMenu}>
-            {categoryOptions.map((opt, i) => {
-              const sel = opt.key === category;
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  style={[
-                    styles.categoryMenuItem,
-                    i === categoryOptions.length - 1 && styles.categoryMenuItemLast,
-                    sel && styles.categoryMenuItemSelected,
-                  ]}
-                  onPress={() => {
-                    setCategory(opt.key);
-                    setCategoryMenuOpen(false);
-                  }}
-                  accessibilityRole="menuitem"
-                  accessibilityState={{ selected: sel }}
-                >
-                  <Text style={styles.categoryMenuIcon}>{opt.icon}</Text>
-                  <Text style={sel ? styles.categoryMenuLabelSelected : styles.categoryMenuLabel}>{opt.label}</Text>
-                  {sel ? <Text style={styles.categoryMenuCheck}>✓</Text> : null}
-                </TouchableOpacity>
-              );
-            })}
           </View>
         ) : null}
 
@@ -377,7 +330,7 @@ export default function EditCropsScreen({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.proBannerTitle}>Grow more than {FREE_CROP_LIMIT} crops</Text>
-              <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $2.99/mo</Text>
+              <Text style={styles.proBannerSub}>Plus grow-more tips and year-over-year · $2.99/mo</Text>
             </View>
             <View style={styles.proBannerCta}>
               <Text style={styles.proBannerCtaText}>Try free</Text>

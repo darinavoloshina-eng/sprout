@@ -61,8 +61,8 @@ export default function ProWelcomeScreen({ profile, isPreview, onProfileChange, 
         <Text style={styles.headline}>Welcome to Pro 🌱</Text>
         <Text style={styles.sub}>
           {isPreview
-            ? "This is a local preview with no payment behind it, but everything's unlocked to try: every crop, the season view, and grow-more tips."
-            : "Thanks for supporting GardenWise. Everything's unlocked: every crop, the season view, and grow-more tips."}
+            ? "This is a local preview with no payment behind it, but everything's unlocked to try: every crop, grow-more tips, and year-over-year comparison."
+            : "Thanks for supporting GardenWise. Everything's unlocked: every crop, grow-more tips, and year-over-year comparison."}
         </Text>
 
         <View style={styles.card}>

@@ -1,20 +1,12 @@
 // CalendarScreen.tsx
-// Screens 1f (month grid, free) and 1e (season lane chart, Pro) from the
-// design handoff, combined behind one Month/Season toggle as designed.
+// The month grid: each day's tasks, harvest and seed-collection windows,
+// dotted by category. There used to be a Pro "Season" lane chart behind a
+// Month/Season toggle; it was removed as more confusing than helpful.
 //
 // The mockup's day dots assume a full per-day task-generation engine that
 // doesn't exist here. What's real and shown instead: watering days (from
 // scheduleEngine, recurring weekly) and scheduled reminders (real dated
 // entries), category-tagged by a keyword read of their own headline text.
-//
-// The season lane chart is real now (see computeSeasonChart below) — sow/
-// grow/harvest bars are derived from real frost dates (api/frost.ts) and
-// each crop's real season shape (plantStageContent.ts), and the "coming up"
-// milestones are the real harvest-start and first-frost dates, not
-// fabricated horticultural advice like "topping" or "last feed" which
-// nothing in this app models. It's gated behind profile.isPro, which the
-// paywall's trial button sets locally — see PaywallScreen.tsx for why
-// that's a local preview flag, not a real subscription check.
 
 import React, { useMemo, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -27,10 +19,11 @@ import {
   TaskCategory,
   getTasksForDate,
   harvestWindowsFor,
+  mergeWateringTasks,
   seedCollectionWindowsFor,
 } from '../engines/taskEngine';
 import { cropIcon, cropLabel } from '../cropMeta';
-import { NEXT_ACTION, SEASON_SHAPE } from '../plantStageContent';
+import { NEXT_ACTION } from '../plantStageContent';
 import { TabBar, TabKey } from '../components/ui';
 import { useToday } from '../hooks/useToday';
 
@@ -38,209 +31,6 @@ const WEEKDAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-function monthDayToDate(monthDay: string, year: number): Date {
-  const [m, d] = monthDay.split('-').map(Number);
-  return new Date(year, m - 1, d);
-}
-
-function addDays(date: Date, days: number): Date {
-  return new Date(date.getTime() + days * 86400000);
-}
-
-function formatMonthDay(monthDay: string): string {
-  const [m, d] = monthDay.split('-').map(Number);
-  return new Date(2021, m - 1, d).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-}
-
-interface SeasonLane {
-  crop: CropKey;
-  icon: string;
-  label: string;
-  sowFrac: number;
-  growFrac: number;
-  harvestFrac: number;
-}
-
-interface SeasonMilestone {
-  date: Date;
-  title: string;
-  detail: string;
-}
-
-interface SeasonChartData {
-  monthLabels: string[];
-  lanes: SeasonLane[];
-  nowFrac: number;
-  milestones: SeasonMilestone[];
-}
-
-function computeSeasonChart(profile: GardenProfile, today: Date): SeasonChartData | null {
-  const frostDates = profile.frostDates;
-  if (!frostDates) return null;
-
-  const year = today.getFullYear();
-  const seasonStart = monthDayToDate(frostDates.lastFrostMonthDay, year);
-  const cropsList = profile.crops.filter((c): c is CropKey => c !== 'other');
-  const cropWeeks = cropsList.map((c) => SEASON_SHAPE[c]?.weeks ?? 12);
-  const maxWeeks = cropWeeks.length ? Math.max(...cropWeeks) : 12;
-  const cropBasedEnd = addDays(seasonStart, maxWeeks * 7);
-
-  let seasonEnd = cropBasedEnd;
-  if (frostDates.firstFrostMonthDay) {
-    const fallFrost = monthDayToDate(frostDates.firstFrostMonthDay, year);
-    if (fallFrost > seasonStart && fallFrost > seasonEnd) seasonEnd = fallFrost;
-  }
-
-  const totalDays = (seasonEnd.getTime() - seasonStart.getTime()) / 86400000;
-  if (totalDays <= 0) return null;
-
-  const lanes: SeasonLane[] = cropsList
-    .map((crop) => {
-      const shape = SEASON_SHAPE[crop];
-      if (!shape) return null;
-      const cropDays = shape.weeks * 7;
-      return {
-        crop,
-        icon: cropIcon(crop),
-        label: cropLabel(crop),
-        sowFrac: (cropDays * (shape.sow / 100)) / totalDays,
-        growFrac: (cropDays * (shape.grow / 100)) / totalDays,
-        harvestFrac: (cropDays * (shape.harvest / 100)) / totalDays,
-      };
-    })
-    .filter((l): l is SeasonLane => l !== null);
-
-  const nowFrac = Math.max(0, Math.min(1, (today.getTime() - seasonStart.getTime()) / (totalDays * 86400000)));
-
-  const monthLabels = [0, 0.25, 0.5, 0.75, 1].map((f) =>
-    new Date(seasonStart.getTime() + f * totalDays * 86400000)
-      .toLocaleDateString(undefined, { month: 'short' })
-      .toUpperCase()
-  );
-
-  const milestones: SeasonMilestone[] = [];
-  for (const crop of cropsList) {
-    const shape = SEASON_SHAPE[crop];
-    if (!shape) continue;
-    const cropDays = shape.weeks * 7;
-    const harvestStart = addDays(seasonStart, cropDays * ((shape.sow + shape.grow) / 100));
-    if (harvestStart >= today) {
-      milestones.push({
-        date: harvestStart,
-        title: `${cropLabel(crop)} harvest begins`,
-        detail: NEXT_ACTION[crop]?.w8 ?? '',
-      });
-    }
-  }
-  if (frostDates.firstFrostMonthDay) {
-    const fallFrost = monthDayToDate(frostDates.firstFrostMonthDay, year);
-    if (fallFrost >= today) {
-      milestones.push({
-        date: fallFrost,
-        title: 'First frost expected',
-        detail: `Plan your last picks before ${formatMonthDay(frostDates.firstFrostMonthDay)}.`,
-      });
-    }
-  }
-  milestones.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  return { monthLabels, lanes, nowFrac, milestones: milestones.slice(0, 3) };
-}
-
-function SeasonChartView({ data }: { data: SeasonChartData }) {
-  return (
-    <View>
-      <View style={styles.seasonChartCard}>
-        <View style={styles.seasonMonthRow}>
-          {data.monthLabels.map((m, i) => (
-            <Text key={i} style={styles.seasonMonthLabel}>
-              {m}
-            </Text>
-          ))}
-        </View>
-        <View style={styles.seasonLanesWrap}>
-          <View style={styles.seasonLabelCol}>
-            {data.lanes.map((lane) => (
-              <View key={lane.crop} style={styles.seasonLaneLabelRow}>
-                <Text style={styles.seasonLaneLabel} numberOfLines={1}>
-                  {lane.icon} {lane.label}
-                </Text>
-              </View>
-            ))}
-          </View>
-          <View style={styles.seasonTrackCol}>
-            {data.lanes.map((lane) => (
-              <View key={lane.crop} style={styles.seasonLaneTrack}>
-                <View
-                  style={[
-                    styles.seasonSeg,
-                    styles.seasonSegSow,
-                    { left: '0%', width: `${lane.sowFrac * 100}%` },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.seasonSeg,
-                    styles.seasonSegGrow,
-                    { left: `${lane.sowFrac * 100}%`, width: `${lane.growFrac * 100}%` },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.seasonSeg,
-                    styles.seasonSegHarvest,
-                    {
-                      left: `${(lane.sowFrac + lane.growFrac) * 100}%`,
-                      width: `${lane.harvestFrac * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-            ))}
-            <View style={[styles.seasonNowLine, { left: `${data.nowFrac * 100}%` }]} />
-            <View style={[styles.seasonNowLabelWrap, { left: `${data.nowFrac * 100}%` }]}>
-              <Text style={styles.seasonNowLabel}>NOW</Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.legendRow}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: colors.mossGreen, opacity: 0.4 }]} />
-            <Text style={styles.legendText}>Sow</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: colors.mossGreen }]} />
-            <Text style={styles.legendText}>Grow</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: colors.mustard }]} />
-            <Text style={styles.legendText}>Harvest</Text>
-          </View>
-        </View>
-      </View>
-
-      {data.milestones.length > 0 && (
-        <>
-          <Text style={styles.dayHeader}>Coming up this season</Text>
-          <View style={{ gap: space.sm }}>
-            {data.milestones.map((m, i) => (
-              <View key={i} style={[styles.taskRow, i === 0 && styles.milestoneRowNext]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.taskTitle}>{m.title}</Text>
-                  {m.detail ? <Text style={styles.taskDetail}>{m.detail}</Text> : null}
-                </View>
-                <Text style={styles.milestoneDate}>
-                  {m.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
-    </View>
-  );
 }
 
 export interface CalendarScreenProps {
@@ -260,7 +50,6 @@ export default function CalendarScreen({
   activeTab = 'calendar',
   onTabPress,
 }: CalendarScreenProps) {
-  const [view, setView] = useState<'month' | 'season'>('month');
   const today = useToday();
   const [selected, setSelected] = useState(today);
   const [viewDate, setViewDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
@@ -306,24 +95,21 @@ export default function CalendarScreen({
     return seedCollectionWindowsFor(profile, new Date(year, month, day)).length > 0;
   }
 
-  const selectedTasks = useMemo(() => getTasksForDate(profile, selected, today), [profile, selected, today]);
+  const selectedTasks = useMemo(
+    () => mergeWateringTasks(getTasksForDate(profile, selected, today)),
+    [profile, selected, today]
+  );
   const selectedHarvestWindows = useMemo(() => harvestWindowsFor(profile, selected), [profile, selected]);
   const selectedSeedWindows = useMemo(() => seedCollectionWindowsFor(profile, selected), [profile, selected]);
   const dayHeader = `${selected.toLocaleDateString(undefined, { weekday: 'short' })} ${selected.getDate()} · ${
     selectedTasks.length
   } ${selectedTasks.length === 1 ? 'task' : 'tasks'}`;
 
-  const seasonChartData = useMemo(
-    () => (profile.isPro ? computeSeasonChart(profile, today) : null),
-    [profile, today]
-  );
-
   return (
     <View style={styles.screen}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          {view === 'month' ? (
-            <View style={styles.monthNavRow}>
+          <View style={styles.monthNavRow}>
               <TouchableOpacity
                 onPress={() => goToMonth(-1)}
                 accessibilityRole="button"
@@ -342,66 +128,14 @@ export default function CalendarScreen({
                 <Text style={styles.monthNavArrow}>›</Text>
               </TouchableOpacity>
             </View>
-          ) : (
-            <Text style={styles.title}>{monthLabel}</Text>
-          )}
-          <View style={styles.toggle}>
-            <TouchableOpacity
-              style={[styles.toggleBtn, view === 'month' && styles.toggleBtnActive]}
-              onPress={() => setView('month')}
-              accessibilityRole="button"
-            >
-              <Text style={view === 'month' ? styles.toggleTextActive : styles.toggleText}>
-                Month
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleBtn, view === 'season' && styles.toggleBtnActive]}
-              onPress={() => setView('season')}
-              accessibilityRole="button"
-            >
-              <Text style={view === 'season' ? styles.toggleTextActive : styles.toggleText}>
-                Season
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
-        {view === 'month' && !isCurrentMonth ? (
+        {!isCurrentMonth ? (
           <TouchableOpacity onPress={goToToday} accessibilityRole="button" style={styles.todayLink}>
             <Text style={styles.todayLinkText}>‹ Back to today</Text>
           </TouchableOpacity>
         ) : null}
 
-        {view === 'season' ? (
-          seasonChartData ? (
-            <SeasonChartView data={seasonChartData} />
-          ) : !profile.isPro ? (
-            <TouchableOpacity style={styles.seasonLockCard} onPress={onOpenPaywall} accessibilityRole="button">
-              <Text style={styles.seasonLockIcon}>🔒</Text>
-              <Text style={styles.seasonLockTitle}>Season view is Pro</Text>
-              <Text style={styles.seasonLockBody}>
-                See every crop's sow-to-harvest window on one timeline, with a NOW marker and the
-                milestones coming up the rest of the season.
-              </Text>
-              <Text style={styles.seasonLockCta}>Try Pro free for 14 days ›</Text>
-            </TouchableOpacity>
-          ) : (
-            // Already Pro — the only other reason computeSeasonChart comes
-            // back empty is no real frost-date location set yet (it needs
-            // a season start/end to lay the timeline out). Not a paywall
-            // problem, so this deliberately doesn't look like one.
-            <TouchableOpacity style={styles.seasonLockCard} onPress={onOpenLocation} accessibilityRole="button">
-              <Text style={styles.seasonLockIcon}>📍</Text>
-              <Text style={styles.seasonLockTitle}>Set your location to see Season view</Text>
-              <Text style={styles.seasonLockBody}>
-                The season timeline is built around your real frost dates — add your location to
-                unlock it.
-              </Text>
-              <Text style={styles.seasonLockCta}>Set location ›</Text>
-            </TouchableOpacity>
-          )
-        ) : (
           <>
             <View style={styles.gridCard}>
               <View style={styles.weekRow}>
@@ -540,7 +274,6 @@ export default function CalendarScreen({
               </View>
             ) : null}
           </>
-        )}
       </ScrollView>
 
       <TabBar active={activeTab} onPress={onTabPress} />

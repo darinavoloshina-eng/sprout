@@ -633,6 +633,47 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
       note: 'Cold-hardy while dormant, so it goes in before your last frost rather than after. Sweet cherries often need a second tree nearby for cross-pollination; sour (pie) cherries are usually self-fruitful on their own.',
     },
   },
+  apple: {
+    spring: {
+      method: 'Plant a bare-root or potted tree while still dormant',
+      outdoorWeeksFromFrost: -2,
+      note: 'Cold-hardy while dormant, so it goes in before your last frost rather than after. Most apples need a second apple (or crabapple) of a different variety nearby for pollination, so check the tag or plant two.',
+    },
+  },
+  pear: {
+    spring: {
+      method: 'Plant a bare-root or potted tree while still dormant',
+      outdoorWeeksFromFrost: -2,
+      note: 'Cold-hardy while dormant, so it goes in before your last frost rather than after. Most pears need a second variety nearby for pollination.',
+    },
+  },
+  plum: {
+    spring: {
+      method: 'Plant a bare-root or potted tree while still dormant',
+      outdoorWeeksFromFrost: -2,
+      note: 'Cold-hardy while dormant, so it goes in before your last frost rather than after. European plums are usually self-fruitful; Japanese plums usually need a second variety nearby.',
+    },
+  },
+  greenonions: {
+    spring: {
+      method: 'Direct sow, or plant sets',
+      outdoorWeeksFromFrost: -4,
+      note: 'Tough and cold-tolerant, so they go in as soon as the soil can be worked. Great in a pot, too.',
+    },
+    fall: {
+      method: 'Direct sow, or plant sets',
+      outdoorWeeksFromFrost: -8,
+      note: 'A fall sowing gives you green onions well into the cold months.',
+    },
+  },
+  tomatillos: {
+    spring: {
+      method: 'Start seeds indoors, or buy seedlings',
+      outdoorWeeksFromFrost: 1,
+      indoorWeeksFromFrost: -6,
+      note: 'Grows just like a tomato. Plant at least two: one tomatillo on its own rarely sets fruit.',
+    },
+  },
   marigold: {
     spring: {
       method: 'Direct sow, or start indoors for a head start',

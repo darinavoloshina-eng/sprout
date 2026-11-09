@@ -7,8 +7,8 @@
 // against that id. This keeps tasks always in sync with the live schedule
 // instead of drifting out of date the way a stored, editable list would.
 
-import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
-import { CARE_BUCKET_FOR, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
+import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, nextWateringDate, wateringDaysOfWeek } from './scheduleEngine';
+import { CARE_BUCKET_FOR, GardenAlert, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
 import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor, SeedStartPlan, seedStartPlan } from './plantingGuide';
 import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
@@ -79,11 +79,11 @@ const ORGANIC_FEED_TIP: Partial<Record<CropKey, string>> = (() => {
   set(['blueberries'], 'Organic option: an organic fertilizer made for acid-loving plants.');
   set(['avocado', 'olive', 'pomegranate'], 'Organic option: spread compost around the base in spring, keeping it a few inches off the trunk.');
   set(
-    ['strawberries', 'tomatoes', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
+    ['strawberries', 'tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
     'Organic option: compost or worm castings around the plants, or a fish-and-kelp liquid feed.'
   );
   set(
-    ['corn', 'celery', 'onions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
+    ['corn', 'celery', 'onions', 'greenonions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
     'Organic option: fish emulsion, or compost worked in around the plants.'
   );
   return tips;
@@ -310,6 +310,7 @@ interface SuccessionInfo {
  * covered by plantingGuide.ts's own spring/fall windows) rather than
  * genuinely repeated every few weeks by home gardeners. */
 const SUCCESSION_INFO: Partial<Record<CropKey, SuccessionInfo>> = {
+  greenonions: { everyWeeks: 3, cutoffWeeksBeforeFrost: 4, note: 'A fresh row every few weeks keeps tender green onions coming instead of one batch that gets tough all at once.' },
   radishes: { everyWeeks: 2, cutoffWeeksBeforeFrost: 4, note: 'So fast (25-30 days) that a fresh round every couple weeks keeps them coming instead of one big batch all at once.' },
   arugula: { everyWeeks: 2, cutoffWeeksBeforeFrost: 4, note: 'Bolts fast once it matures, so a new round every couple weeks keeps you in fresh leaves rather than one batch that all bolts together.' },
   lettuce: { everyWeeks: 2, cutoffWeeksBeforeFrost: 5, note: 'A fresh sowing every couple weeks means new heads are always coming along as older ones finish.' },
@@ -474,6 +475,7 @@ const FEED_INFO: Partial<Record<CropKey, FeedInfo>> = {
   // they're actively growing, not just once at planting.
   tomatoes: { everyWeeks: 4, startWeeks: 5, cutoffWeeksBeforeFrost: 8, perennial: false, note: 'Once flowering begins, feed every 3-4 weeks with a lower-nitrogen fertilizer (higher phosphorus/potassium) — too much nitrogen grows leaves at the expense of fruit.' },
   peppers: { everyWeeks: 5, startWeeks: 5, cutoffWeeksBeforeFrost: 8, perennial: false, note: 'Once flowering begins, feed every 4-5 weeks with a lower-nitrogen fertilizer — too much nitrogen grows leaves at the expense of fruit.' },
+  tomatillos: { everyWeeks: 4, startWeeks: 5, cutoffWeeksBeforeFrost: 8, perennial: false, note: 'Once flowering begins, feed every 3-4 weeks with a lower-nitrogen fertilizer, same as tomatoes. Too much nitrogen grows leaves instead of fruit.' },
   eggplant: { everyWeeks: 5, startWeeks: 5, cutoffWeeksBeforeFrost: 8, perennial: false, note: 'Once flowering begins, feed every 4-5 weeks with a lower-nitrogen fertilizer, same reasoning as tomatoes and peppers.' },
   cucumbers: { everyWeeks: 4, startWeeks: 3, cutoffWeeksBeforeFrost: 6, perennial: false, note: 'A heavy feeder once vining starts — feed every 3-4 weeks to keep production going.' },
   squash: { everyWeeks: 4, startWeeks: 3, cutoffWeeksBeforeFrost: 6, perennial: false, note: 'A heavy feeder once vining starts — feed every 3-4 weeks to keep production going.' },
@@ -636,6 +638,9 @@ const TREE_WATER_INFO: Partial<Record<CropKey, TreeWaterInfo>> = {
   pomegranate: { everyDays: 5, offset: 2, note: 'Fairly drought-tolerant once established. Check the top couple inches of soil, and water deeply if dry.' },
   figs: { everyDays: 4, offset: 0, note: 'Tolerates some drying out once established, but a container still needs more frequent water than a bed. Check the top couple inches of soil.' },
   peach: { everyDays: 4, offset: 1, note: 'Wants consistent moisture, especially while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
+  apple: { everyDays: 5, offset: 0, note: 'Water deeply but not often, especially while fruit is sizing up. Check the top couple inches of soil, and water deeply if dry.' },
+  pear: { everyDays: 5, offset: 2, note: 'Water deeply but not often, especially while fruit is sizing up. Check the top couple inches of soil, and water deeply if dry.' },
+  plum: { everyDays: 4, offset: 3, note: 'Wants consistent moisture while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
   cherry: { everyDays: 4, offset: 2, note: 'Wants consistent moisture, especially while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
   blueberries: { everyDays: 3, offset: 2, note: 'Shallow roots in the acidic, well-drained soil blueberries need mean they dry out faster than most bed plants. Check the top couple inches of soil, and water deeply if dry.' },
   raspberries: { everyDays: 4, offset: 3, note: 'Cane fruit want consistent moisture through fruiting, especially now that they are off the bed\'s shared schedule. Check the top couple inches of soil, and water deeply if dry.' },
@@ -696,6 +701,7 @@ const SEED_SAVE_EXCLUDED = new Set<CropKey>([
   'onions', 'garlic', 'leeks',
   'asparagus', 'rhubarb', 'strawberries', 'blueberries', 'raspberries', 'blackberries', 'grapes',
   'figs', 'lemon', 'lime', 'orange', 'kumquat', 'olive', 'avocado', 'pomegranate', 'peach', 'cherry',
+  'apple', 'pear', 'plum', 'greenonions',
 ]);
 
 // A window, not a single precise day — seed drying time genuinely varies,
@@ -893,6 +899,8 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       // A crop being started from seed gets its own dated steps instead
       // of the generic "plant it now" alert.
       if (activeSeedStartPlan(profile, a.crop, today)) continue;
+      // Watering advice is folded into the watering card (wateringNotes).
+      if (isWateringAdvice(a)) continue;
       const id = `alert-${a.crop}-${a.headline}-${dateKey(today)}`;
       if (isTaskComplete(profile, id)) continue;
       tasks.push({
@@ -982,6 +990,7 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
 const FROST_COVER_AT_F: Partial<Record<CropKey, number>> = {
   tomatoes: 34, peppers: 34, eggplant: 34, cucumbers: 34, squash: 34, zucchini: 34, pumpkin: 34,
   watermelon: 34, cantaloupe: 34, beans: 34, corn: 34, okra: 34, basil: 34, sweetpotatoes: 34,
+  tomatillos: 34,
   marigold: 34, zinnia: 34, cosmos: 34, dahlias: 34,
   lemon: 32, lime: 32, orange: 32, kumquat: 32, avocado: 32,
   lettuce: 28, chard: 28, bokchoy: 28, arugula: 28, broccoli: 28, cauliflower: 28, cabbage: 28,
@@ -1203,6 +1212,73 @@ export function nextSeedStep(profile: GardenProfile, today: Date = new Date()): 
   return best;
 }
 
+/** A crop-stage alert that's really watering advice ("Water on a
+ * consistent schedule", "Keep the soil consistently moist"). You can't do
+ * and tick off "water consistently", so these aren't tasks: Home shows
+ * them as one-line notes inside its watering card instead, next to the
+ * actual schedule they're about. */
+export function isWateringAdvice(a: GardenAlert): boolean {
+  return /\bwater|moist|dry out|dry spell|thirsty/i.test(a.headline);
+}
+
+export interface WateringNote {
+  crop: CropKey;
+  text: string;
+}
+
+/** Today's watering advice, at most one line per crop, for Home's
+ * watering card. Pro, like the alerts it comes from. */
+export function wateringNotes(profile: GardenProfile, today: Date = new Date()): WateringNote[] {
+  if (!profile.isPro) return [];
+  const seen = new Set<CropKey>();
+  const notes: WateringNote[] = [];
+  for (const a of getAlerts(profile.crops, resolvedPlantedWeeks(profile, today), profile.weather, profile.frostDates)) {
+    if (a.severity !== 'soon' || !isWateringAdvice(a) || seen.has(a.crop)) continue;
+    if (effectiveBucket(profile, a.crop, today) === 'w0') continue;
+    seen.add(a.crop);
+    notes.push({ crop: a.crop, text: a.headline });
+  }
+  return notes;
+}
+
+/** The bed's next watering day after `today`, for the watering card on a
+ * day with nothing to water. Null when nothing in the bed needs it. */
+export function nextBedWatering(profile: GardenProfile, today: Date = new Date()): { date: Date; detail: string } | null {
+  const result = scheduleFor(profile);
+  if (result.sessionsPerWeek <= 0) return null;
+  const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59);
+  return {
+    date: nextWateringDate(result.sessionsPerWeek, endOfToday),
+    detail: `${result.minutesPerSession} min · ${timeOfDayLabel(result.timeOfDay).toLowerCase()}`,
+  };
+}
+
+/** Whether a task is part of watering (the bed's schedule or a tree's soil
+ * check), which Home and Calendar show as one watering entry. */
+export function isWateringTask(taskId: string): boolean {
+  return taskId.startsWith('water-') || taskId.startsWith('treewater-');
+}
+
+/** A day's watering as one entry for the Calendar: the bed's session and
+ * any tree soil checks combined, first in the list, instead of a separate
+ * row for each. */
+export function mergeWateringTasks(tasks: DailyTask[]): DailyTask[] {
+  const water = tasks.filter((t) => isWateringTask(t.id));
+  if (water.length <= 1) return tasks;
+  const bed = water.find((t) => t.id.startsWith('water-'));
+  const trees = water.filter((t) => t.id.startsWith('treewater-')).map((t) => t.title.replace(/^Water /, ''));
+  const treeLine = trees.length > 0 ? `Check the soil: ${trees.join(', ')}` : '';
+  const merged: DailyTask = {
+    id: bed?.id ?? water[0].id,
+    icon: '💧',
+    iconBg: colors.selectedBg,
+    title: bed ? 'Water the garden' : 'Check your trees',
+    detail: bed ? [bed.detail, treeLine].filter(Boolean).join(' · ') : treeLine,
+    category: 'tend',
+  };
+  return [merged, ...tasks.filter((t) => !isWateringTask(t.id))];
+}
+
 /** Today's checkable tasks — watering plus, for Pro, any crop-stage alert
  * urgent enough to act on today (the "Stage & harvest alerts" Pro benefit —
  * see PaywallScreen.tsx). Nothing here is ever from the future: watering
@@ -1246,6 +1322,7 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
       // A crop being started from seed gets its own dated steps instead
       // of the generic "plant it now" alert.
       if (activeSeedStartPlan(profile, a.crop, today)) continue;
+      if (isWateringAdvice(a)) continue;
       tasks.push({
         id: `alert-${a.crop}-${a.headline}-${dateKey(today)}`,
         icon: cropIcon(a.crop),

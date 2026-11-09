@@ -434,6 +434,36 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w4: { headline: 'Building root reserves', detail: 'Keep watering consistent while the tree establishes its structure.', severity: 'low' },
     w8: { headline: 'Established, ongoing care', detail: 'Feed once in early spring before bud break, and prune to shape each winter while dormant. A young tree usually takes several years to bear a real harvest, longer than most other fruit trees. Once it starts fruiting, netting against birds becomes the main challenge.', severity: 'fyi' },
   },
+  apple: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Good drainage matters more than extra water here.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Keep watering steady as the root system develops.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Pick off any fruit that sets in the first year or two so the tree puts its energy into roots and branches.', severity: 'low' },
+    w8: { headline: 'Established, ongoing care', detail: 'Feed once in early spring before bud break, and prune each winter while dormant to open up the center. Thin fruit to one per cluster in early summer for bigger, better apples. A young tree usually takes three to five years to bear a real harvest.', severity: 'fyi' },
+  },
+  pear: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Good drainage matters more than extra water here.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Keep watering steady as the root system develops.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering consistent while the tree builds its structure.', severity: 'low' },
+    w8: { headline: 'Established, ongoing care', detail: 'Feed lightly once in early spring; too much nitrogen invites fire blight. Prune each winter while dormant. Pick pears while still firm and let them ripen indoors. A young tree usually takes four to six years to bear well.', severity: 'fyi' },
+  },
+  plum: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Good drainage matters more than extra water here.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Keep watering steady as the root system develops.', severity: 'low' },
+    w4: { headline: 'Building root reserves', detail: 'Keep watering consistent while the tree builds its structure.', severity: 'low' },
+    w8: { headline: 'Established, ongoing care', detail: 'Feed once in early spring before bud break. Prune in late spring or summer, not winter, to avoid silver leaf disease. Thin heavy crops so branches do not snap. A young tree usually takes three to five years to bear well.', severity: 'fyi' },
+  },
+  greenonions: {
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist near the surface. Shallow roots dry out fast.', severity: 'low' },
+    w2: { headline: 'Leafing out', detail: 'Steady watering keeps the leaves tender.', severity: 'low' },
+    w4: { headline: 'Ready to harvest', detail: 'Cut what you need an inch above the soil and they will grow back, or pull whole plants once they are pencil-thick.', severity: 'fyi' },
+    w8: { headline: 'Keep cutting', detail: 'Keep cutting as you need them. Sow a fresh row every few weeks for a steady supply.', severity: 'fyi' },
+  },
+  tomatillos: {
+    w0: { headline: 'Establishing roots', detail: 'Keep soil evenly moist and hold off on heavy feeding until new growth kicks in.', severity: 'low' },
+    w2: { headline: 'Vegetative growth', detail: 'Plants sprawl fast. A cage or stake now keeps fruit off the ground later.', severity: 'low' },
+    w4: { headline: 'Flowering & fruit set', detail: 'Fruit forms inside papery husks. Keep watering steady while the husks fill out.', severity: 'fyi' },
+    w8: { headline: 'Pick when the husks split', detail: 'Pick once the fruit fills its husk and the husk starts to split or turn tan. Check every few days.', severity: 'soon' },
+  },
   marigold: {
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots take hold.', severity: 'low' },
     w2: { headline: 'Vegetative growth', detail: 'Pinch growing tips once seedlings have a few sets of leaves to encourage bushier, fuller plants.', severity: 'low' },

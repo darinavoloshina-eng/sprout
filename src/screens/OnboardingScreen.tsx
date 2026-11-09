@@ -130,13 +130,11 @@ const PRO_CROPS: CropKey[] = [
   'pomegranate',
   'peach',
   'cherry',
-];
-const CATEGORY_OPTIONS: { key: CropCategory; label: string; icon: string }[] = [
-  { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
-  { key: 'fruit', label: 'Fruit', icon: '🍓' },
-  { key: 'herb', label: 'Herbs', icon: '🌿' },
-  { key: 'flower', label: 'Flowers', icon: '🌻' },
-  { key: 'tree', label: 'Trees', icon: '🌳' },
+  'apple',
+  'pear',
+  'plum',
+  'greenonions',
+  'tomatillos',
 ];
 const SUN_OPTIONS: { key: SunExposure; icon: string; label: string; description: string }[] = [
   { key: 'full', icon: '☀️', label: 'Full sun all day', description: '6+ hours, no real shade' },
@@ -181,8 +179,6 @@ export default function OnboardingScreen({
 }) {
   const [step, setStep] = useState<Step>('crops');
   const [crops, setCrops] = useState<Set<CropKey>>(new Set(existing?.crops ?? []));
-  const [category, setCategory] = useState<CropCategory>('vegetable');
-  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [plantedWeeks, setPlantedWeeks] = useState<Partial<Record<CropKey, PlantedBackdate>>>(
     existing?.plantedWeeks ?? {}
   );
@@ -488,54 +484,9 @@ export default function OnboardingScreen({
               </View>
             ) : null}
 
-            <TouchableOpacity
-              style={[styles.categoryDropdown, showSuggestions && styles.hidden]}
-              onPress={() => setCategoryMenuOpen((o) => !o)}
-              accessibilityRole="button"
-              accessibilityLabel={`Category: ${CATEGORY_OPTIONS.find((o) => o.key === category)!.label}`}
-            >
-              <Text style={styles.categoryDropdownIcon}>
-                {CATEGORY_OPTIONS.find((o) => o.key === category)!.icon}
-              </Text>
-              <Text style={styles.categoryDropdownLabel}>
-                {CATEGORY_OPTIONS.find((o) => o.key === category)!.label}
-              </Text>
-              <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
-            </TouchableOpacity>
-
-            {categoryMenuOpen && !showSuggestions ? (
-              <View style={styles.categoryMenu}>
-                {CATEGORY_OPTIONS.filter((o) => isOfferedCategory(o.key, existing?.crops ?? [])).map((opt, i, opts) => {
-                  const sel = opt.key === category;
-                  return (
-                    <TouchableOpacity
-                      key={opt.key}
-                      style={[
-                        styles.categoryMenuItem,
-                        i === opts.length - 1 && styles.categoryMenuItemLast,
-                        sel && styles.categoryMenuItemSelected,
-                      ]}
-                      onPress={() => {
-                        setCategory(opt.key);
-                        setCategoryMenuOpen(false);
-                      }}
-                      accessibilityRole="menuitem"
-                      accessibilityState={{ selected: sel }}
-                    >
-                      <Text style={styles.categoryMenuIcon}>{opt.icon}</Text>
-                      <Text style={sel ? styles.categoryMenuLabelSelected : styles.categoryMenuLabel}>
-                        {opt.label}
-                      </Text>
-                      {sel ? <Text style={styles.categoryMenuCheck}>✓</Text> : null}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : null}
-
             <View style={[styles.cropGrid, showSuggestions && styles.hidden]}>
               {[...FREE_CROPS, ...PRO_CROPS]
-                .filter((c) => CROP_CATEGORY[c] === category && isOfferedCrop(c, existing?.crops ?? []))
+                .filter((c) => isOfferedCrop(c, existing?.crops ?? []))
                 .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)))
                 .map((c) => {
                 const selected = crops.has(c);
@@ -633,7 +584,7 @@ export default function OnboardingScreen({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.proBannerTitle}>Grow more than {FREE_CROP_LIMIT} crops</Text>
-                  <Text style={styles.proBannerSub}>Plus the season view and year-over-year · $2.99/mo</Text>
+                  <Text style={styles.proBannerSub}>Plus grow-more tips and year-over-year · $2.99/mo</Text>
                 </View>
                 <View style={styles.proBannerCta}>
                   <Text style={styles.proBannerCtaText}>Try free</Text>
@@ -966,7 +917,7 @@ export default function OnboardingScreen({
                   <Text style={styles.trialCheck}>✓</Text> Grow-more tips for every crop
                 </Text>
                 <Text style={styles.trialBullet}>
-                  <Text style={styles.trialCheck}>✓</Text> The season view and year-over-year comparison
+                  <Text style={styles.trialCheck}>✓</Text> Year-over-year harvest comparison
                 </Text>
               </View>
               <View style={styles.trialCta}>

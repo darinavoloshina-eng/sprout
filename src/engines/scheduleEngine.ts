@@ -69,6 +69,11 @@ export type CropKey =
   | 'pomegranate'
   | 'peach'
   | 'cherry'
+  | 'apple'
+  | 'pear'
+  | 'plum'
+  | 'greenonions'
+  | 'tomatillos'
   | 'marigold'
   | 'zinnia'
   | 'sunflower'
@@ -180,6 +185,11 @@ const CROP_WEEKLY_NEED_IN: Record<CropKey, number> = {
   pomegranate: 1.0,
   peach: 1.5,
   cherry: 1.25,
+  apple: 1.25,
+  pear: 1.25,
+  plum: 1.25,
+  greenonions: 1.0,
+  tomatillos: 1.5,
   marigold: 1.0,
   zinnia: 1.0,
   sunflower: 1.25,
@@ -259,6 +269,11 @@ const CROP_HEAT_THRESHOLD_F: Record<CropKey, number> = {
   pomegranate: 95,
   peach: 95,
   cherry: 85,
+  apple: 90,
+  pear: 90,
+  plum: 90,
+  greenonions: 85,
+  tomatillos: 92,
   marigold: 90,
   zinnia: 90,
   sunflower: 92,

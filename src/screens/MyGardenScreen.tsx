@@ -106,6 +106,11 @@ const PRO_CROPS: CropKey[] = [
   'pomegranate',
   'peach',
   'cherry',
+  'apple',
+  'pear',
+  'plum',
+  'greenonions',
+  'tomatillos',
 ];
 
 /** 'all' isn't a real CropCategory (see cropMeta.ts) — it's a My Garden-only

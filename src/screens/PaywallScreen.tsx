@@ -7,7 +7,7 @@
 // a placeholder, every purchases.ts function reports "not configured" and
 // this screen falls back to its original preview behavior instead: a
 // local toggle that flips profile.isPro with no payment behind it, so the
-// rest of the app's Pro gates (extra crops, season view, year-over-year)
+// rest of the app's Pro gates (extra crops, grow-more tips, year-over-year)
 // can still be previewed and tested. That fallback is also why "Turn off
 // Pro preview" only shows in the unconfigured case — once real purchases
 // are live, isPro should only change because RevenueCat says it did (a
@@ -36,17 +36,12 @@ const BENEFITS = [
   {
     icon: '🌱',
     title: 'Every crop',
-    body: '35 vegetables, 10 herbs, 6 fruits, and 12 fruit trees and berry bushes, each with step-by-step guidance',
+    body: '37 vegetables, 10 herbs, 6 fruits, and 15 fruit trees and berry bushes, each with step-by-step guidance',
   },
   {
     icon: '🧺',
     title: 'Grow-more tips',
     body: 'When to feed, prune, and pick each crop for a bigger, healthier harvest',
-  },
-  {
-    icon: '🗓',
-    title: 'The season view',
-    body: 'Know what to plant next and when to stop',
   },
   {
     icon: '📚',

@@ -16,7 +16,10 @@ import {
   getTasksForDate,
   getTodayTasks,
   isTaskComplete,
+  isWateringTask,
   markPlanted,
+  mergeWateringTasks,
+  wateringNotes,
   toggleTask,
 } from '../taskEngine';
 import { GardenProfile } from '../../types';
@@ -266,13 +269,13 @@ describe('getTasksForDate', () => {
       // for crops already in the ground never appeared there at all, only
       // the watering task did.
       const profile = makeProfile({
-        crops: ['celery'],
-        plantedWeeks: { celery: 'w2' },
+        crops: ['cucumbers'],
+        plantedWeeks: { cucumbers: 'w4' },
         frostDates,
         isPro: true,
       });
       const todayTasks = getTasksForDate(profile, FIXED_NOW, FIXED_NOW);
-      expect(todayTasks.some((t) => t.title.toLowerCase().includes('celery stays thirsty'))).toBe(true);
+      expect(todayTasks.some((t) => t.title.toLowerCase().includes('ripe cucumbers'))).toBe(true);
     });
 
     it('does not show an ongoing stage alert on a non-today day being browsed', () => {
@@ -289,8 +292,8 @@ describe('getTasksForDate', () => {
 
     it('drops a checked-off alert task from the calendar, unlike Home which keeps it visible', () => {
       const profile = makeProfile({
-        crops: ['celery'],
-        plantedWeeks: { celery: 'w2' },
+        crops: ['cucumbers'],
+        plantedWeeks: { cucumbers: 'w4' },
         frostDates,
         isPro: true,
       });
@@ -321,11 +324,32 @@ describe('getTasksForDate', () => {
 
 describe('getTodayTasks', () => {
   it('includes soon-severity crop-stage alerts for Pro', () => {
-    const profile = makeProfile({ plantedWeeks: { tomatoes: 'w4' }, isPro: true });
+    const profile = makeProfile({ crops: ['cucumbers'], plantedWeeks: { cucumbers: 'w4' }, isPro: true });
     const tasks = getTodayTasks(profile, TUE);
-    expect(tasks.some((t) => t.id === `alert-tomatoes-Water on a consistent schedule-${dateKey(TUE)}`)).toBe(
-      true
-    );
+    expect(
+      tasks.some((t) => t.id === `alert-cucumbers-Check the vines daily for ripe cucumbers-${dateKey(TUE)}`)
+    ).toBe(true);
+  });
+
+  it('turns watering advice into a note for the watering card, not a task', () => {
+    const profile = makeProfile({ plantedWeeks: { tomatoes: 'w4' }, isPro: true });
+    expect(getTodayTasks(profile, TUE).some((t) => t.id.startsWith('alert-'))).toBe(false);
+    expect(getTasksForDate(profile, TUE, TUE).some((t) => t.id.startsWith('alert-'))).toBe(false);
+    expect(wateringNotes(profile, TUE)).toEqual([{ crop: 'tomatoes', text: 'Water on a consistent schedule' }]);
+    expect(wateringNotes({ ...profile, isPro: false }, TUE)).toEqual([]);
+  });
+
+  it('merges the bed watering and tree soil checks into one Calendar entry', () => {
+    const profile = makeProfile({ crops: ['tomatoes', 'lemon'], plantedWeeks: { tomatoes: 'w4', lemon: 'w8' } });
+    const day = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i)).find((d) => {
+      const ids = getTasksForDate(profile, d, d).map((t) => t.id);
+      return ids.some((id) => id.startsWith('water-')) && ids.some((id) => id.startsWith('treewater-'));
+    })!;
+    const merged = mergeWateringTasks(getTasksForDate(profile, day, day));
+    const water = merged.filter((t) => isWateringTask(t.id));
+    expect(water).toHaveLength(1);
+    expect(water[0].title).toBe('Water the garden');
+    expect(water[0].detail).toContain('Check the soil: Lemon tree');
   });
 
   it('excludes low-severity crop-stage alerts even for Pro', () => {
@@ -341,7 +365,7 @@ describe('getTodayTasks', () => {
   });
 
   it('includes the watering task alongside alerts when both are due for Pro', () => {
-    const profile = makeProfile({ plantedWeeks: { tomatoes: 'w4' }, isPro: true });
+    const profile = makeProfile({ crops: ['cucumbers'], plantedWeeks: { cucumbers: 'w4' }, isPro: true });
     const tasks = getTodayTasks(profile, MON);
     expect(tasks.some((t) => t.id.startsWith('water-'))).toBe(true);
     expect(tasks.some((t) => t.id.startsWith('alert-'))).toBe(true);

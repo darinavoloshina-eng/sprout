@@ -19,7 +19,8 @@ describe('suggestCrops', () => {
 
   it('suggests warm-weather crops outside in May and cool ones in August', () => {
     const may = suggestCrops(chicago, [], new Date(2027, 4, 10))!;
-    expect(crops(may.outside)).toEqual(expect.arrayContaining(['beans', 'zucchini']));
+    expect(crops(may.outside)).toContain('beans');
+    expect(crops(may.outside)).not.toContain('lettuce');
     const aug = suggestCrops(chicago, [], new Date(2027, 7, 1))!;
     expect(crops(aug.outside)).toContain('radishes');
     expect(crops(aug.outside)).not.toContain('tomatoes');

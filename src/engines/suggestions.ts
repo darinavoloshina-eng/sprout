@@ -41,7 +41,7 @@ export const MAX_PER_GROUP = 6;
 // picks are likely to succeed.
 const BEGINNER_FRIENDLY = new Set<CropKey>([
   'lettuce', 'radishes', 'spinach', 'arugula', 'peas', 'beans', 'zucchini', 'kale', 'chard',
-  'tomatoes', 'basil', 'bokchoy', 'garlic', 'potatoes', 'strawberries', 'cucumbers', 'chives', 'mint',
+  'tomatoes', 'basil', 'bokchoy', 'garlic', 'potatoes', 'strawberries', 'cucumbers', 'chives', 'mint', 'greenonions',
 ]);
 
 // Need near-frost-free winters to grow outside.
@@ -166,7 +166,25 @@ function collect(frost: FrostEstimate, owned: readonly string[], now: Date, soon
 
   const groups: Suggestions = { indoors: [], outside: [], soon: [] };
   for (const g of Object.keys(groups) as SuggestionGroup[]) {
-    groups[g] = found.filter((s) => s.group === g).sort(order).slice(0, MAX_PER_GROUP);
+    groups[g] = mixCategories(found.filter((s) => s.group === g).sort(order)).slice(0, MAX_PER_GROUP);
   }
   return groups;
+}
+
+/** Takes the best of each category in turn (vegetable, herb, fruit, tree),
+ * keeping each category's own order, so a short list isn't six
+ * vegetables when an herb, a fruit, or a tree would also go in now. */
+function mixCategories(sorted: CropSuggestion[]): CropSuggestion[] {
+  const byCategory = new Map<string, CropSuggestion[]>();
+  for (const s of sorted) {
+    const c = CROP_CATEGORY[s.crop];
+    if (!byCategory.has(c)) byCategory.set(c, []);
+    byCategory.get(c)!.push(s);
+  }
+  const queues = [...byCategory.values()];
+  const mixed: CropSuggestion[] = [];
+  while (queues.some((q) => q.length > 0)) {
+    for (const q of queues) if (q.length > 0) mixed.push(q.shift()!);
+  }
+  return mixed;
 }

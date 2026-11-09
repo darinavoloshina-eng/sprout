@@ -29,6 +29,7 @@ import { CropKey, computeSchedule } from '../engines/scheduleEngine';
 import { PlantedBucket } from '../engines/alertsEngine';
 import {
   DailyTask,
+  WateringNote,
   computeLongestStreak,
   computeStreak,
   effectiveBucket,
@@ -38,7 +39,10 @@ import {
   activeSeedStartPlan,
   dateKey,
   isTaskComplete,
+  isWateringTask,
+  nextBedWatering,
   toggleTask,
+  wateringNotes,
 } from '../engines/taskEngine';
 import { useLiveWeather } from '../hooks/useLiveWeather';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -179,8 +183,6 @@ export default function HomeScreen({
   );
   const streak = computeStreak(profile, today);
   const longestStreak = computeLongestStreak(profile);
-  const doneCount = tasks.filter((t) => isTaskComplete(profile, t.id)).length;
-  const leftCount = tasks.length - doneCount;
 
   function handleToggle(taskId: string) {
     const updated = toggleTask(profile, taskId);
@@ -215,9 +217,42 @@ export default function HomeScreen({
   // anything's planted yet; in the cold months that would mean watering an
   // empty bed, so it only shows once something is actually in the ground.
   const anythingInBed = bedCrops(profile.crops).some((c) => effectiveBucket(profile, c, today) !== 'w0');
-  const careTasks = tasks.filter(
-    (t) => !isSeedStartTask(t.id) && (!isColdStart || anythingInBed || !t.id.startsWith('water-'))
+  // Watering is one card, not several tasks: the bed's schedule and any
+  // tree soil checks due today, plus each crop's watering advice as a
+  // short note. It counts as one item, done once everything in it is.
+  const waterTasks = tasks.filter(
+    (t) => isWateringTask(t.id) && (!isColdStart || anythingInBed || !t.id.startsWith('water-'))
   );
+  const waterNotes = useMemo(() => wateringNotes(profile, today), [profile, today]);
+  const nextWater = useMemo(() => nextBedWatering(profile, today), [profile, today]);
+  const waterDone = waterTasks.length > 0 && waterTasks.every((t) => isTaskComplete(profile, t.id));
+  const showWaterCard = waterTasks.length > 0 || waterNotes.length > 0 || (anythingInBed && !!nextWater);
+  const jobTasks = tasks.filter((t) => !isWateringTask(t.id));
+  const careTasks = jobTasks.filter((t) => !isSeedStartTask(t.id));
+  const waterItems = waterTasks.length > 0 ? 1 : 0;
+  const doneCount = jobTasks.filter((t) => isTaskComplete(profile, t.id)).length + (waterDone ? 1 : 0);
+  const totalCount = jobTasks.length + waterItems;
+  const leftCount = totalCount - doneCount;
+
+  function toggleWatering() {
+    let updated = profile;
+    for (const t of waterTasks) {
+      const done = !!isTaskComplete(updated, t.id);
+      if (waterDone ? done : !done) updated = toggleTask(updated, t.id);
+    }
+    onProfileChange(updated);
+    saveProfile(updated).catch(() => {});
+  }
+
+  const waterCard = showWaterCard ? (
+    <WateringCard
+      waterTasks={waterTasks}
+      notes={waterNotes}
+      next={nextWater}
+      done={waterDone}
+      onToggle={toggleWatering}
+    />
+  ) : null;
   const nextSeed = useMemo(() => nextSeedStep(profile, today), [profile, today]);
   const startingFromSeed = profile.crops.some((c) => c !== 'other' && activeSeedStartPlan(profile, c as CropKey, today));
   const coldStartTasks = (startingFromSeed ? [SEED_SUPPLIES_TASK, ...COLD_START_TASKS] : COLD_START_TASKS).filter(
@@ -226,14 +261,14 @@ export default function HomeScreen({
 
   // "Getting ready to grow" only when there's genuinely nothing to do.
   const coldShown = [...careTasks, ...seedTasks];
-  const coldLeft = coldShown.filter((t) => !isTaskComplete(profile, t.id)).length;
+  const coldLeft = coldShown.filter((t) => !isTaskComplete(profile, t.id)).length + (waterItems && !waterDone ? 1 : 0);
   const title = isColdStart
     ? coldLeft > 0
       ? `${coldLeft} ${coldLeft === 1 ? 'thing' : 'things'} left`
-      : coldShown.length > 0
+      : coldShown.length + waterItems > 0
         ? 'All done for today'
         : 'Getting ready to grow'
-    : tasks.length === 0
+    : totalCount === 0
       ? 'Nothing to do today. Enjoy the garden 🌱'
       : leftCount === 0
         ? 'All done for today'
@@ -359,6 +394,8 @@ export default function HomeScreen({
               </Text>
             </View>
 
+            {waterCard}
+
             {careTasks.length > 0 ? (
               <>
                 <Text style={styles.sectionLabel}>In your garden</Text>
@@ -428,10 +465,10 @@ export default function HomeScreen({
               the date gets closer.
             </Text>
           </>
-        ) : tasks.length > 0 ? (
+        ) : totalCount > 0 ? (
           <>
             <View style={styles.progressCard}>
-              <ProgressRing fraction={tasks.length ? doneCount / tasks.length : 0} />
+              <ProgressRing fraction={totalCount ? doneCount / totalCount : 0} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.progressTitle}>
                   {leftCount === 0 ? "Nice, everything's done" : 'Finish today to keep your streak'}
@@ -442,18 +479,24 @@ export default function HomeScreen({
               </View>
             </View>
 
-            <Text style={styles.sectionLabel}>Today</Text>
-            <View style={{ gap: space.sm }}>
-              {tasks.map((t) => (
-                <TaskRow
-                  key={t.id}
-                  task={t}
-                  completedAt={isTaskComplete(profile, t.id)}
-                  onToggle={() => handleToggle(t.id)}
-                  onOpenGuide={onOpenSeedGuide}
-                />
-              ))}
-            </View>
+            {waterCard}
+
+            {jobTasks.length > 0 ? (
+              <>
+                <Text style={styles.sectionLabel}>Today</Text>
+                <View style={{ gap: space.sm }}>
+                  {jobTasks.map((t) => (
+                    <TaskRow
+                      key={t.id}
+                      task={t}
+                      completedAt={isTaskComplete(profile, t.id)}
+                      onToggle={() => handleToggle(t.id)}
+                      onOpenGuide={onOpenSeedGuide}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
 
             {weatherAlert ? (
               <View style={styles.weatherCard}>
@@ -471,6 +514,7 @@ export default function HomeScreen({
           </>
         ) : (
           <>
+            {waterCard}
             {topCrop && topBucket ? (
               <View style={styles.reasonCard}>
                 <Text style={styles.reasonTitle}>
@@ -538,7 +582,7 @@ export default function HomeScreen({
 
         <View style={styles.spacer} />
 
-        {isColdStart || tasks.length > 0 ? (
+        {isColdStart || totalCount > 0 ? (
           <View style={styles.shortcutRow}>
             <TouchableOpacity
               style={styles.shortcut}
@@ -635,6 +679,74 @@ function weatherAgeLabel(weatherFetchedAt: string | null): string {
   return `showing weather from ${ageDays} ${ageDays === 1 ? 'day' : 'days'} ago`;
 }
 
+function lowerFirst(s: string): string {
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+
+/** All of today's watering in one place: the bed's schedule, any tree
+ * soil checks, and each crop's watering advice, with one check for the
+ * lot. On a day with nothing to water it shrinks to when the next one is. */
+function WateringCard({
+  waterTasks,
+  notes,
+  next,
+  done,
+  onToggle,
+}: {
+  waterTasks: DailyTask[];
+  notes: WateringNote[];
+  next: { date: Date; detail: string } | null;
+  done: boolean;
+  onToggle: () => void;
+}) {
+  const bed = waterTasks.find((t) => t.id.startsWith('water-'));
+  const trees = waterTasks.filter((t) => t.id.startsWith('treewater-'));
+  const due = waterTasks.length > 0;
+  const title = bed ? 'Water the garden' : trees.length > 0 ? 'Check your trees' : 'No watering today';
+  const sub = bed
+    ? bed.detail
+    : !due && next
+      ? `Next: ${next.date.toLocaleDateString(undefined, { weekday: 'long' })}, ${next.detail}`
+      : null;
+  const lines = [
+    ...trees.map((t) => `${t.title.replace(/^Water /, '')}: check the soil, water if dry`),
+    ...notes.map((n) => `${cropLabel(n.crop)}: ${lowerFirst(n.text)}`),
+  ];
+  const body = (
+    <>
+      <Text style={styles.waterIcon}>💧</Text>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={styles.waterEyebrow}>Today's watering</Text>
+        <Text style={[styles.waterTitle, done && styles.taskTitleDone]}>{title}</Text>
+        {sub ? <Text style={styles.waterSub}>{sub}</Text> : null}
+        {lines.map((l) => (
+          <Text key={l} style={styles.waterLine}>
+            • {l}
+          </Text>
+        ))}
+      </View>
+      {due ? (
+        <View style={[styles.checkCircle, done && styles.checkCircleDone]}>
+          {done ? <Text style={styles.checkMark}>✓</Text> : null}
+        </View>
+      ) : null}
+    </>
+  );
+  return due ? (
+    <TouchableOpacity
+      style={[styles.waterCard, done && styles.taskRowDone]}
+      onPress={onToggle}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: done }}
+      accessibilityLabel={`${title}${sub ? `, ${sub}` : ''}`}
+    >
+      {body}
+    </TouchableOpacity>
+  ) : (
+    <View style={styles.waterCard}>{body}</View>
+  );
+}
+
 function TaskRow({
   task,
   completedAt,
@@ -693,6 +805,28 @@ function TaskRow({
 }
 
 const styles = StyleSheet.create({
+  waterCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    backgroundColor: colors.selectedBg,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    padding: 14,
+  },
+  waterIcon: { fontSize: 22, marginTop: 2 },
+  waterEyebrow: {
+    fontFamily: fonts.monoSemiBold,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.mossGreen,
+    marginBottom: 3,
+  },
+  waterTitle: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.ink },
+  waterSub: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft, marginTop: 2 },
+  waterLine: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.ink, marginTop: 6 },
   screen: { flex: 1, backgroundColor: colors.paper },
   scroll: { flex: 1 },
   content: {
