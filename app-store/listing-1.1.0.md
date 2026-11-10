@@ -7,7 +7,6 @@ How App Store search works here: only the name, subtitle, and keywords field are
 ## App Information (name and subtitle change only with a new version)
 - **Name** (30/30): GardenWise: Grow Your Own Food
 - **Subtitle** (30/30): Seed to Harvest Garden Planner
-  - Alternative (24/30): Vegetable Garden Planner
 
 ## Version 1.1.0
 - **Keywords** (97/100):
