@@ -26,7 +26,8 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, space } from '../theme';
 import { OwlMark } from '../components/OwlMark';
 
-const MIN_DISPLAY_MS = 1400;
+// The tagline is fully in by ~1s; this leaves about a second to read it.
+const MIN_DISPLAY_MS = 2100;
 
 export interface SplashScreenProps {
   onFinish: () => void;

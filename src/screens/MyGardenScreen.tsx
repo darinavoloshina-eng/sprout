@@ -136,7 +136,7 @@ export interface MyGardenScreenProps {
   /** Passed the category currently being browsed, so "+ Add a crop" opens
    * the crop picker to that same category instead of always defaulting
    * back to Vegetables. */
-  onAddCrop: (category: CropCategory) => void;
+  onAddCrop: (category: CropCategory | 'all') => void;
   onOpenLog: () => void;
   onRemoveCrop: (crop: CropKey) => void;
   activeTab?: TabKey;
@@ -407,7 +407,7 @@ export default function MyGardenScreen({
         {missingCrops.length > 0 ? (
           <TouchableOpacity
             style={styles.addCard}
-            onPress={() => onAddCrop(category === 'all' ? 'vegetable' : category)}
+            onPress={() => onAddCrop(category)}
             accessibilityRole="button"
           >
             <View style={styles.addIconWrap}>

@@ -41,7 +41,6 @@ import {
   isTaskComplete,
   isWateringTask,
   seedSeasonCard,
-  nextBedWatering,
   toggleTask,
   wateringNotes,
 } from '../engines/taskEngine';
@@ -227,9 +226,9 @@ export default function HomeScreen({
     (t) => isWateringTask(t.id) && (!isColdStart || anythingInBed || !t.id.startsWith('water-'))
   );
   const waterNotes = useMemo(() => wateringNotes(profile, today), [profile, today]);
-  const nextWater = useMemo(() => nextBedWatering(profile, today), [profile, today]);
   const waterDone = waterTasks.length > 0 && waterTasks.every((t) => isTaskComplete(profile, t.id));
-  const showWaterCard = waterTasks.length > 0 || waterNotes.length > 0 || (anythingInBed && !!nextWater);
+  // Only on a day with watering to do: a quiet day stays quiet.
+  const showWaterCard = waterTasks.length > 0;
   const jobTasks = tasks.filter((t) => !isWateringTask(t.id));
   const careTasks = jobTasks.filter((t) => !isSeedStartTask(t.id));
   const waterItems = waterTasks.length > 0 ? 1 : 0;
@@ -251,7 +250,6 @@ export default function HomeScreen({
     <WateringCard
       waterTasks={waterTasks}
       notes={waterNotes}
-      next={nextWater}
       done={waterDone}
       onToggle={toggleWatering}
     />
@@ -389,7 +387,7 @@ export default function HomeScreen({
         }
       >
         <View style={styles.headerRow}>
-          <View>
+          <View style={styles.headerText}>
             <Text style={styles.eyebrow}>{dateLabel}</Text>
             <Text style={styles.title}>{title}</Text>
           </View>
@@ -730,17 +728,15 @@ function lowerFirst(s: string): string {
 
 /** All of today's watering in one place: the bed's schedule, any tree
  * soil checks, and each crop's watering advice, with one check for the
- * lot. On a day with nothing to water it shrinks to when the next one is. */
+ * lot. Shown only on a day with watering to do. */
 function WateringCard({
   waterTasks,
   notes,
-  next,
   done,
   onToggle,
 }: {
   waterTasks: DailyTask[];
   notes: WateringNote[];
-  next: { date: Date; detail: string } | null;
   done: boolean;
   onToggle: () => void;
 }) {
@@ -748,11 +744,7 @@ function WateringCard({
   const trees = waterTasks.filter((t) => t.id.startsWith('treewater-'));
   const due = waterTasks.length > 0;
   const title = bed ? 'Water the garden' : trees.length > 0 ? 'Check your trees' : 'No watering today';
-  const sub = bed
-    ? bed.detail
-    : !due && next
-      ? `Next: ${next.date.toLocaleDateString(undefined, { weekday: 'long' })}, ${next.detail}`
-      : null;
+  const sub = bed ? bed.detail : null;
   const lines = [
     ...trees.map((t) => `${t.title.replace(/^Water /, '')}: check the soil, water if dry`),
     ...notes.map((n) => `${cropLabel(n.crop)}: ${lowerFirst(n.text)}`),
@@ -913,7 +905,10 @@ const styles = StyleSheet.create({
     paddingBottom: space.xl,
     gap: space.md,
   },
-  headerRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  // The title can run to two lines ("Nothing to do today..."): it wraps
+  // and the streak pill keeps its size instead of being pushed off-screen.
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  headerText: { flex: 1, minWidth: 0 },
   eyebrow: {
     fontFamily: fonts.monoSemiBold,
     fontSize: 10.5,
@@ -922,8 +917,10 @@ const styles = StyleSheet.create({
     color: colors.mossGreen,
     marginBottom: 6,
   },
-  title: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 26, color: colors.pine },
+  title: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, color: colors.pine },
   streakPill: {
+    flexShrink: 0,
+    marginTop: 14,
     backgroundColor: colors.sevFyiBg,
     borderRadius: radius.pill,
     paddingVertical: 6,

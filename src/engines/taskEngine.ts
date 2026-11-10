@@ -7,7 +7,7 @@
 // against that id. This keeps tasks always in sync with the live schedule
 // instead of drifting out of date the way a stored, editable list would.
 
-import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, nextWateringDate, wateringDaysOfWeek } from './scheduleEngine';
+import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { CARE_BUCKET_FOR, GardenAlert, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
 import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor, SeedStartPlan, seedStartPlan } from './plantingGuide';
 import { GardenProfile, FrostEstimate } from '../types';
@@ -1363,18 +1363,6 @@ export function wateringNotes(profile: GardenProfile, today: Date = new Date()):
     notes.push({ crop: a.crop, text: a.headline });
   }
   return notes;
-}
-
-/** The bed's next watering day after `today`, for the watering card on a
- * day with nothing to water. Null when nothing in the bed needs it. */
-export function nextBedWatering(profile: GardenProfile, today: Date = new Date()): { date: Date; detail: string } | null {
-  const result = scheduleFor(profile);
-  if (result.sessionsPerWeek <= 0) return null;
-  const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59);
-  return {
-    date: nextWateringDate(result.sessionsPerWeek, endOfToday),
-    detail: `${result.minutesPerSession} min · ${timeOfDayLabel(result.timeOfDay).toLowerCase()}`,
-  };
 }
 
 /** Whether a task is part of watering (the bed's schedule or a tree's soil

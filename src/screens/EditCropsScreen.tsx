@@ -114,6 +114,15 @@ const PRO_CROPS: CropKey[] = [
 
 
 
+const CATEGORY_OPTIONS: { key: CropCategory | 'all'; label: string; icon: string }[] = [
+  { key: 'all', label: 'All crops', icon: '🌱' },
+  { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
+  { key: 'fruit', label: 'Fruit', icon: '🍓' },
+  { key: 'herb', label: 'Herbs', icon: '🌿' },
+  { key: 'flower', label: 'Flowers', icon: '🌻' },
+  { key: 'tree', label: 'Trees', icon: '🌳' },
+];
+
 export interface EditCropsScreenProps {
   profile: GardenProfile;
   onProfileChange: (p: GardenProfile) => void;
@@ -121,8 +130,9 @@ export interface EditCropsScreenProps {
   onOpenPaywall: () => void;
   activeTab: TabKey;
   onTabPress?: (tab: TabKey) => void;
-  /** Unused since the picker became one A–Z list; kept so callers compile. */
-  initialCategory?: CropCategory;
+  /** Which category to open on, e.g. Trees when arriving from My Garden's
+   * Trees filter. Defaults to All crops. */
+  initialCategory?: CropCategory | 'all';
 }
 
 export default function EditCropsScreen({
@@ -184,6 +194,11 @@ export default function EditCropsScreen({
   }
 
 
+  // 'All crops' by default; My Garden's category (e.g. Trees) when it opened from there.
+  const [category, setCategory] = useState<CropCategory | 'all'>(initialCategory ?? 'all');
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const categoryOptions = CATEGORY_OPTIONS.filter((o) => o.key === 'all' || isOfferedCategory(o.key, profile.crops));
+  const activeCategoryOption = CATEGORY_OPTIONS.find((o) => o.key === category)!;
   const [showSuggestions, setShowSuggestions] = useState(false);
   // Computed once per open, so a crop doesn't vanish from the list the
   // moment it's added (it shows as "✓ Added" instead).
@@ -211,7 +226,7 @@ export default function EditCropsScreen({
   // crops total, not which specific ones are visible. See atFreeLimit
   // above for where that cap actually bites.
   const visibleCrops = [...FREE_CROPS, ...PRO_CROPS]
-    .filter((c) => isOfferedCrop(c, profile.crops))
+    .filter((c) => (category === 'all' || CROP_CATEGORY[c] === category) && isOfferedCrop(c, profile.crops))
     .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)));
 
   return (
@@ -250,6 +265,45 @@ export default function EditCropsScreen({
                   : 'Add your location in Settings to see what grows well where you live.'}
               </Text>
             )}
+          </View>
+        ) : null}
+
+        <TouchableOpacity
+          style={[styles.categoryDropdown, showSuggestions && styles.hidden]}
+          onPress={() => setCategoryMenuOpen((o) => !o)}
+          accessibilityRole="button"
+          accessibilityLabel={`Category: ${activeCategoryOption.label}`}
+        >
+          <Text style={styles.categoryDropdownIcon}>{activeCategoryOption.icon}</Text>
+          <Text style={styles.categoryDropdownLabel}>{activeCategoryOption.label}</Text>
+          <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
+        </TouchableOpacity>
+
+        {categoryMenuOpen && !showSuggestions ? (
+          <View style={styles.categoryMenu}>
+            {categoryOptions.map((opt, i) => {
+              const sel = opt.key === category;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[
+                    styles.categoryMenuItem,
+                    i === categoryOptions.length - 1 && styles.categoryMenuItemLast,
+                    sel && styles.categoryMenuItemSelected,
+                  ]}
+                  onPress={() => {
+                    setCategory(opt.key);
+                    setCategoryMenuOpen(false);
+                  }}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected: sel }}
+                >
+                  <Text style={styles.categoryMenuIcon}>{opt.icon}</Text>
+                  <Text style={sel ? styles.categoryMenuLabelSelected : styles.categoryMenuLabel}>{opt.label}</Text>
+                  {sel ? <Text style={styles.categoryMenuCheck}>✓</Text> : null}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         ) : null}
 

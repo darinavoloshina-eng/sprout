@@ -166,6 +166,15 @@ function StepDots({ current }: { current: 0 | 1 | 2 | 3 }) {
   );
 }
 
+const CATEGORY_OPTIONS: { key: CropCategory | 'all'; label: string; icon: string }[] = [
+  { key: 'all', label: 'All crops', icon: '🌱' },
+  { key: 'vegetable', label: 'Vegetables', icon: '🥕' },
+  { key: 'fruit', label: 'Fruit', icon: '🍓' },
+  { key: 'herb', label: 'Herbs', icon: '🌿' },
+  { key: 'flower', label: 'Flowers', icon: '🌻' },
+  { key: 'tree', label: 'Trees', icon: '🌳' },
+];
+
 export default function OnboardingScreen({
   existing,
   onDone,
@@ -210,6 +219,8 @@ export default function OnboardingScreen({
   // the location step, so it asks for it inline, then looks up the frost
   // history to time suggestions by. That location carries on into the
   // location step, and the frost estimate into the saved garden.
+  const [category, setCategory] = useState<CropCategory | 'all'>('all');
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestFrost, setSuggestFrost] = useState<{ lat: number; lon: number; frost: FrostEstimate | null } | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
@@ -484,9 +495,54 @@ export default function OnboardingScreen({
               </View>
             ) : null}
 
+            <TouchableOpacity
+              style={[styles.categoryDropdown, showSuggestions && styles.hidden]}
+              onPress={() => setCategoryMenuOpen((o) => !o)}
+              accessibilityRole="button"
+              accessibilityLabel={`Category: ${CATEGORY_OPTIONS.find((o) => o.key === category)!.label}`}
+            >
+              <Text style={styles.categoryDropdownIcon}>
+                {CATEGORY_OPTIONS.find((o) => o.key === category)!.icon}
+              </Text>
+              <Text style={styles.categoryDropdownLabel}>
+                {CATEGORY_OPTIONS.find((o) => o.key === category)!.label}
+              </Text>
+              <Text style={styles.categoryDropdownChevron}>{categoryMenuOpen ? '▴' : '▾'}</Text>
+            </TouchableOpacity>
+
+            {categoryMenuOpen && !showSuggestions ? (
+              <View style={styles.categoryMenu}>
+                {CATEGORY_OPTIONS.filter((o) => o.key === 'all' || isOfferedCategory(o.key, existing?.crops ?? [])).map((opt, i, opts) => {
+                  const sel = opt.key === category;
+                  return (
+                    <TouchableOpacity
+                      key={opt.key}
+                      style={[
+                        styles.categoryMenuItem,
+                        i === opts.length - 1 && styles.categoryMenuItemLast,
+                        sel && styles.categoryMenuItemSelected,
+                      ]}
+                      onPress={() => {
+                        setCategory(opt.key);
+                        setCategoryMenuOpen(false);
+                      }}
+                      accessibilityRole="menuitem"
+                      accessibilityState={{ selected: sel }}
+                    >
+                      <Text style={styles.categoryMenuIcon}>{opt.icon}</Text>
+                      <Text style={sel ? styles.categoryMenuLabelSelected : styles.categoryMenuLabel}>
+                        {opt.label}
+                      </Text>
+                      {sel ? <Text style={styles.categoryMenuCheck}>✓</Text> : null}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : null}
+
             <View style={[styles.cropGrid, showSuggestions && styles.hidden]}>
               {[...FREE_CROPS, ...PRO_CROPS]
-                .filter((c) => isOfferedCrop(c, existing?.crops ?? []))
+                .filter((c) => (category === 'all' || CROP_CATEGORY[c] === category) && isOfferedCrop(c, existing?.crops ?? []))
                 .sort((a, b) => cropLabel(a).localeCompare(cropLabel(b)))
                 .map((c) => {
                 const selected = crops.has(c);
