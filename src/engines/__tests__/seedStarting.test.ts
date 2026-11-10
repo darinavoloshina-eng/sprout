@@ -6,6 +6,8 @@ import {
   toggleTask,
   effectiveBucket,
   currentSeedStep,
+  dateKey,
+  seedSeasonCard,
 } from '../taskEngine';
 import { planNudges } from '../nudgeEngine';
 import { GardenProfile } from '../../types';
@@ -133,5 +135,24 @@ describe('seed-start reminders', () => {
   it('are Pro only', () => {
     expect(planNudges(makeProfile(), twoWeeksBeforeStart).some((n) => n.title === 'Sow Peppers indoors')).toBe(false);
     expect(planNudges(makeProfile({ isPro: true }), twoWeeksBeforeStart).some((n) => n.title === 'Sow Peppers indoors')).toBe(true);
+  });
+});
+
+describe('seed season heads-up', () => {
+  // makeProfile: peppers started from seed; START is Mar 6.
+  it('shows the Home card from three weeks before the first sowing, until it is dismissed', () => {
+    const profile = makeProfile();
+    expect(seedSeasonCard(profile, new Date(2026, 1, 10, 9))).toBeNull(); // 24 days out
+    expect(seedSeasonCard(profile, new Date(2026, 1, 14, 9))!.crop).toBe('peppers'); // 20 days out
+    expect(seedSeasonCard(profile, START)).not.toBeNull();
+    const dismissed = { ...profile, seedSeasonCardDismissed: dateKey(START) };
+    expect(seedSeasonCard(dismissed, new Date(2026, 1, 14, 9))).toBeNull();
+  });
+
+  it('plans one push two weeks before the first sowing', () => {
+    const plan = planNudges(makeProfile(), new Date(2026, 1, 10, 12));
+    const seed = plan.find((n) => n.title.startsWith('Seed season'));
+    expect(seed).toBeDefined();
+    expect(dateKey(seed!.fireAt)).toBe('2026-02-20');
   });
 });

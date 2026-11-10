@@ -23,7 +23,7 @@
 // would only repeat what's on screen.
 
 import { GardenProfile } from '../types';
-import { DailyTask, dateKey, getTasksForDate, getTreeWateringReminders, isSeedStartTask, isTaskComplete } from './taskEngine';
+import { DailyTask, dateKey, firstSeedSowing, SEED_SEASON_NUDGE_DAYS, getTasksForDate, getTreeWateringReminders, isSeedStartTask, isTaskComplete } from './taskEngine';
 import { computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { bedCrops } from '../cropMeta';
 
@@ -152,9 +152,27 @@ export function weeklyDigest(profile: GardenProfile, weekStart: Date, now: Date)
  * at most one per calendar day. */
 export function planNudges(profile: GardenProfile, now: Date = new Date()): PlannedNudge[] {
   const nudges: PlannedNudge[] = [];
+  // One heads-up two weeks before the season's first sowing, for everyone
+  // (the guide it points to is free): time to read up and order supplies.
+  const firstSowing = firstSeedSowing(profile, now);
+  const seedSeasonDay = firstSowing
+    ? dateKey(new Date(firstSowing.date.getFullYear(), firstSowing.date.getMonth(), firstSowing.date.getDate() - SEED_SEASON_NUDGE_DAYS))
+    : null;
   for (let offset = 1; offset <= HORIZON_DAYS; offset++) {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset, MORNING_HOUR, 0, 0, 0);
     const tasks = nudgeWorthyTasks(profile, day, now);
+    if (firstSowing && dateKey(day) === seedSeasonDay) {
+      const when = firstSowing.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const seedLine = `Your first seeds go in on ${when}. Open GardenWise for what to get ready.`;
+      if (tasks.length > 0) {
+        const nudge = actionNudge(tasks, day);
+        nudge.body = `${nudge.body} Also: seed season starts in 2 weeks.`;
+        nudges.push(nudge);
+      } else {
+        nudges.push({ id: `nudge-${dateKey(day)}`, fireAt: day, title: 'Seed season starts in 2 weeks 🌱', body: seedLine });
+      }
+      continue;
+    }
     // Someone actually getting the weekly email already has the watering
     // plan in their inbox on Sunday — a push saying the same thing an hour
     // apart is the kind of double nudge this whole file exists to avoid.

@@ -1288,6 +1288,38 @@ export function currentSeedStep(
   return { task: seedStepTask(crop, plan, next), date: dates[next], upcoming: next !== step && dates[next].getTime() > today.getTime() };
 }
 
+/** How far ahead of the first sowing the "seed season is coming" card
+ * shows on Home, and when its one push notification goes out: time
+ * enough to read the guide and for supplies to arrive. */
+export const SEED_SEASON_CARD_DAYS = 21;
+export const SEED_SEASON_NUDGE_DAYS = 14;
+
+/** The garden's first start-indoors date still ahead of `today` (or today
+ * itself), and which crop it's for. Null when nothing is being started
+ * from seed. */
+export function firstSeedSowing(profile: GardenProfile, today: Date = new Date()): { date: Date; crop: CropKey } | null {
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let best: { date: Date; crop: CropKey } | null = null;
+  for (const crop of profile.crops) {
+    if (crop === 'other') continue;
+    const plan = activeSeedStartPlan(profile, crop, today);
+    if (!plan || plan.startIndoors.getTime() < startOfToday.getTime()) continue;
+    if (!best || plan.startIndoors.getTime() < best.date.getTime()) best = { date: plan.startIndoors, crop };
+  }
+  return best;
+}
+
+/** Whether Home should show the seed-season card today: within
+ * SEED_SEASON_CARD_DAYS of the first sowing, and not dismissed for it. */
+export function seedSeasonCard(profile: GardenProfile, today: Date = new Date()): { date: Date; crop: CropKey } | null {
+  const first = firstSeedSowing(profile, today);
+  if (!first) return null;
+  const days = Math.round((first.date.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000);
+  if (days > SEED_SEASON_CARD_DAYS) return null;
+  if (profile.seedSeasonCardDismissed === dateKey(first.date)) return null;
+  return first;
+}
+
 /** The soonest seed-start step still ahead (after today) across the
  * garden — Home's "Next up" line during the cold months. */
 export function nextSeedStep(profile: GardenProfile, today: Date = new Date()): { date: Date; task: DailyTask } | null {

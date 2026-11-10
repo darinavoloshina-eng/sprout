@@ -139,6 +139,9 @@ export interface GardenProfile {
   // fetchCurrentEntitlement/onEntitlementChange listeners. Before a real
   // API key is set, PaywallScreen instead sets this directly as a local,
   // unpaid preview toggle.
+  /** dateKey of the first sowing whose "seed season is coming" card the
+   * user closed on Home, so it stays closed for that season only. */
+  seedSeasonCardDismissed?: string;
   isPro?: boolean;
   // True when the active entitlement came from the one-time Lifetime
   // purchase rather than a recurring subscription — RevenueCat's

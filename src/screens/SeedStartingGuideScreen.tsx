@@ -8,7 +8,7 @@
 // Buy links are tagged Amazon links (see affiliate.ts), with Amazon's
 // required disclosure under the list.
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
 import { AFFILIATE_DISCLOSURE, amazonSearchUrl } from '../affiliate';
@@ -78,11 +78,14 @@ const STEPS = [
 export interface SeedStartingGuideScreenProps {
   onBack: () => void;
   backLabel?: string;
+  /** Where to open: the supply list (top, default) or the five steps. */
+  startAt?: 'kit' | 'steps';
 }
 
-export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back' }: SeedStartingGuideScreenProps) {
+export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back', startAt = 'kit' }: SeedStartingGuideScreenProps) {
+  const scrollRef = useRef<ScrollView>(null);
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView ref={scrollRef} style={styles.screen} contentContainerStyle={styles.content}>
       <TouchableOpacity onPress={onBack} accessibilityRole="button">
         <Text style={styles.back}>‹ {backLabel}</Text>
       </TouchableOpacity>
@@ -116,7 +119,14 @@ export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back' }: 
       </View>
       <Text style={styles.disclosure}>{AFFILIATE_DISCLOSURE}</Text>
 
-      <Text style={styles.sectionLabel}>How to do it</Text>
+      <Text
+        style={styles.sectionLabel}
+        onLayout={(e) => {
+          if (startAt === 'steps') scrollRef.current?.scrollTo({ y: e.nativeEvent.layout.y - 12, animated: false });
+        }}
+      >
+        How to do it
+      </Text>
       <View style={{ gap: space.sm }}>
         {STEPS.map((step, i) => (
           <View key={step.title} style={styles.stepCard}>

@@ -40,6 +40,7 @@ import {
   dateKey,
   isTaskComplete,
   isWateringTask,
+  seedSeasonCard,
   nextBedWatering,
   toggleTask,
   wateringNotes,
@@ -54,6 +55,7 @@ import { bedCrops, cropLabel } from '../cropMeta';
 import { NEXT_ACTION, STAGE_HEADLINE, BUCKET_LABEL } from '../plantStageContent';
 import { plantingGuidanceFor } from '../engines/plantingGuide';
 import { CropIcon, TabBar, TabKey } from '../components/ui';
+import { OwlMark } from '../components/OwlMark';
 import { useToday } from '../hooks/useToday';
 
 Notifications.setNotificationHandler({
@@ -156,7 +158,8 @@ export default function HomeScreen({
   profile: GardenProfile;
   onProfileChange: (p: GardenProfile) => void;
   onOpenTriage: () => void;
-  onOpenSeedGuide: () => void;
+  /** 'steps' opens the guide at its five steps; default is the supply list. */
+  onOpenSeedGuide: (startAt?: 'kit' | 'steps') => void;
   onOpenMyGarden: () => void;
   onOpenLog: () => void;
   onOpenAddHarvest: () => void;
@@ -254,6 +257,46 @@ export default function HomeScreen({
     />
   ) : null;
   const nextSeed = useMemo(() => nextSeedStep(profile, today), [profile, today]);
+  // "Seed season is coming": from three weeks before the first sowing.
+  const seedSeason = useMemo(() => seedSeasonCard(profile, today), [profile, today]);
+  function dismissSeedSeason() {
+    if (!seedSeason) return;
+    const updated = { ...profile, seedSeasonCardDismissed: dateKey(seedSeason.date) };
+    onProfileChange(updated);
+    saveProfile(updated).catch(() => {});
+  }
+  const seedSeasonDays = seedSeason
+    ? Math.round((seedSeason.date.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
+    : 0;
+  const seedSeasonCardEl = seedSeason ? (
+    <View style={styles.seedCard}>
+      <TouchableOpacity onPress={dismissSeedSeason} style={styles.seedClose} accessibilityRole="button" accessibilityLabel="Hide this card">
+        <Text style={styles.seedCloseText}>×</Text>
+      </TouchableOpacity>
+      <View style={styles.seedHead}>
+        <OwlMark size={84} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={styles.seedEyebrow}>Seed season is coming</Text>
+          <Text style={styles.seedTitle}>
+            {seedSeasonDays === 0
+              ? 'Your first seeds go in today'
+              : `Your first seeds go in ${seedSeasonDays === 1 ? 'tomorrow' : `on ${seedSeason.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`}`}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.seedBody}>
+        Starting from seed is easier than it looks. Here's what to get ready, and how to do it in five short steps.
+      </Text>
+      <View style={styles.seedButtons}>
+        <TouchableOpacity style={styles.seedPrimary} onPress={() => onOpenSeedGuide('steps')} accessibilityRole="button">
+          <Text style={styles.seedPrimaryText}>See the 5 steps</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.seedSecondary} onPress={() => onOpenSeedGuide('kit')} accessibilityRole="button">
+          <Text style={styles.seedSecondaryText}>Get your kit</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  ) : null;
   const startingFromSeed = profile.crops.some((c) => c !== 'other' && activeSeedStartPlan(profile, c as CropKey, today));
   const coldStartTasks = (startingFromSeed ? [SEED_SUPPLIES_TASK, ...COLD_START_TASKS] : COLD_START_TASKS).filter(
     (t) => !doneBeforeToday(t.id)
@@ -383,6 +426,8 @@ export default function HomeScreen({
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+        {seedSeasonCardEl}
+
         {isColdStart && daysToFrost != null ? (
           <>
             <View style={styles.frostCard}>
@@ -406,7 +451,7 @@ export default function HomeScreen({
                       task={t}
                       completedAt={isTaskComplete(profile, t.id)}
                       onToggle={() => handleToggle(t.id)}
-                      onOpenGuide={onOpenSeedGuide}
+                      onOpenGuide={() => onOpenSeedGuide()}
                     />
                   ))}
                 </View>
@@ -423,7 +468,7 @@ export default function HomeScreen({
                       task={t}
                       completedAt={isTaskComplete(profile, t.id)}
                       onToggle={() => handleToggle(t.id)}
-                      onOpenGuide={onOpenSeedGuide}
+                      onOpenGuide={() => onOpenSeedGuide()}
                     />
                   ))}
                 </View>
@@ -431,7 +476,7 @@ export default function HomeScreen({
             ) : null}
 
             {nextSeed ? (
-              <TouchableOpacity style={styles.nextUpCard} onPress={onOpenSeedGuide} accessibilityRole="button">
+              <TouchableOpacity style={styles.nextUpCard} onPress={() => onOpenSeedGuide()} accessibilityRole="button">
                 <View style={styles.nextUpHead}>
                   <Text style={styles.nextUpLabel}>Next up</Text>
                   <Text style={styles.nextUpDate}>
@@ -453,7 +498,7 @@ export default function HomeScreen({
                       task={t}
                       completedAt={isTaskComplete(profile, t.id)}
                       onToggle={() => handleToggle(t.id)}
-                      onOpenGuide={onOpenSeedGuide}
+                      onOpenGuide={() => onOpenSeedGuide()}
                     />
                   ))}
                 </View>
@@ -491,7 +536,7 @@ export default function HomeScreen({
                       task={t}
                       completedAt={isTaskComplete(profile, t.id)}
                       onToggle={() => handleToggle(t.id)}
-                      onOpenGuide={onOpenSeedGuide}
+                      onOpenGuide={() => onOpenSeedGuide()}
                     />
                   ))}
                 </View>
@@ -812,6 +857,32 @@ function TaskRow({
 }
 
 const styles = StyleSheet.create({
+  seedCard: {
+    backgroundColor: colors.iconCream,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    padding: 16,
+    gap: 10,
+  },
+  seedClose: { position: 'absolute', top: 6, right: 10, padding: 6, zIndex: 1 },
+  seedCloseText: { fontSize: 20, color: colors.inkSoft },
+  seedHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: -10, paddingRight: 20 },
+  seedEyebrow: {
+    fontFamily: fonts.monoSemiBold,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.mossGreen,
+    marginBottom: 3,
+  },
+  seedTitle: { fontFamily: fonts.heading, fontSize: 20, lineHeight: 24, color: colors.pine },
+  seedBody: { fontFamily: fonts.body, fontSize: 13.5, lineHeight: 19, color: colors.ink },
+  seedButtons: { flexDirection: 'row', gap: 10 },
+  seedPrimary: { flex: 1, backgroundColor: colors.pine, borderRadius: radius.pill, paddingVertical: 11, alignItems: 'center' },
+  seedPrimaryText: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: colors.onPine },
+  seedSecondary: { flex: 1, borderWidth: 1.5, borderColor: colors.pine, borderRadius: radius.pill, paddingVertical: 10, alignItems: 'center' },
+  seedSecondaryText: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: colors.pine },
   buyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   affiliateNote: { fontFamily: fonts.body, fontSize: 11, color: colors.inkSoft, marginTop: 8 },
   waterCard: {
