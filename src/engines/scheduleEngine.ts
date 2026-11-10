@@ -117,6 +117,9 @@ export interface ScheduleResult {
   targetInchesPerWeek: number;
   sessionsPerWeek: number;
   minutesPerSession: number;
+  /** Water per watering time, for hand watering, where minutes mean little
+   * (a hose or can delivers it in a few minutes). */
+  gallonsPerSession: number;
   timeOfDay: TimeOfDay;
   weatherAlert: string | null;
 }
@@ -337,7 +340,7 @@ export function computeSchedule(setup: GardenSetup): ScheduleResult {
   // its initial value (1.0) and produce a fully-formed, entirely made-up
   // bed watering schedule for a bed that isn't actually growing anything.
   if (setup.crops.length === 0) {
-    return { areaSqFt, targetInchesPerWeek: 0, sessionsPerWeek: 0, minutesPerSession: 0, timeOfDay: 'morning', weatherAlert: null };
+    return { areaSqFt, targetInchesPerWeek: 0, sessionsPerWeek: 0, minutesPerSession: 0, gallonsPerSession: 0, timeOfDay: 'morning', weatherAlert: null };
   }
 
   const baseTarget = setup.crops.reduce(
@@ -386,6 +389,9 @@ export function computeSchedule(setup: GardenSetup): ScheduleResult {
     minutesPerSession = Math.round(minutesPerSession / 2);
   }
   minutesPerSession = Math.max(3, minutesPerSession);
+  // 1 inch over 1 sq ft is about 0.623 gallons.
+  const wateringsPerSession = timeOfDay === 'morning and evening' ? 2 : 1;
+  const gallonsPerSession = (inchesPerSession / wateringsPerSession) * areaSqFt * 0.623;
 
   let weatherAlert: string | null = null;
   if (setup.weather) {
@@ -401,6 +407,7 @@ export function computeSchedule(setup: GardenSetup): ScheduleResult {
     targetInchesPerWeek: Number(targetInchesPerWeek.toFixed(2)),
     sessionsPerWeek,
     minutesPerSession,
+    gallonsPerSession,
     timeOfDay,
     weatherAlert,
   };

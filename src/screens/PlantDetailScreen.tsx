@@ -245,7 +245,6 @@ export default function PlantDetailScreen({
         </View>
 
         <View style={styles.instructionCard}>
-          <Text style={styles.instructionEyebrow}>Do this now</Text>
           <Text style={styles.instructionTitle}>{instructionTitle}</Text>
           <Text style={styles.instructionDetail}>{instructionDetail}</Text>
         </View>
@@ -556,17 +555,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: 14,
   },
-  instructionEyebrow: {
-    fontFamily: fonts.monoSemiBold,
-    fontSize: 10,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.mustard,
-    marginBottom: 7,
-  },
   instructionTitle: {
     fontFamily: fonts.bodyBold,
-    fontSize: 13.5,
+    fontSize: 15,
     color: colors.onPine,
     marginBottom: 4,
   },

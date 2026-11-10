@@ -24,6 +24,7 @@
 
 import { GardenProfile } from '../types';
 import { DailyTask, dateKey, firstSeedSowing, SEED_SEASON_NUDGE_DAYS, getTasksForDate, getTreeWateringReminders, isSeedStartTask, isTaskComplete } from './taskEngine';
+import { formatWaterVolume } from '../utils/units';
 import { computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { bedCrops } from '../cropMeta';
 
@@ -110,7 +111,7 @@ export function weeklyWateringLine(profile: GardenProfile, weekStart: Date): str
   const days = wateringDaysOfWeek(result.sessionsPerWeek);
   if (days.length > 0) {
     parts.push(
-      `Water ${joinNames(days.map((d) => DAY_NAMES[d]))}, about ${result.minutesPerSession} min each.`
+      `Water ${joinNames(days.map((d) => DAY_NAMES[d]))}, about ${profile.method === 'hand' ? formatWaterVolume(result.gallonsPerSession, profile.units ?? 'imperial') : `${result.minutesPerSession} min`} each.`
     );
   }
 

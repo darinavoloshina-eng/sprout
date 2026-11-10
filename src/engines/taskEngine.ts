@@ -7,6 +7,7 @@
 // against that id. This keeps tasks always in sync with the live schedule
 // instead of drifting out of date the way a stored, editable list would.
 
+import { formatHandWater } from '../utils/units';
 import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { CARE_BUCKET_FOR, GardenAlert, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
 import { addWeeks, coolSeasonFirstFrostMonthDay, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor, SeedStartPlan, seedStartPlan } from './plantingGuide';
@@ -135,6 +136,13 @@ export function dateKey(date: Date): string {
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+/** "25 min" for drip; for hand watering, how much water instead. */
+export function waterAmountLabel(profile: GardenProfile, result: ScheduleResult): string {
+  return profile.method === 'hand'
+    ? formatHandWater(result.gallonsPerSession, profile.units ?? 'imperial')
+    : `${result.minutesPerSession} min`;
 }
 
 function timeOfDayLabel(t: TimeOfDay): string {
@@ -705,21 +713,21 @@ interface TreeWaterInfo {
  * inches of soil are dry," which every note below says explicitly, same
  * as the per-bucket care copy already does for these crops. */
 const TREE_WATER_INFO: Partial<Record<CropKey, TreeWaterInfo>> = {
-  lemon: { everyDays: 3, offset: 0, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
-  lime: { everyDays: 3, offset: 1, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
-  orange: { everyDays: 3, offset: 2, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
-  kumquat: { everyDays: 3, offset: 0, note: 'Citrus in containers dries out faster than an in-ground bed. Check the top couple inches of soil, and water deeply if dry.' },
-  avocado: { everyDays: 3, offset: 1, note: 'Avocado has shallow roots that dislike drying out completely, but also rot in soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
-  olive: { everyDays: 5, offset: 0, note: 'Drought-tolerant once established, and prone to root rot if kept too wet. Let it dry out somewhat between waterings.' },
-  pomegranate: { everyDays: 5, offset: 2, note: 'Fairly drought-tolerant once established. Check the top couple inches of soil, and water deeply if dry.' },
-  figs: { everyDays: 4, offset: 0, note: 'Tolerates some drying out once established, but a container still needs more frequent water than a bed. Check the top couple inches of soil.' },
-  peach: { everyDays: 4, offset: 1, note: 'Wants consistent moisture, especially while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
-  apple: { everyDays: 5, offset: 0, note: 'Water deeply but not often, especially while fruit is sizing up. Check the top couple inches of soil, and water deeply if dry.' },
-  pear: { everyDays: 5, offset: 2, note: 'Water deeply but not often, especially while fruit is sizing up. Check the top couple inches of soil, and water deeply if dry.' },
-  plum: { everyDays: 4, offset: 3, note: 'Wants consistent moisture while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
-  cherry: { everyDays: 4, offset: 2, note: 'Wants consistent moisture, especially while fruit is developing, but not soggy soil. Check the top couple inches of soil, and water deeply if dry.' },
-  blueberries: { everyDays: 3, offset: 2, note: 'Shallow roots in the acidic, well-drained soil blueberries need mean they dry out faster than most bed plants. Check the top couple inches of soil, and water deeply if dry.' },
-  raspberries: { everyDays: 4, offset: 3, note: 'Cane fruit want consistent moisture through fruiting, especially now that they are off the bed\'s shared schedule. Check the top couple inches of soil, and water deeply if dry.' },
+  lemon: { everyDays: 3, offset: 0, note: 'Citrus dries out faster than a garden bed, especially in a pot. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  lime: { everyDays: 3, offset: 1, note: 'Citrus dries out faster than a garden bed, especially in a pot. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  orange: { everyDays: 3, offset: 2, note: 'Citrus dries out faster than a garden bed, especially in a pot. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  kumquat: { everyDays: 3, offset: 0, note: 'Citrus dries out faster than a garden bed, especially in a pot. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  avocado: { everyDays: 3, offset: 1, note: 'Avocado has shallow roots that dislike drying out but rot in soggy soil. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  olive: { everyDays: 5, offset: 0, note: 'Olives handle dry spells once established and rot if kept too wet. Let the soil dry out a bit between waterings.' },
+  pomegranate: { everyDays: 5, offset: 2, note: 'Fairly drought-tolerant once established. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  figs: { everyDays: 4, offset: 0, note: 'Figs handle some drying out once established, but a fig in a pot needs water more often. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  peach: { everyDays: 4, offset: 1, note: 'Peaches like steady moisture, especially while fruit is growing, but not soggy soil. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  apple: { everyDays: 5, offset: 0, note: 'Apple trees do best with a deep soak now and then rather than frequent light watering. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  pear: { everyDays: 5, offset: 2, note: 'Pear trees do best with a deep soak now and then rather than frequent light watering. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  plum: { everyDays: 4, offset: 3, note: 'Plums like steady moisture, especially while fruit is growing, but not soggy soil. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  cherry: { everyDays: 4, offset: 2, note: 'Cherries like steady moisture, especially while fruit is growing, but not soggy soil. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  blueberries: { everyDays: 3, offset: 2, note: 'Blueberries have shallow roots, so they dry out faster than most plants. Check the top couple of inches of soil and water deeply if it\'s dry.' },
+  raspberries: { everyDays: 4, offset: 3, note: 'Raspberries like steady moisture, especially while fruiting. Check the top couple of inches of soil and water deeply if it\'s dry.' },
 };
 
 function isTreeWaterDay(info: TreeWaterInfo, date: Date): boolean {
@@ -948,7 +956,7 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       icon: '💧',
       iconBg: colors.selectedBg,
       title: 'Water the garden',
-      detail: `${result.minutesPerSession} min · ${timeOfDayLabel(result.timeOfDay)}`,
+      detail: `${waterAmountLabel(profile, result)} · ${timeOfDayLabel(result.timeOfDay)}`,
       category: 'tend',
     });
   }
@@ -1430,7 +1438,7 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
       icon: '💧',
       iconBg: colors.selectedBg,
       title: 'Water the garden',
-      detail: `${result.minutesPerSession} min · ${timeOfDayLabel(result.timeOfDay)}`,
+      detail: `${waterAmountLabel(profile, result)} · ${timeOfDayLabel(result.timeOfDay)}`,
       category: 'tend',
     });
   }

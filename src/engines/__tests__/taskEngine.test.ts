@@ -1490,3 +1490,19 @@ describe('harvestWindowsFor, cold-hardy greens', () => {
     expect(harvestWindowsFor(profile, new Date(2026, 7, 1))).toEqual([]);
   });
 });
+
+describe('watering amount by method', () => {
+  // Tomatoes, full sun, 4x4: Mon/Wed/Fri. Jan 5 2026 is a Monday.
+  const monday = new Date(2026, 0, 5, 9);
+  const water = (p: GardenProfile) => getTasksForDate(p, monday, monday).find((t) => t.title === 'Water the garden')!;
+
+  it('gives drip a run time', () => {
+    expect(water(makeProfile()).detail).toMatch(/^\d+ min · Morning/);
+  });
+
+  it('gives hand watering an amount, not a long run time', () => {
+    const detail = water(makeProfile({ method: 'hand' })).detail;
+    expect(detail).toMatch(/^About \d+ gallons? \(\d+ watering cans?\) · Morning/);
+    expect(water(makeProfile({ method: 'hand', units: 'metric' })).detail).toMatch(/^About \d+ L /);
+  });
+});

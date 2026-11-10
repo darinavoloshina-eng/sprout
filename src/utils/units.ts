@@ -38,6 +38,20 @@ export function formatBedArea(widthFt: number, lengthFt: number, units: UnitSyst
   return `${(sqFt * SQFT_PER_SQM).toFixed(1)} m²`;
 }
 
+/** How much to hand water, e.g. "About 5 gallons (2 watering cans)".
+ * A watering can is taken as 2 gallons / 8 L. */
+export function formatHandWater(gallons: number, units: UnitSystem): string {
+  const cans = Math.max(1, Math.round(gallons / 2));
+  return `About ${formatWaterVolume(gallons, units)} (${cans} watering can${cans === 1 ? '' : 's'})`;
+}
+
+/** "5 gallons" / "19 L", never less than 1. */
+export function formatWaterVolume(gallons: number, units: UnitSystem): string {
+  if (units === 'metric') return `${Math.max(1, Math.round(gallons * L_PER_GAL))} L`;
+  const gal = Math.max(1, Math.round(gallons));
+  return `${gal} gallon${gal === 1 ? '' : 's'}`;
+}
+
 export function formatFlowGph(gph: number, units: UnitSystem): string {
   if (units === 'imperial') return `${gph} GPH`;
   const lph = gph * L_PER_GAL;
