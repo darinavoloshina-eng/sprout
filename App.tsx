@@ -229,7 +229,7 @@ export default function App() {
   // Which category tab EditCropsScreen should open on — set from My
   // Garden's own active category tab so "+ Add a crop" lands where the
   // user was already browsing, instead of always defaulting to Vegetables.
-  const [editCropsInitialCategory, setEditCropsInitialCategory] = useState<CropCategory>('vegetable');
+  const [editCropsInitialCategory, setEditCropsInitialCategory] = useState<CropCategory | 'all'>('all');
   // A boolean overlay rather than a routed screen: routing through `screen`
   // would unmount whatever's underneath (losing onboarding's in-progress
   // wizard state, mid-step) every time it opened.
@@ -610,7 +610,7 @@ export default function App() {
           }}
           onEditCrops={() => {
             setEditCropsFrom('settings');
-            setEditCropsInitialCategory('vegetable');
+            setEditCropsInitialCategory('all');
             setScreen('editCrops');
           }}
           onDeleteAccount={() => setScreen('deleteAccount')}
