@@ -250,20 +250,6 @@ export default function PlantDetailScreen({
           <Text style={styles.instructionDetail}>{instructionDetail}</Text>
         </View>
 
-        {fertilizer ? (
-          <View style={styles.feedRow}>
-            <Text style={styles.feedIcon}>🧺</Text>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.feedTitle}>Needs feeding</Text>
-              <Text style={styles.feedSub}>We'll remind you when. A good match: {fertilizer.label}.</Text>
-            </View>
-            <TouchableOpacity onPress={() => Linking.openURL(fertilizer.url)} style={styles.feedBuy} accessibilityRole="button" accessibilityLabel={`Shop ${fertilizer.label} on Amazon`}>
-              <Text style={styles.feedBuyText}>Shop</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-        {fertilizer ? <Text style={styles.feedNote}>{COMMISSION_NOTE}</Text> : null}
-
         {seedSteps ? (
           <View style={styles.seedCard}>
             <Text style={styles.seedEyebrow}>Starting from seed</Text>
@@ -305,6 +291,20 @@ export default function PlantDetailScreen({
             ) : null}
           </View>
         ) : null}
+
+        {fertilizer ? (
+          <View style={styles.feedRow}>
+            <Text style={styles.feedIcon}>🧺</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.feedTitle}>Needs feeding</Text>
+              <Text style={styles.feedSub}>We'll remind you when. A good match: {fertilizer.label}.</Text>
+            </View>
+            <TouchableOpacity onPress={() => Linking.openURL(fertilizer.url)} style={styles.feedBuy} accessibilityRole="button" accessibilityLabel={`Shop ${fertilizer.label} on Amazon`}>
+              <Text style={styles.feedBuyText}>Shop</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        {fertilizer ? <Text style={styles.feedNote}>{COMMISSION_NOTE}</Text> : null}
 
         <View style={styles.statsRow}>
           {stats.map((s) => (
