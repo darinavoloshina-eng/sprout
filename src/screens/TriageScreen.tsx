@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { triageTree, TriageCause } from '../engines/triageEngine';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { causeProduct, triageTree, TriageCause } from '../engines/triageEngine';
+import { amazonSearchUrl } from '../affiliate';
 import { GardenProfile } from '../types';
 import { colors, radius, space } from '../theme';
 import { cropIcon, cropLabel } from '../cropMeta';
@@ -147,6 +148,19 @@ export default function TriageScreen({
                 {cause.action}
               </Text>
             </View>
+            {causeProduct(cause) ? (
+              <View style={styles.buyRow}>
+                <TouchableOpacity
+                  style={styles.buyPill}
+                  onPress={() => Linking.openURL(amazonSearchUrl(causeProduct(cause)!.query))}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Buy ${causeProduct(cause)!.label} on Amazon`}
+                >
+                  <Text style={styles.buyText}>Buy {causeProduct(cause)!.label} →</Text>
+                </TouchableOpacity>
+                <Text style={styles.affiliateNote}>Affiliate link</Text>
+              </View>
+            ) : null}
             {resultIdx < results.length - 1 && (
               <TouchableOpacity onPress={() => setResultIdx(resultIdx + 1)} accessibilityRole="button">
                 <Text style={styles.other}>Not quite? See another possibility</Text>
@@ -161,6 +175,10 @@ export default function TriageScreen({
 }
 
 const styles = StyleSheet.create({
+  buyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: space.md },
+  buyPill: { borderWidth: 1.5, borderColor: colors.clay, borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 14 },
+  buyText: { fontSize: 13, fontWeight: '600', color: colors.clay },
+  affiliateNote: { fontSize: 11, color: colors.inkSoft },
   scroll: { flex: 1 },
   container: { padding: space.xl, paddingBottom: 60 },
   back: { color: colors.inkSoft, marginBottom: space.md, fontSize: 13 },

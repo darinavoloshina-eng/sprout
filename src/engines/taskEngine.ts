@@ -64,7 +64,26 @@ export interface DailyTask {
  * the crop a feed task is about — a placeholder "Buy now" destination
  * until real affiliate links and curated per-crop products exist. */
 function placeholderFertilizerBuyUrl(crop: CropKey): string {
-  return amazonSearchUrl(`organic ${cropLabel(crop)} fertilizer`);
+  return amazonSearchUrl(fertilizerQuery(crop));
+}
+
+/** What to search for, by the kind of plant: "organic Lime tree
+ * fertilizer" finds less than "organic citrus fertilizer". Swapped for
+ * specific products (affiliate.ts amazonProductUrl) once those are chosen. */
+function fertilizerQuery(crop: CropKey): string {
+  const groups: [CropKey[], string][] = [
+    [['lemon', 'lime', 'orange', 'kumquat'], 'organic citrus fertilizer'],
+    [['avocado'], 'organic citrus and avocado fertilizer'],
+    [['blueberries'], 'organic fertilizer for blueberries and acid loving plants'],
+    [['strawberries', 'raspberries', 'blackberries'], 'organic berry fertilizer'],
+    [['grapes'], 'organic grape vine fertilizer'],
+    [['apple', 'pear', 'plum', 'peach', 'cherry', 'figs', 'olive', 'pomegranate'], 'organic fruit tree fertilizer'],
+    [['tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
+      'organic tomato and vegetable fertilizer'],
+    [['corn', 'celery', 'onions', 'greenonions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
+      'organic fish emulsion fertilizer'],
+  ];
+  return groups.find(([crops]) => crops.includes(crop))?.[1] ?? 'organic vegetable garden fertilizer';
 }
 
 /** One organic way to do each feed task, appended to its note. A lot of
@@ -77,7 +96,8 @@ const ORGANIC_FEED_TIP: Partial<Record<CropKey, string>> = (() => {
   const set = (crops: CropKey[], tip: string) => crops.forEach((c) => (tips[c] = tip));
   set(['lemon', 'lime', 'orange', 'kumquat'], 'Organic option: an organic citrus fertilizer, plus a layer of compost around the base in spring.');
   set(['blueberries'], 'Organic option: an organic fertilizer made for acid-loving plants.');
-  set(['avocado', 'olive', 'pomegranate'], 'Organic option: spread compost around the base in spring, keeping it a few inches off the trunk.');
+  set(['avocado', 'olive', 'pomegranate', 'apple', 'pear', 'plum', 'peach', 'cherry', 'figs'], 'Organic option: spread compost around the base in spring, keeping it a few inches off the trunk.');
+  set(['raspberries', 'blackberries', 'grapes'], 'Organic option: a couple inches of compost around the plants in spring.');
   set(
     ['strawberries', 'tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
     'Organic option: compost or worm castings around the plants, or a fish-and-kelp liquid feed.'
@@ -494,6 +514,18 @@ const FEED_INFO: Partial<Record<CropKey, FeedInfo>> = {
   brusselssprouts: { everyWeeks: 4, startWeeks: 3, cutoffWeeksBeforeFrost: 8, perennial: false, note: 'A heavy nitrogen feeder over its long season — feed every 3-4 weeks.' },
   kale: { everyWeeks: 5, startWeeks: 4, cutoffWeeksBeforeFrost: 5, perennial: false, note: 'A long, cut-and-come-again harvest benefits from feeding every 4-5 weeks to keep new leaves coming.' },
   chard: { everyWeeks: 5, startWeeks: 4, cutoffWeeksBeforeFrost: 5, perennial: false, note: 'A long, cut-and-come-again harvest benefits from feeding every 4-5 weeks to keep new leaves coming.' },
+  // Fruit trees, cane berries, and grapes: one feeding a year, in early
+  // spring as buds swell, which is all most of them want. More pushes
+  // leaves over fruit. (everyWeeks 52 means a single round per season.)
+  apple: { everyWeeks: 52, startWeeks: -3, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed once a year in early spring, as the buds start to swell, with a balanced fruit tree fertilizer spread out to the edge of the branches. Skip it the year you plant: let the roots settle first.' },
+  pear: { everyWeeks: 52, startWeeks: -3, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed lightly once a year in early spring as buds swell. Go easy: too much nitrogen invites fire blight. Skip it the year you plant.' },
+  plum: { everyWeeks: 52, startWeeks: -3, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed once a year in early spring, as the buds start to swell, with a balanced fruit tree fertilizer. Skip it the year you plant.' },
+  peach: { everyWeeks: 52, startWeeks: -3, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed once a year in early spring, before bud break, with a balanced fruit tree fertilizer. Skip it the year you plant.' },
+  cherry: { everyWeeks: 52, startWeeks: -3, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed once a year in early spring, before bud break, with a balanced fruit tree fertilizer. Skip it the year you plant.' },
+  figs: { everyWeeks: 52, startWeeks: 2, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Figs need little feeding: once in spring as new leaves appear is plenty. More gives you leaves instead of figs.' },
+  raspberries: { everyWeeks: 52, startWeeks: -2, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed once in early spring as new canes start to grow, with a berry fertilizer or compost worked in around the plants.' },
+  blackberries: { everyWeeks: 52, startWeeks: -2, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Feed once in early spring as new canes start to grow, with a berry fertilizer or compost worked in around the plants.' },
+  grapes: { everyWeeks: 52, startWeeks: 0, cutoffWeeksBeforeFrost: 0, perennial: true, note: 'Grapes need only a light feeding once in spring as buds break. Heavy feeding grows vines instead of grapes.' },
   dahlias: { everyWeeks: 4, startWeeks: 3, cutoffWeeksBeforeFrost: 8, perennial: false, note: 'A heavy bloomer — feed every 3-4 weeks with a low-nitrogen, higher-phosphorus/potassium fertilizer to support flowering without excess foliage.' },
 };
 
@@ -522,6 +554,9 @@ function perennialFeedWindow(
     fallFrost = parseMonthDay(fallMonthDay, year + 1);
   }
   const end = addWeeks(fallFrost, -info.cutoffWeeksBeforeFrost);
+  // A once-a-year spring feeding skips the year the plant goes in: a
+  // newly planted tree shouldn't be fed until its roots settle.
+  if (info.everyWeeks >= 52 && plantedDate.getTime() > springStart.getTime()) return null;
   const start = plantedDate.getTime() > springStart.getTime() ? plantedDate : springStart;
   if (start.getTime() > end.getTime()) return null;
   return { start, end };
@@ -597,6 +632,38 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
         buyUrl: placeholderFertilizerBuyUrl(crop),
       });
     }
+  }
+  return tasks;
+}
+
+/** Fruit birds go for, and roughly when (weeks after the last spring
+ * frost) to get netting on: before the fruit colors up, since birds
+ * usually beat you to it the day before it's ready. Rough by design:
+ * a reminder to be ready, not a ripeness prediction. */
+const NET_WEEKS_AFTER_FROST: Partial<Record<CropKey, number>> = {
+  strawberries: 5, cherry: 8, blueberries: 11, raspberries: 13, blackberries: 15, grapes: 17, figs: 19,
+};
+
+/** "Net your … against birds", once a season, Pro like the other care
+ * reminders, for a planted crop on the list above. */
+export function getNettingReminders(profile: GardenProfile, date: Date): DailyTask[] {
+  if (!profile.isPro || !profile.frostDates?.lastFrostMonthDay) return [];
+  const tasks: DailyTask[] = [];
+  for (const crop of profile.crops) {
+    if (crop === 'other') continue;
+    const weeks = NET_WEEKS_AFTER_FROST[crop];
+    if (weeks == null || effectiveBucket(profile, crop, date) === 'w0') continue;
+    const due = addWeeks(parseMonthDay(profile.frostDates.lastFrostMonthDay, date.getFullYear()), weeks);
+    if (!sameDay(due, date)) continue;
+    tasks.push({
+      id: `net-${crop}-${date.getFullYear()}`,
+      icon: cropIcon(crop),
+      iconBg: cropIconBg(crop),
+      title: `Net your ${cropLabel(crop).toLowerCase()} against birds`,
+      detail: 'Birds find ripening fruit fast, often the day before you would pick it. Drape bird netting over the plants now, before the fruit colors up, and pin the edges down so birds cannot get underneath.',
+      category: 'tend',
+      buyUrl: amazonSearchUrl('bird netting for garden and fruit trees'),
+    });
   }
   return tasks;
 }
@@ -941,7 +1008,7 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
-    for (const t of getFeedReminders(profile, today)) {
+    for (const t of [...getFeedReminders(profile, today), ...getNettingReminders(profile, today)]) {
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
@@ -990,7 +1057,7 @@ export function getTasksForDate(profile: GardenProfile, date: Date, today: Date 
         category: 'tend',
       });
     }
-    for (const t of getFeedReminders(profile, date)) {
+    for (const t of [...getFeedReminders(profile, date), ...getNettingReminders(profile, date)]) {
       if (isTaskComplete(profile, t.id)) continue;
       tasks.push(t);
     }
@@ -1359,6 +1426,7 @@ export function getTodayTasks(profile: GardenProfile, today: Date = new Date()):
     }
     tasks.push(...getSuccessionReminders(profile, today));
     tasks.push(...getFeedReminders(profile, today));
+    tasks.push(...getNettingReminders(profile, today));
     tasks.push(...getSeedCollectionReminders(profile, today));
     const frost = frostProtectionTask(profile, today);
     if (frost) tasks.push(frost);

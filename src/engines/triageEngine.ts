@@ -204,6 +204,43 @@ export const triageTree: Record<string, SymptomDefinition> = {
       return out;
     },
   },
+  holes: {
+    icon: '🕳️',
+    label: 'Holes in leaves',
+    q1: { text: 'What do the holes look like?', options: [
+      { key: 'ragged', label: 'Big, ragged holes, maybe shiny trails' },
+      { key: 'pinholes', label: 'Lots of tiny pinholes' },
+      { key: 'chewed', label: 'Leaves chewed from the edges, or stripped' },
+    ]},
+    q2: { text: 'When does new damage show up?', options: [
+      { key: 'overnight', label: 'Overnight' },
+      { key: 'daytime', label: 'During the day' },
+      { key: 'unsure', label: 'Not sure' },
+    ]},
+    resolve(a) {
+      const out: TriageCause[] = [];
+      if (a.q1 === 'ragged' || a.q2 === 'overnight') {
+        out.push({ title: 'Slugs or snails', confidence: a.q1 === 'ragged' ? 'Likely' : 'Possible', risk: 'soon',
+          explain: 'Big ragged holes that appear overnight, often with silvery slime trails, are the classic sign of slugs and snails. They feed in the dark and hide in damp spots by day.',
+          action: 'Go out with a flashlight after dark and pick them off, then scatter an iron phosphate slug bait around the plants. It is safe for pets, birds, and organic gardens.' });
+      }
+      if (a.q1 === 'pinholes') {
+        out.push({ title: 'Flea beetles', confidence: 'Likely', risk: 'low',
+          explain: 'Dozens of tiny round pinholes, especially on young eggplant, arugula, radishes, and other cabbage-family crops, come from flea beetles: tiny black beetles that jump when disturbed.',
+          action: 'Cover young plants with a light row cover until they are bigger and tougher. Established plants usually outgrow the damage.' });
+      }
+      if (a.q1 === 'chewed') {
+        out.push({ title: 'Caterpillars', confidence: 'Likely', risk: 'soon',
+          explain: 'Leaves chewed in from the edges or stripped to the veins usually mean caterpillars, like cabbage worms or tomato hornworms. Look for green droppings on the leaves below.',
+          action: 'Hand-pick what you can find, then spray an organic BT (Bacillus thuringiensis) spray. It only affects caterpillars, not bees or people.' });
+      }
+      out.push({ title: 'Slugs or snails', confidence: 'Possible', risk: 'low',
+        explain: 'If you are not sure what is causing the holes, slugs are the most common culprit in home gardens, especially after rain.',
+        action: 'Check under leaves and mulch after dark with a flashlight. If you find them, pick them off and use an iron phosphate slug bait.' });
+      // The catch-all slug entry would repeat a slug diagnosis already given.
+      return out.filter((c, i) => i === out.findIndex((d) => d.title === c.title));
+    },
+  },
   slow_growth: {
     icon: '🐢',
     label: 'Slow growth',
@@ -239,3 +276,32 @@ export const triageTree: Record<string, SymptomDefinition> = {
     },
   },
 };
+
+/** A product that helps with a cause (label reads after "Buy "), linked from its result card: organic
+ * and beginner-safe first. Causes that need no product (overwatering,
+ * transplant shock) have none. */
+export interface CauseProduct {
+  label: string;
+  query: string;
+}
+
+const CAUSE_PRODUCTS: Record<string, CauseProduct> = {
+  Aphids: { label: 'insecticidal soap', query: 'organic insecticidal soap spray for plants' },
+  Mealybugs: { label: 'neem oil spray', query: 'organic neem oil spray for plants' },
+  Whiteflies: { label: 'yellow sticky traps', query: 'yellow sticky traps for whiteflies' },
+  'General pest pressure': { label: 'neem oil spray', query: 'organic neem oil spray for plants' },
+  'Pest feeding damage': { label: 'neem oil spray', query: 'organic neem oil spray for plants' },
+  'Slugs or snails': { label: 'iron phosphate slug bait', query: 'iron phosphate slug and snail bait organic' },
+  'Flea beetles': { label: 'row cover', query: 'floating row cover garden fabric' },
+  Caterpillars: { label: 'BT caterpillar spray', query: 'BT Bacillus thuringiensis caterpillar spray organic' },
+  'Fungal blight': { label: 'organic copper fungicide', query: 'organic copper fungicide spray' },
+  'Bacterial leaf spot': { label: 'organic copper fungicide', query: 'organic copper fungicide spray' },
+  'Powdery mildew': { label: 'mildew spray', query: 'organic powdery mildew fungicide spray' },
+  'Nitrogen deficiency': { label: 'organic fish fertilizer', query: 'organic fish emulsion fertilizer' },
+  'Nutrient deficiency': { label: 'organic all-purpose fertilizer', query: 'organic all purpose garden fertilizer' },
+  'Nutrient lockup (iron/magnesium)': { label: 'a soil pH test kit', query: 'soil pH test kit' },
+};
+
+export function causeProduct(cause: TriageCause): CauseProduct | null {
+  return CAUSE_PRODUCTS[cause.title] ?? null;
+}

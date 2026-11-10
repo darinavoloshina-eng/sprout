@@ -37,7 +37,7 @@ export const WEEKLY_SUMMARY_HOUR = 18;
 // the day they're due. Notably absent: water- (the bed's routine watering)
 // and treewater- (a soil check every 3–5 days) — both folded into the
 // weekly summary — and harvested-, which is a record, not a task.
-const NUDGE_PREFIXES = ['plant-', 'succession-', 'feed-', 'seeds-', 'reminder-', 'seedstart-', 'hardenoff-', 'transplant-'];
+const NUDGE_PREFIXES = ['plant-', 'succession-', 'feed-', 'net-', 'seeds-', 'reminder-', 'seedstart-', 'hardenoff-', 'transplant-'];
 
 export interface PlannedNudge {
   id: string;

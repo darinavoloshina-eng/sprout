@@ -7,6 +7,7 @@ import {
   effectiveBackdate,
   effectiveBucket,
   getFeedReminders,
+  getNettingReminders,
   getSeedCollectionReminders,
   harvestWindowsFor,
   seedCollectionWindowsFor,
@@ -939,7 +940,7 @@ describe('getFeedReminders', () => {
     expect(tasks[0].title).toBe('Fertilize Lemon tree');
   });
 
-  it('includes a placeholder Amazon "buy now" link, scoped to the specific crop', () => {
+  it('includes a tagged Amazon "buy now" link for that kind of plant', () => {
     const profile = makeProfile({
       crops: ['lemon'],
       plantedDates: { lemon: new Date(2023, 5, 1).toISOString() },
@@ -948,7 +949,28 @@ describe('getFeedReminders', () => {
     });
     const tasks = getFeedReminders(profile, new Date(2024, 4, 8));
     expect(tasks[0].buyUrl).toContain('amazon.com');
-    expect(tasks[0].buyUrl).toContain(encodeURIComponent('organic Lemon tree fertilizer'));
+    expect(tasks[0].buyUrl).toContain(encodeURIComponent('organic citrus fertilizer'));
+    expect(tasks[0].buyUrl).toContain('tag=gardenwise-20');
+  });
+
+  it('feeds an established apple tree once in early spring, and skips the year it was planted', () => {
+    const base = { crops: ['apple'] as any, frostDates, isPro: true }; // last frost 05-01
+    const springFeed = new Date(2024, 3, 10); // 3 weeks before
+    const established = makeProfile({ ...base, plantedDates: { apple: new Date(2022, 3, 1).toISOString() } });
+    expect(getFeedReminders(established, springFeed).map((t) => t.title)).toEqual(['Fertilize Apple tree']);
+    expect(getFeedReminders(established, new Date(2024, 4, 8))).toEqual([]);
+    const plantedThisSpring = makeProfile({ ...base, plantedDates: { apple: new Date(2024, 3, 20).toISOString() } });
+    expect(getFeedReminders(plantedThisSpring, new Date(2024, 3, 20))).toEqual([]);
+  });
+
+  it('reminds to net cherries against birds, with a netting link', () => {
+    const profile = makeProfile({ crops: ['cherry'] as any, plantedWeeks: { cherry: 'y2' } as any, frostDates, isPro: true });
+    const due = new Date(2024, 5, 26); // 8 weeks after 05-01
+    const tasks = getNettingReminders(profile, due);
+    expect(tasks.map((t) => t.id)).toEqual(['net-cherry-2024']);
+    expect(tasks[0].buyUrl).toContain('bird%20netting');
+    expect(getNettingReminders({ ...profile, isPro: false }, due)).toEqual([]);
+    expect(getTasksForDate(profile, due, new Date(2024, 0, 1)).some((t) => t.id === 'net-cherry-2024')).toBe(true);
   });
 
   describe('perennial trees (citrus etc.) — recurs every year, not just the planting year', () => {
