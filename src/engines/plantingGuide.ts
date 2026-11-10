@@ -27,6 +27,7 @@
 import { CropKey } from './scheduleEngine';
 import { FrostEstimate } from '../types';
 import { cropLabel } from '../cropMeta';
+import { SEASON_SHAPE } from '../plantStageContent';
 
 export interface PlantingGuidance {
   headline: string;
@@ -371,6 +372,15 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
       indoorWeeksFromFrost: -6,
       note: 'A long-season crop; sprouts actually sweeten after a light frost in fall, so this one planting already carries you into the second season.',
     },
+    // The way most gardeners grow it: planted in late summer or fall, it
+    // matures in cool weather and frost sweetens the sprouts. Spring
+    // plantings often size up in summer heat and turn loose and bitter.
+    fall: {
+      method: 'Plant seedlings, or start seeds indoors',
+      outdoorWeeksFromFrost: -12,
+      indoorWeeksFromFrost: -18,
+      note: 'The best season for Brussels sprouts: they mature in cool weather, and a few light frosts make them sweeter. Harvest from the bottom of the stalk up.',
+    },
   },
   leeks: {
     spring: {
@@ -378,6 +388,11 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
       outdoorWeeksFromFrost: -2,
       indoorWeeksFromFrost: -10,
       note: 'Slow-growing; hill soil around the stem as it grows to blanch it white.',
+    },
+    fall: {
+      method: 'Plant seedlings',
+      outdoorWeeksFromFrost: -16,
+      note: 'Planted by late summer, leeks size up through fall and hold in the ground into winter, so you can pull them as you need them.',
     },
   },
   okra: {
@@ -764,6 +779,35 @@ interface Candidate {
   window: SeasonWindow;
   frostDate: Date;
   outdoorDate: Date;
+  /** Mild-winter fall windows only: the last good day to plant, timed from
+   * the real (late) first frost, while outdoorDate stays the usual opening
+   * date. Between the two it's "plant now". */
+  until?: Date;
+  /** The real first frost `until` is timed from. */
+  untilFrost?: Date;
+  /** Spring windows of crops with no fall window (tomatoes, squash...):
+   * the last date that still leaves the season it needs before fall. */
+  lateUntil?: Date;
+}
+
+// How late a planting date can be and still be worth doing ("plant now").
+// Past that, the window is over and the next one is what to plan for.
+const LATE_PLANTING_GRACE_WEEKS = 4;
+
+/** Ordering key for a candidate: a window open today (from its date to a
+ * few weeks after, or its mild-winter deadline) comes first; then upcoming
+ * windows, soonest first; windows that are over come last. This used to be
+ * plain "nearest date, past or future", which told someone in Chicago to
+ * plant broccoli "now" in November because its August date was nearer than
+ * next spring's. */
+function windowRank(c: Candidate, now: Date): number {
+  const start = c.outdoorDate.getTime();
+  const graceEnd = addWeeks(c.until ?? c.outdoorDate, LATE_PLANTING_GRACE_WEEKS).getTime();
+  const end = Math.max(graceEnd, c.lateUntil?.getTime() ?? 0);
+  const t = now.getTime();
+  if (t >= start && t <= end) return 0;
+  if (t < start) return 1 + (start - t);
+  return Number.MAX_SAFE_INTEGER / 2 + (t - end);
 }
 
 // A generic, typical first fall frost, substituted in only when the real
@@ -808,6 +852,29 @@ function isAnomalouslyLateFrost(monthDay: string, isNorthern: boolean): boolean 
  * bound, for one — uses the exact same rule this file already applies to
  * fall planting windows, rather than a second, possibly-diverging one. */
 export function effectiveFirstFrostMonthDay(frostDates: FrostEstimate | null | undefined): string | null {
+  return cappedFirstFrost(frostDates);
+}
+
+/** For cool-season crops planted in fall (broccoli, kale, lettuce, peas,
+ * Brussels sprouts...): the real measured first frost, however late.
+ * These crops grow through cool weather, so in a mild-winter place whose
+ * first frost isn't until January or February (much of coastal and
+ * northern California), fall planting really does run into November and
+ * December. The generic Nov 15 cap is right for things limited by warmth
+ * (a tomato's season end) but timed these crops two to three months early:
+ * Brussels sprouts said "start in January" in early November, when it was
+ * the best time to plant them. */
+export function coolSeasonFirstFrostMonthDay(frostDates: FrostEstimate | null | undefined): string | null {
+  if (!frostDates) return null;
+  return frostDates.firstFrostMonthDay ?? cappedFirstFrost(frostDates);
+}
+
+// Fall plantings timed by winter cold rather than by how long cool weather
+// lasts: garlic needs a cold spell to form cloves, so a mild-winter place
+// still plants it in mid-to-late fall, not just before a February frost.
+const FALL_TIMED_BY_COLD = new Set<CropKey>(['garlic']);
+
+function cappedFirstFrost(frostDates: FrostEstimate | null | undefined): string | null {
   if (!frostDates) return null;
   const isNorthern = frostDates.isNorthernHemisphere !== false;
   const cap = FALL_FROST_CAP[isNorthern ? 'north' : 'south'];
@@ -840,16 +907,44 @@ function candidatesFor(crop: CropKey, frostDates: FrostEstimate | null | undefin
   }
 
   addCandidates('spring', info.spring, frostDates?.lastFrostMonthDay);
-  addCandidates('fall', info.fall, effectiveFirstFrostMonthDay(frostDates));
+  // A summer crop (no fall window) can still go in late, as long as there's
+  // the season it needs left before fall: tomatoes in May in Sonoma, not
+  // "next March".
+  const weeksToHarvest = SEASON_SHAPE[crop]?.weeks;
+  const fallRef = effectiveFirstFrostMonthDay(frostDates);
+  if (!info.fall && weeksToHarvest && fallRef) {
+    for (const c of candidates) {
+      let fall = parseMonthDay(fallRef, c.frostDate.getFullYear());
+      if (fall.getTime() < c.frostDate.getTime()) fall = parseMonthDay(fallRef, c.frostDate.getFullYear() + 1);
+      const late = addWeeks(fall, -weeksToHarvest);
+      if (late.getTime() > c.outdoorDate.getTime()) c.lateUntil = late;
+    }
+  }
+  // Fall opens at the usual date (timed from a typical first frost). In a
+  // mild-winter place whose real first frost is much later, a cool-season
+  // crop can keep going in until a few weeks before that real frost.
+  const capped = effectiveFirstFrostMonthDay(frostDates);
+  addCandidates('fall', info.fall, capped);
+  const real = coolSeasonFirstFrostMonthDay(frostDates);
+  if (info.fall && real && capped && real !== capped && !FALL_TIMED_BY_COLD.has(crop)) {
+    for (const c of candidates) {
+      if (c.season !== 'fall') continue;
+      let realFrost = parseMonthDay(real, c.frostDate.getFullYear());
+      if (realFrost.getTime() < c.frostDate.getTime()) realFrost = parseMonthDay(real, c.frostDate.getFullYear() + 1);
+      const until = addWeeks(realFrost, info.fall.outdoorWeeksFromFrost);
+      if (until.getTime() > c.outdoorDate.getTime()) {
+        c.until = until;
+        c.untilFrost = realFrost;
+      }
+    }
+  }
 
   // Whichever window's target date is chronologically closest to today —
   // spring or fall — is the one worth acting on right now. This is what
   // hands guidance over to the fall window once spring's has passed,
   // instead of a crop being stuck showing (or being "due for") its spring
   // advice for the rest of the year.
-  candidates.sort(
-    (a, b) => Math.abs(a.outdoorDate.getTime() - now.getTime()) - Math.abs(b.outdoorDate.getTime() - now.getTime())
-  );
+  candidates.sort((a, b) => windowRank(a, now) - windowRank(b, now));
   return candidates;
 }
 
@@ -864,6 +959,8 @@ export interface PlantingWindow {
   coolSeason: boolean;
   /** Goes out after the last spring frost, i.e. wants warm weather. */
   warmWeather: boolean;
+  /** Mild-winter fall windows: still plantable up to this date. */
+  until: Date | null;
 }
 
 /** Every dated planting window for `crop` around `now` (spring and fall,
@@ -881,6 +978,7 @@ export function plantingWindowsFor(
     indoorDate: c.window.indoorWeeksFromFrost != null ? addWeeks(c.frostDate, c.window.indoorWeeksFromFrost) : null,
     coolSeason,
     warmWeather: c.season === 'spring' && c.window.outdoorWeeksFromFrost >= 1,
+    until: c.until ?? null,
   }));
 }
 
@@ -905,6 +1003,17 @@ export function plantingGuidanceFor(
   const chosen = candidates[0];
   const outdoorLabel = formatDate(chosen.outdoorDate);
   const isPastDue = now >= chosen.outdoorDate;
+  const label = cropLabel(crop);
+
+  // Inside a mild-winter fall range: plant now, with the real deadline.
+  if (chosen.until && isPastDue && now.getTime() <= chosen.until.getTime()) {
+    return {
+      headline: `Plant ${label} now`,
+      detail: `${chosen.window.method}. With your mild winters, any time until about ${formatDate(chosen.until)} works. ${chosen.window.note}`,
+      isPastDue: true,
+      date: chosen.outdoorDate,
+    };
+  }
 
   let detail: string;
   if (chosen.window.indoorWeeksFromFrost != null) {
@@ -919,7 +1028,6 @@ export function plantingGuidanceFor(
       : `${chosen.window.method}, around ${outdoorLabel}. ${chosen.window.note}`;
   }
 
-  const label = cropLabel(crop);
   return {
     // A date that's already passed reads as "you missed it" rather than
     // "the window's open, go ahead" — once due, the headline says so
@@ -971,12 +1079,23 @@ export function seedStartPlan(
 ): SeedStartPlan | null {
   const chosen = candidatesFor(crop, frostDates, now)
     .sort((a, b) => a.outdoorDate.getTime() - b.outdoorDate.getTime())
-    .find((c) => addWeeks(c.outdoorDate, TRANSPLANT_GRACE_WEEKS).getTime() >= now.getTime());
+    .find((c) => addWeeks(c.until ?? c.outdoorDate, TRANSPLANT_GRACE_WEEKS).getTime() >= now.getTime());
   if (!chosen || chosen.window.indoorWeeksFromFrost == null) return null;
-  const transplant = chosen.outdoorDate;
+  let frostDate = chosen.frostDate;
+  let transplant = chosen.outdoorDate;
+  // A mild-winter fall range: if the usual start-indoors date has passed,
+  // plan from the real (later) frost instead. If even that sowing date has
+  // passed, there's no seed plan for this season: it's time to plant
+  // seedlings (the planting guidance says so), not to jump to next spring.
+  if (chosen.until && chosen.untilFrost && addWeeks(frostDate, chosen.window.indoorWeeksFromFrost).getTime() < now.getTime()) {
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (addWeeks(chosen.untilFrost, chosen.window.indoorWeeksFromFrost).getTime() < startOfToday.getTime()) return null;
+    frostDate = chosen.untilFrost;
+    transplant = chosen.until;
+  }
   return {
     season: chosen.season,
-    startIndoors: addWeeks(chosen.frostDate, chosen.window.indoorWeeksFromFrost),
+    startIndoors: addWeeks(frostDate, chosen.window.indoorWeeksFromFrost),
     hardenOff: new Date(transplant.getFullYear(), transplant.getMonth(), transplant.getDate() - HARDEN_OFF_DAYS),
     transplant,
     note: chosen.window.note,

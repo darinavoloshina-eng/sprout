@@ -273,6 +273,22 @@ export default function MyGardenScreen({
           </View>
         ) : null}
 
+        {/* At the top, where people look for it, not after every crop card. */}
+        {missingCrops.length > 0 ? (
+          <TouchableOpacity
+            style={styles.addCard}
+            onPress={() => onAddCrop(category)}
+            accessibilityRole="button"
+          >
+            <View style={styles.addIconWrap}>
+              <Text style={styles.addIconText}>+</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.addTitle}>Add a crop</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
+
         {crops.length > 0 && visibleCrops.length === 0 ? (
           <View style={styles.categoryEmptyCard}>
             <Text style={styles.categoryEmptyText}>No {activeCategoryOption.label.toLowerCase()} in your garden yet.</Text>
@@ -404,20 +420,6 @@ export default function MyGardenScreen({
           );
         })}
 
-        {missingCrops.length > 0 ? (
-          <TouchableOpacity
-            style={styles.addCard}
-            onPress={() => onAddCrop(category)}
-            accessibilityRole="button"
-          >
-            <View style={styles.addIconWrap}>
-              <Text style={styles.addIconText}>+</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.addTitle}>Add a crop</Text>
-            </View>
-          </TouchableOpacity>
-        ) : null}
 
         <TouchableOpacity style={styles.logRow} onPress={onOpenLog} accessibilityRole="button">
           <View style={styles.logIconWrap}>

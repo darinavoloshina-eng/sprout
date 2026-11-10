@@ -155,10 +155,23 @@ export default function EditCropsScreen({
 
   // `bucket`: suggestions add crops as not-planted-yet; a tap in the
   // catalog keeps assuming it's already in the ground.
+  // A short "✓ Kale added" at the bottom, so it's obvious a tap stuck.
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function showToast(text: string) {
+    setToast(text);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 1800);
+  }
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+  }, []);
+
   function toggleCrop(c: CropKey, bucket: PlantedBackdate = 'w2') {
     if (profile.crops.includes(c)) {
       const { [c]: _removed, ...plantedWeeks } = profile.plantedWeeks;
       updateProfile({ crops: profile.crops.filter((x) => x !== c), plantedWeeks });
+      showToast(`${cropLabel(c)} removed`);
       return;
     }
     // Free is a count, not a fixed list — picking a 5th crop from
@@ -172,6 +185,7 @@ export default function EditCropsScreen({
       crops: [...profile.crops, c],
       plantedWeeks: { ...profile.plantedWeeks, [c]: bucket },
     });
+    showToast(`✓ ${cropLabel(c)} added to your garden`);
   }
 
   function setPlantedWeek(c: CropKey, bucket: PlantedBackdate) {
@@ -392,15 +406,27 @@ export default function EditCropsScreen({
           </TouchableOpacity>
         ) : null}
 
+      </ScrollView>
+
+      {/* Pinned above the tab bar, so it's always in reach: every tap
+          already saves, this just confirms and goes back. */}
+      <View style={styles.doneBar}>
+        {toast ? (
+          <View style={styles.toast} pointerEvents="none">
+            <Text style={styles.toastText}>{toast}</Text>
+          </View>
+        ) : null}
         <TouchableOpacity
           style={[styles.saveButton, justSaved && styles.saveButtonSaved]}
           onPress={handleSavePress}
           disabled={justSaved}
           accessibilityRole="button"
         >
-          <Text style={styles.saveButtonText}>{justSaved ? 'Saved ✓' : 'Save'}</Text>
+          <Text style={styles.saveButtonText}>
+            {justSaved ? 'Saved ✓' : `Done · ${selectedCount} ${selectedCount === 1 ? 'crop' : 'crops'} in your garden`}
+          </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       <TabBar active={activeTab} onPress={onTabPress} />
     </View>
@@ -567,12 +593,37 @@ const styles = StyleSheet.create({
   proBannerSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.pineFoot, marginTop: 2 },
   proBannerCta: { backgroundColor: colors.mustard, borderRadius: 11, paddingVertical: 8, paddingHorizontal: 12 },
   proBannerCtaText: { fontFamily: fonts.bodyBold, fontSize: 12, color: colors.pine },
+  doneBar: {
+    paddingHorizontal: space.xl,
+    paddingTop: 10,
+    paddingBottom: 10,
+    backgroundColor: colors.paper,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  toast: {
+    position: 'absolute',
+    bottom: '100%',
+    left: space.xl,
+    right: space.xl,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  toastText: {
+    backgroundColor: colors.ink,
+    color: colors.paper,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13.5,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   saveButton: {
     backgroundColor: colors.pine,
     borderRadius: radius.xl,
-    padding: 16,
+    padding: 15,
     alignItems: 'center',
-    marginTop: 20,
   },
   saveButtonSaved: { backgroundColor: colors.mossGreen },
   saveButtonText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.onPine },

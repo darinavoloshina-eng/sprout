@@ -141,6 +141,19 @@ function collect(frost: FrostEstimate, owned: readonly string[], now: Date, soon
 
       let group: SuggestionGroup | null = null;
       let date = w.outdoorDate;
+      // A mild-winter fall range that's open today: plant outside now, by
+      // its real deadline.
+      if (w.until && today.getTime() >= w.outdoorDate.getTime() && today.getTime() <= w.until.getTime()) {
+        const weeks = SEASON_SHAPE[crop]?.weeks;
+        const candidate: CropSuggestion = {
+          crop,
+          group: 'outside',
+          date: w.until,
+          reason: `Plant by ${shortDate(w.until)}${weeks ? ` · harvest in about ${weeks} weeks` : ''}`,
+        };
+        if (!best || rank['outside'] < rank[best.group]) best = candidate;
+        continue;
+      }
       if (inDays != null && inDays >= START_NOW_FROM && inDays <= NOW_UNTIL && outDays > NOW_UNTIL) {
         group = 'indoors';
         date = w.indoorDate!;

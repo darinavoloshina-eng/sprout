@@ -9,7 +9,7 @@
 
 import { CropKey, ScheduleResult, TimeOfDay, computeSchedule, wateringDaysOfWeek } from './scheduleEngine';
 import { CARE_BUCKET_FOR, GardenAlert, getAlerts, PlantedBackdate, PlantedBucket } from './alertsEngine';
-import { addWeeks, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor, SeedStartPlan, seedStartPlan } from './plantingGuide';
+import { addWeeks, coolSeasonFirstFrostMonthDay, effectiveFirstFrostMonthDay, parseMonthDay, plantingGuidanceFor, SeedStartPlan, seedStartPlan } from './plantingGuide';
 import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
 import { bedCrops, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
@@ -831,7 +831,7 @@ const FROST_HARDY_HARVEST_WEEKS: Partial<Record<CropKey, number>> = {
  * up long before fall) is left alone: those greens bolt in summer heat. */
 function hardyHarvestEnd(crop: CropKey, start: Date, end: Date, frostDates: FrostEstimate | null | undefined): Date {
   const weeks = FROST_HARDY_HARVEST_WEEKS[crop];
-  const fallMonthDay = effectiveFirstFrostMonthDay(frostDates);
+  const fallMonthDay = coolSeasonFirstFrostMonthDay(frostDates);
   if (!weeks || !fallMonthDay) return end;
   let frost = parseMonthDay(fallMonthDay, start.getFullYear());
   if (frost.getTime() < start.getTime()) frost = parseMonthDay(fallMonthDay, start.getFullYear() + 1);

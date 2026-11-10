@@ -1,4 +1,4 @@
-import { plantingGuidanceFor } from '../plantingGuide';
+import { seedStartPlan, plantingGuidanceFor } from '../plantingGuide';
 import { FrostEstimate } from '../../types';
 
 function makeFrostDates(
@@ -147,12 +147,31 @@ describe('plantingGuidanceFor', () => {
       // Sonoma County, CA location — is well beyond the original Sep-Dec
       // search range, so it's treated as unreliable for fall-planting
       // timing and the generic Nov 15 reference is used instead.
+      // The window opens at the usual date (12 weeks before Nov 15) and,
+      // with a mild winter, stays open until 12 weeks before the real Feb 14.
       const frostDates = makeFrostDates('03-05', '02-14');
-      const target = new Date(2024, 7, 23); // broccoli: 12 weeks before Nov 15
       const guidance = plantingGuidanceFor('broccoli', frostDates, new Date(2024, 8, 3));
       expect(guidance.headline).toBe('Plant Broccoli now');
       expect(guidance.isPastDue).toBe(true);
-      expect(guidance.detail).toContain(target.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }));
+      expect(guidance.detail).toContain('any time until about November 22');
+    });
+
+    it('says to plant Brussels sprouts now in early November in a mild-winter place, not to start seeds in January', () => {
+      const frostDates = makeFrostDates('03-05', '02-14');
+      const now = new Date(2026, 10, 9);
+      const guidance = plantingGuidanceFor('brusselssprouts', frostDates, now);
+      expect(guidance.headline).toBe('Plant Brussels sprouts now');
+      expect(guidance.detail).not.toContain('January');
+      // Too late to start from seed this fall, so no seed plan (and not next spring's).
+      expect(seedStartPlan('brusselssprouts', frostDates, now)).toBeNull();
+    });
+
+    it('leaves a cold location on its usual fall dates', () => {
+      const frostDates = makeFrostDates('04-25', '10-15');
+      const guidance = plantingGuidanceFor('brusselssprouts', frostDates, new Date(2026, 5, 20));
+      const target = new Date(2026, 6, 23); // 12 weeks before Oct 15
+      expect(guidance.headline).toBe(`Plant Brussels sprouts around ${target.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`);
+      expect(guidance.detail).not.toContain('mild winters');
     });
 
     it('reads as plantable now for fast crops too, under the same anomalous-frost real-world case', () => {
@@ -182,11 +201,23 @@ describe('plantingGuidanceFor', () => {
       const frostDates = makeFrostDates('04-15', '11-15');
       const now = new Date(2024, 8, 3); // September — deep into what would be tomatoes' fall window if it had one
       const guidance = plantingGuidanceFor('tomatoes', frostDates, now);
-      // No fall window exists to compete, so the nearest occurrence is
-      // still this year's (already-passed) spring target, not a fall date.
-      expect(guidance.headline).toBe('Plant Tomatoes now');
-      expect(guidance.isPastDue).toBe(true);
-      expect(guidance.detail).toContain('April');
+      // No fall window, and this spring's date is long gone: it points to
+      // next spring rather than saying "plant now" in September.
+      const next = new Date(2025, 3, 22); // 1 week after Apr 15
+      expect(guidance.headline).toBe(`Plant Tomatoes around ${next.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`);
+      expect(guidance.isPastDue).toBe(false);
+    });
+
+    it('never says to plant a crop "now" months after its window closed', () => {
+      // Chicago-like: fall broccoli went in back in July; in November the
+      // next chance is spring.
+      const frostDates = makeFrostDates('04-25', '10-15');
+      const nov = new Date(2026, 10, 9);
+      for (const crop of ['broccoli', 'lettuce', 'peas', 'sweetpotatoes', 'tomatoes'] as const) {
+        expect(plantingGuidanceFor(crop, frostDates, nov).isPastDue).toBe(false);
+      }
+      // Still "now" when it's only a little late.
+      expect(plantingGuidanceFor('broccoli', frostDates, new Date(2026, 7, 5)).headline).toBe('Plant Broccoli now');
     });
   });
 
