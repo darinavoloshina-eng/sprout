@@ -81,7 +81,7 @@ const FERTILIZER_GROUPS: { crops: CropKey[]; label: string; query: string; asin?
   { crops: ['avocado'], label: 'an organic citrus & avocado fertilizer', query: 'organic citrus and avocado fertilizer', asin: 'B00YEUROQK' },
   { crops: ['blueberries'], label: 'an organic fertilizer for acid-loving plants', query: 'organic fertilizer for blueberries and acid loving plants', asin: 'B07DJJSLMF' },
   { crops: ['strawberries', 'raspberries', 'blackberries'], label: 'an organic berry fertilizer', query: 'organic berry fertilizer', asin: 'B07DJJSLMF' },
-  { crops: ['grapes'], label: 'an organic grape vine fertilizer', query: 'organic grape vine fertilizer' },
+  { crops: ['grapes'], label: 'a grape vine fertilizer', query: 'organic grape vine fertilizer', asin: 'B0FKSPRS33' },
   { crops: ['apple', 'pear', 'plum', 'peach', 'cherry', 'figs', 'olive', 'pomegranate'], label: 'an organic fruit tree fertilizer', query: 'organic fruit tree fertilizer', asin: 'B00Q71JSSG' },
   { crops: ['tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
     label: 'an organic tomato & vegetable fertilizer', query: 'organic tomato and vegetable fertilizer', asin: 'B07DH6HFBW' },

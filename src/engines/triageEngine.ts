@@ -297,7 +297,7 @@ const CAUSE_PRODUCTS: Record<string, CauseProduct> = {
   Caterpillars: { label: 'BT caterpillar spray', query: 'BT Bacillus thuringiensis caterpillar spray organic', asin: 'B01LYXXTZF' },
   'Fungal blight': { label: 'organic copper fungicide', query: 'organic copper fungicide spray', asin: 'B00BSULSHA' },
   'Bacterial leaf spot': { label: 'organic copper fungicide', query: 'organic copper fungicide spray', asin: 'B00BSULSHA' },
-  'Powdery mildew': { label: 'mildew spray', query: 'organic powdery mildew fungicide spray', asin: 'B000UJVDXY' },
+  'Powdery mildew': { label: 'mildew spray', query: 'organic powdery mildew fungicide spray', asin: 'B00BSULSHA' },
   'Nitrogen deficiency': { label: 'organic fish fertilizer', query: 'organic fish emulsion fertilizer', asin: 'B0DQ2LNX35' },
   'Nutrient deficiency': { label: 'organic all-purpose fertilizer', query: 'organic all purpose garden fertilizer', asin: 'B08GYJR9VX' },
   'Nutrient lockup (iron/magnesium)': { label: 'a soil pH test kit', query: 'soil pH test kit', asin: 'B01HQXF0PS' },
