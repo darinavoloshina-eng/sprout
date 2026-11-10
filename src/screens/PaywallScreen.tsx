@@ -175,7 +175,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose, onPur
           <>
             {real && profile.isLifetime ? (
               <Text style={styles.finePrint}>
-                It's yours for good — no subscription, nothing to renew or cancel.
+                It's yours for good: no subscription, nothing to renew or cancel.
               </Text>
             ) : (
               <>
@@ -248,7 +248,7 @@ export default function PaywallScreen({ profile, onProfileChange, onClose, onPur
                 ) : null}
                 <Text style={styles.finePrint}>
                   {real ? 'A one-time payment of' : 'Once billing is enabled, a one-time payment of'} {lifetimePrice}{' '}
-                  is charged to your Apple ID account. Access never expires — no subscription, nothing to renew or
+                  is charged to your Apple ID account. Access never expires: no subscription, nothing to renew or
                   cancel.
                 </Text>
               </>

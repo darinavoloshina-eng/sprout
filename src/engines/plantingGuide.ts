@@ -610,7 +610,7 @@ const PLANTING_METHOD: Record<CropKey, PlantingMethodInfo> = {
     spring: {
       method: 'Plant a potted tree',
       outdoorWeeksFromFrost: 0,
-      note: 'The most cold-hardy citrus, tolerating a brief light frost — but still safest overwintered indoors or in a sheltered spot outside true citrus climates.',
+      note: 'The most cold-hardy citrus, tolerating a brief light frost, but still safest overwintered indoors or in a sheltered spot outside true citrus climates.',
     },
   },
   olive: {

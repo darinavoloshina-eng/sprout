@@ -36,7 +36,7 @@ let configured = false;
 export function initPurchases(): void {
   if (REVENUECAT_API_KEY.startsWith('YOUR_')) {
     console.warn(
-      'GardenWise: RevenueCat API key is still a placeholder in src/purchases.ts — real purchases are disabled until it is set.'
+      'GardenWise: RevenueCat API key is still a placeholder in src/purchases.ts. Real purchases are disabled until it is set.'
     );
     return;
   }

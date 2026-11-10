@@ -348,7 +348,7 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist; blueberries have shallow roots and need acidic soil.', severity: 'low' },
     w2: { headline: 'Rooting in', detail: 'Water regularly while it roots in. Mulch helps hold moisture.', severity: 'low' },
     w4: { headline: 'Leafing out', detail: 'Keep watering steady. This first year is about building a strong root system.', severity: 'low' },
-    w8: { headline: 'Established, ongoing care', detail: 'Feed with an acid-forming fertilizer (the kind made for azaleas/camellias) a couple of times each growing season — regular garden fertilizer can push soil pH the wrong way for blueberries. Prune out the oldest canes each winter to keep the bush productive. A young bush may only give a light harvest, if any yet; a mature one should be in full production.', severity: 'fyi' },
+    w8: { headline: 'Established, ongoing care', detail: 'Feed with an acid-forming fertilizer (the kind made for azaleas/camellias) a couple of times each growing season. Regular garden fertilizer can push soil pH the wrong way for blueberries. Prune out the oldest canes each winter to keep the bush productive. A young bush may only give a light harvest, if any yet; a mature one should be in full production.', severity: 'fyi' },
   },
   raspberries: {
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while canes root in.', severity: 'low' },
@@ -366,7 +366,7 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish.', severity: 'low' },
     w2: { headline: 'Vine growth', detail: 'Train the young vine onto its trellis or support as it grows.', severity: 'low' },
     w4: { headline: 'Establishing root system', detail: 'This first year is about building roots and a strong trunk, not fruit.', severity: 'low' },
-    w8: { headline: 'End of establishment year', detail: 'Feed lightly once in early spring — overfeeding grows leaves at the expense of fruit. Prune hard each winter while dormant; grapes fruit on new wood, so this is essential, not optional. Once established, harvest when berries taste sweet and separate easily from the stem. Expect little to no fruit this first year; full production typically starts around year three.', severity: 'fyi' },
+    w8: { headline: 'End of establishment year', detail: 'Feed lightly once in early spring. Overfeeding grows leaves at the expense of fruit. Prune hard each winter while dormant; grapes fruit on new wood, so this is essential, not optional. Once established, harvest when berries taste sweet and separate easily from the stem. Expect little to no fruit this first year; full production typically starts around year three.', severity: 'fyi' },
   },
   rhubarb: {
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Do not harvest this first year.', severity: 'low' },
@@ -378,7 +378,7 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Let the tree focus on establishing this first year rather than fruiting heavily.', severity: 'low' },
     w4: { headline: 'Building root reserves', detail: 'Keep watering steady while the root system develops.', severity: 'low' },
-    w8: { headline: 'Established, ongoing care', detail: 'A light feeder — overfeeding costs you fruit for leaves, so skip regular fertilizing. Prune in late winter while dormant to control size and remove dead wood. Harvest figs once they droop on the stem and soften; they will not ripen further once picked. Expect a modest crop from a young tree; a mature one should be fruiting reliably most seasons.', severity: 'fyi' },
+    w8: { headline: 'Established, ongoing care', detail: 'A light feeder. Overfeeding costs you fruit for leaves, so skip regular fertilizing. Prune in late winter while dormant to control size and remove dead wood. Harvest figs once they droop on the stem and soften; they will not ripen further once picked. Expect a modest crop from a young tree; a mature one should be fruiting reliably most seasons.', severity: 'fyi' },
   },
   lemon: {
     w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish. Citrus likes well-draining, slightly acidic soil.', severity: 'low' },
@@ -405,13 +405,13 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
     w8: { headline: 'Established, ongoing care', detail: 'Feed on the same monthly (or quarterly slow-release) citrus schedule as other citrus, stopping a few weeks before your first fall frost. Prune lightly any time after fruiting to remove dead, crossing, or crowded branches. A young tree may not fruit much yet; a mature one should be in full production.', severity: 'fyi' },
   },
   olive: {
-    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish, then let it dry out somewhat between waterings — olives dislike soggy soil.', severity: 'low' },
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist while roots establish, then let it dry out somewhat between waterings. Olives dislike soggy soil.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Water deeply but infrequently; overwatering is a more common problem than underwatering.', severity: 'low' },
     w4: { headline: 'Building root reserves', detail: 'Keep watering on a steady, moderate schedule while the root system develops.', severity: 'low' },
     w8: { headline: 'Established, ongoing care', detail: 'More cold-tolerant than citrus once established, but a young tree or container still benefits from winter shelter. Olive is a light feeder: 2-3 applications through the growing season is plenty, and overfeeding costs you fruit and oil quality, not gains it. Prune in late winter to open up the canopy for light and airflow. Olives are slow to bear, often several years, so a young tree not fruiting yet is normal.', severity: 'fyi' },
   },
   avocado: {
-    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist but well-draining while roots establish — avocado roots are shallow and rot easily in soggy soil.', severity: 'low' },
+    w0: { headline: 'Establishing', detail: 'Keep soil consistently moist but well-draining while roots establish. Avocado roots are shallow and rot easily in soggy soil.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'New growth should be picking up. Keep watering consistent; avocado dislikes drying out completely between waterings.', severity: 'low' },
     w4: { headline: 'Building root reserves', detail: 'Keep watering steady while the root system develops. Very frost-tender, especially at this young stage.', severity: 'low' },
     w8: { headline: 'Established, ongoing care', detail: 'Avocado is slow to fruit, often taking several years even in ideal conditions, so a young tree not fruiting yet is normal. Once established, feed roughly every 5 weeks through the growing season with a citrus/avocado-formulated fertilizer, watering deeply afterward to flush excess salts. Prune only to remove dead wood or control size; avocado does not need regular shaping.', severity: 'fyi' },

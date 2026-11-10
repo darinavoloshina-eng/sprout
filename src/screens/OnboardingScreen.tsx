@@ -998,7 +998,7 @@ export default function OnboardingScreen({
             <Text style={styles.eyebrow}>Almost there</Text>
             <Text style={styles.h1}>Add your email</Text>
             <Text style={styles.sub}>
-              Optional. Your garden is already saved on this phone either way — add an email if
+              Optional. Your garden is already saved on this phone either way. Add an email if
               you'd like a way to find your way back here, or opt into occasional updates below.
             </Text>
 

@@ -454,7 +454,7 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
     w0: 'Keep soil consistently moist; blueberries have shallow roots and need acidic soil.',
     w2: 'Water regularly while it roots in. Mulch helps hold moisture.',
     w4: 'Keep watering steady. This first year is about building a strong root system.',
-    w8: 'Feed with an acid-forming fertilizer (the kind made for azaleas/camellias) a couple of times each growing season — regular garden fertilizer can push soil pH the wrong way for blueberries. A young bush may only give a light harvest, if any yet; a mature one should be in full production.',
+    w8: 'Feed with an acid-forming fertilizer (the kind made for azaleas/camellias) a couple of times each growing season. Regular garden fertilizer can push soil pH the wrong way for blueberries. A young bush may only give a light harvest, if any yet; a mature one should be in full production.',
   },
   raspberries: {
     w0: 'Keep soil consistently moist while canes root in.',
@@ -511,13 +511,13 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
     w8: 'Feed on the same monthly (or quarterly slow-release) citrus schedule as other citrus, stopping a few weeks before your first fall frost. A young tree may not fruit much yet; a mature one should be in full production.',
   },
   olive: {
-    w0: 'Keep soil consistently moist while roots establish, then let it dry out somewhat between waterings — olives dislike soggy soil.',
+    w0: 'Keep soil consistently moist while roots establish, then let it dry out somewhat between waterings. Olives dislike soggy soil.',
     w2: 'New growth should be picking up. Water deeply but infrequently; overwatering is a more common problem than underwatering.',
     w4: 'Keep watering on a steady, moderate schedule while the root system develops.',
     w8: 'More cold-tolerant than citrus once established, but a young tree or container still benefits from winter shelter. Olive is a light feeder: 2-3 applications through the growing season is plenty, and overfeeding costs you fruit and oil quality, not gains it. Olives are slow to bear, often several years, so a young tree not fruiting yet is normal.',
   },
   avocado: {
-    w0: 'Keep soil consistently moist but well-draining while roots establish — avocado roots are shallow and rot easily in soggy soil.',
+    w0: 'Keep soil consistently moist but well-draining while roots establish. Avocado roots are shallow and rot easily in soggy soil.',
     w2: 'New growth should be picking up. Keep watering consistent; avocado dislikes drying out completely between waterings.',
     w4: 'Keep watering steady while the root system develops. Very frost-tender, especially at this young stage.',
     w8: 'Avocado is slow to fruit, often taking several years even in ideal conditions, so a young tree not fruiting yet is normal. Once established, feed roughly every 5 weeks through the growing season with a citrus/avocado-formulated fertilizer, watering deeply afterward to flush excess salts.',

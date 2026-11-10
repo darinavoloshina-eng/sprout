@@ -283,8 +283,15 @@ export default function PlantDetailScreen({
                   </View>
                 ))}
                 {onOpenSeedGuide ? (
-                  <TouchableOpacity onPress={onOpenSeedGuide} accessibilityRole="button">
-                    <Text style={styles.seedGuideLink}>How to start seeds →</Text>
+                  <TouchableOpacity onPress={onOpenSeedGuide} style={styles.seedGuideRow} accessibilityRole="button">
+                    <View style={styles.seedGuideIcon}>
+                      <Text style={styles.diagnoseIconText}>📖</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.seedGuideTitle}>How to start seeds</Text>
+                      <Text style={styles.seedGuideSub}>What you need, in five easy steps</Text>
+                    </View>
+                    <Text style={styles.seedGuideChevron}>›</Text>
                   </TouchableOpacity>
                 ) : null}
               </>
@@ -601,7 +608,29 @@ const styles = StyleSheet.create({
   seedStepDone: { color: colors.inkSoft, textDecorationLine: 'line-through' },
   seedStepDate: { fontFamily: fonts.monoSemiBold, fontSize: 11, color: colors.inkSoft },
   seedSkippedText: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.inkSoft },
-  seedGuideLink: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.mossGreen },
+  // A real button, not a text link: the step list above it is the "what",
+  // this is the "how", and a small link got lost under it.
+  seedGuideRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.selectedBg,
+    borderRadius: 13,
+    padding: 11,
+    paddingHorizontal: 12,
+    marginTop: 2,
+  },
+  seedGuideIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seedGuideTitle: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.pine },
+  seedGuideSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+  seedGuideChevron: { fontFamily: fonts.bodyBold, fontSize: 18, color: colors.mossGreen },
   seedSkipLink: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.inkSoft, textDecorationLine: 'underline' },
   statTile: {
     flex: 1,

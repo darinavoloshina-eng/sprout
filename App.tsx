@@ -35,6 +35,7 @@ import {
   effectiveBucket,
   isTaskComplete,
   plantedAgoLabel,
+  fertilizerFor,
   SeedStep,
   seedStepTask,
 } from './src/engines/taskEngine';
@@ -167,6 +168,7 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
     instructionDetail: seedStep ? seedStep.task.detail : notPlanted ? guidance!.detail : NEXT_ACTION[crop]?.[bucket] ?? '',
     seedSteps,
     seedStartSkipped: !!profile.skipIndoorStart?.includes(crop),
+    fertilizer: fertilizerFor(crop),
     heroDateLabel: `TODAY · ${bucketLabel}`,
     heroPhotoUri: todaysPhoto?.uri,
     photoCountLabel,
