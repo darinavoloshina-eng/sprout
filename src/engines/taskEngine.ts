@@ -63,6 +63,13 @@ export interface DailyTask {
 /** A generic, unaffiliated Amazon search for an organic fertilizer for
  * the crop a feed task is about — a placeholder "Buy now" destination
  * until real affiliate links and curated per-crop products exist. */
+/** The fertilizer to suggest on a crop's own page, for crops that get
+ * feeding reminders: same product as their feed task's Buy button. */
+export function fertilizerFor(crop: CropKey): { label: string; url: string } | null {
+  if (!FEED_INFO[crop]) return null;
+  return { label: fertilizerGroup(crop).label, url: placeholderFertilizerBuyUrl(crop) };
+}
+
 function placeholderFertilizerBuyUrl(crop: CropKey): string {
   return amazonSearchUrl(fertilizerQuery(crop));
 }
@@ -70,20 +77,26 @@ function placeholderFertilizerBuyUrl(crop: CropKey): string {
 /** What to search for, by the kind of plant: "organic Lime tree
  * fertilizer" finds less than "organic citrus fertilizer". Swapped for
  * specific products (affiliate.ts amazonProductUrl) once those are chosen. */
+const FERTILIZER_GROUPS: { crops: CropKey[]; label: string; query: string }[] = [
+  { crops: ['lemon', 'lime', 'orange', 'kumquat'], label: 'an organic citrus fertilizer', query: 'organic citrus fertilizer' },
+  { crops: ['avocado'], label: 'an organic citrus & avocado fertilizer', query: 'organic citrus and avocado fertilizer' },
+  { crops: ['blueberries'], label: 'an organic fertilizer for acid-loving plants', query: 'organic fertilizer for blueberries and acid loving plants' },
+  { crops: ['strawberries', 'raspberries', 'blackberries'], label: 'an organic berry fertilizer', query: 'organic berry fertilizer' },
+  { crops: ['grapes'], label: 'an organic grape vine fertilizer', query: 'organic grape vine fertilizer' },
+  { crops: ['apple', 'pear', 'plum', 'peach', 'cherry', 'figs', 'olive', 'pomegranate'], label: 'an organic fruit tree fertilizer', query: 'organic fruit tree fertilizer' },
+  { crops: ['tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
+    label: 'an organic tomato & vegetable fertilizer', query: 'organic tomato and vegetable fertilizer' },
+  { crops: ['corn', 'celery', 'onions', 'greenonions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
+    label: 'organic fish emulsion', query: 'organic fish emulsion fertilizer' },
+];
+const DEFAULT_FERTILIZER = { label: 'an organic vegetable fertilizer', query: 'organic vegetable garden fertilizer' };
+
+function fertilizerGroup(crop: CropKey): { label: string; query: string } {
+  return FERTILIZER_GROUPS.find((g) => g.crops.includes(crop)) ?? DEFAULT_FERTILIZER;
+}
+
 function fertilizerQuery(crop: CropKey): string {
-  const groups: [CropKey[], string][] = [
-    [['lemon', 'lime', 'orange', 'kumquat'], 'organic citrus fertilizer'],
-    [['avocado'], 'organic citrus and avocado fertilizer'],
-    [['blueberries'], 'organic fertilizer for blueberries and acid loving plants'],
-    [['strawberries', 'raspberries', 'blackberries'], 'organic berry fertilizer'],
-    [['grapes'], 'organic grape vine fertilizer'],
-    [['apple', 'pear', 'plum', 'peach', 'cherry', 'figs', 'olive', 'pomegranate'], 'organic fruit tree fertilizer'],
-    [['tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
-      'organic tomato and vegetable fertilizer'],
-    [['corn', 'celery', 'onions', 'greenonions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
-      'organic fish emulsion fertilizer'],
-  ];
-  return groups.find(([crops]) => crops.includes(crop))?.[1] ?? 'organic vegetable garden fertilizer';
+  return fertilizerGroup(crop).query;
 }
 
 /** One organic way to do each feed task, appended to its note. A lot of

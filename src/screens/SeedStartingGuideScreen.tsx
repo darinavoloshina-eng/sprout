@@ -149,7 +149,7 @@ export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back', st
 }
 
 const styles = StyleSheet.create({
-  disclosure: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: -4 },
+  disclosure: { fontFamily: fonts.body, fontSize: 11.5, lineHeight: 16, color: colors.inkSoft, marginTop: 10, marginBottom: 6 },
   screen: { flex: 1, backgroundColor: colors.paper },
   content: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xxl },
   back: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft, marginBottom: space.md },

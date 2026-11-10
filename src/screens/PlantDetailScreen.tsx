@@ -6,9 +6,10 @@
 // they're not (the default demo props still show the mock example content).
 
 import React, { useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
 import { TabBar, TabKey } from '../components/ui';
+import { COMMISSION_NOTE } from '../affiliate';
 
 export interface PhotoTile {
   day: number;
@@ -44,6 +45,8 @@ export interface PlantDetailScreenProps {
   timeline?: PhotoTile[];
   instructionTitle?: string;
   instructionDetail?: string;
+  /** For crops that need feeding: the fertilizer to buy (see fertilizerFor). */
+  fertilizer?: { label: string; url: string } | null;
   stats?: { value: string; label: string }[];
   /** Newest-first — see App.tsx's plantDetailProps. */
   notes?: NoteTile[];
@@ -95,6 +98,7 @@ export default function PlantDetailScreen({
   timeline = DEFAULT_TIMELINE,
   instructionTitle = 'Feed 5-10-10, and pinch suckers if indeterminate',
   instructionDetail = 'High nitrogen now gives leaves, not fruit. On indeterminate varieties, snap out the shoots in each stem-branch V to push energy into the fruit already set. Leave determinate plants alone: pruning costs you yield.',
+  fertilizer,
   stats = DEFAULT_STATS,
   notes = [],
   onAddNote,
@@ -246,6 +250,20 @@ export default function PlantDetailScreen({
           <Text style={styles.instructionDetail}>{instructionDetail}</Text>
         </View>
 
+        {fertilizer ? (
+          <View style={styles.feedRow}>
+            <Text style={styles.feedIcon}>🧺</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.feedTitle}>Needs feeding</Text>
+              <Text style={styles.feedSub}>We'll remind you when. A good match: {fertilizer.label}.</Text>
+            </View>
+            <TouchableOpacity onPress={() => Linking.openURL(fertilizer.url)} style={styles.feedBuy} accessibilityRole="button" accessibilityLabel={`Shop ${fertilizer.label} on Amazon`}>
+              <Text style={styles.feedBuyText}>Shop</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        {fertilizer ? <Text style={styles.feedNote}>{COMMISSION_NOTE}</Text> : null}
+
         {seedSteps ? (
           <View style={styles.seedCard}>
             <Text style={styles.seedEyebrow}>Starting from seed</Text>
@@ -382,6 +400,22 @@ export default function PlantDetailScreen({
 }
 
 const styles = StyleSheet.create({
+  feedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    padding: 14,
+  },
+  feedIcon: { fontSize: 22 },
+  feedNote: { fontFamily: fonts.body, fontSize: 11, color: colors.inkSoft, opacity: 0.8, marginTop: -6, textAlign: 'right' },
+  feedTitle: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.ink },
+  feedSub: { fontFamily: fonts.body, fontSize: 12.5, lineHeight: 17, color: colors.inkSoft, marginTop: 2 },
+  feedBuy: { borderWidth: 1.5, borderColor: colors.clay, borderRadius: radius.pill, paddingVertical: 6, paddingHorizontal: 14 },
+  feedBuyText: { fontFamily: fonts.bodySemiBold, fontSize: 13, color: colors.clay },
   screen: { flex: 1, backgroundColor: colors.paper },
   scroll: { flex: 1 },
   content: {

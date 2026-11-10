@@ -71,8 +71,8 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
   lettuce: {
     w0: { headline: 'Seedling stage', detail: 'Keep consistently moist and thin crowded seedlings for airflow.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Growth should be picking up. Keep an eye on moisture since shallow roots dry out fast.', severity: 'low' },
-    w4: { headline: 'Near harvest size', detail: 'Start checking daily, especially once warmer weather arrives.', severity: 'fyi' },
-    w8: { headline: 'Harvest the lettuce soon', detail: 'Older lettuce bolts (turns bitter, goes to seed) fast once heat arrives, worth harvesting sooner rather than later.', severity: 'soon' },
+    w4: { headline: 'Near harvest size', detail: 'Nearly ready: check every couple of days and pick as it sizes up.', severity: 'fyi' },
+    w8: { headline: 'Harvest the lettuce soon', detail: 'Older lettuce bolts (turns bitter, goes to seed), faster in warm weather, worth harvesting sooner rather than later.', severity: 'soon' },
   },
   carrots: {
     w0: { headline: 'Germinating', detail: 'Carrot seeds are slow and finicky. Keep the soil surface consistently moist until you see sprouts.', severity: 'low' },
@@ -155,7 +155,7 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
   spinach: {
     w0: { headline: 'Seedling stage', detail: 'Keep soil consistently moist until you see sprouts.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Thin crowded seedlings for airflow and room to size up.', severity: 'low' },
-    w4: { headline: 'Near harvest size', detail: 'Start checking daily once warmer weather arrives; it bolts fast.', severity: 'fyi' },
+    w4: { headline: 'Near harvest size', detail: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.', severity: 'fyi' },
     w8: { headline: 'Harvest the spinach soon', detail: 'Harvest soon. Older spinach turns bitter and bolts once heat sets in.', severity: 'soon' },
   },
   chard: {
@@ -263,7 +263,7 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
   arugula: {
     w0: { headline: 'Seedling stage', detail: 'Keep soil consistently moist until you see sprouts.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Thin crowded seedlings for airflow and room to fill out.', severity: 'low' },
-    w4: { headline: 'Near harvest size', detail: 'Start checking daily once warmer weather arrives; it bolts fast.', severity: 'fyi' },
+    w4: { headline: 'Near harvest size', detail: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.', severity: 'fyi' },
     w8: { headline: 'Harvest the arugula soon', detail: 'Harvest soon. It turns sharp and peppery once it starts to bolt.', severity: 'soon' },
   },
   collards: {
@@ -275,13 +275,13 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
   bokchoy: {
     w0: { headline: 'Seedling stage', detail: 'Keep soil consistently moist until you see sprouts.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Thin crowded seedlings for airflow and room to fill out.', severity: 'low' },
-    w4: { headline: 'Near harvest size', detail: 'Start checking daily once warmer weather arrives; it bolts fast.', severity: 'fyi' },
+    w4: { headline: 'Near harvest size', detail: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.', severity: 'fyi' },
     w8: { headline: 'Harvest the bok choy soon', detail: 'Harvest soon. It turns bitter fast once it starts to bolt.', severity: 'soon' },
   },
   cilantro: {
     w0: { headline: 'Germinating', detail: 'Keep soil consistently moist until you see sprouts.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Thin crowded seedlings for airflow.', severity: 'low' },
-    w4: { headline: 'Near harvest size', detail: 'Start checking daily once warmer weather arrives; it bolts fast in heat.', severity: 'fyi' },
+    w4: { headline: 'Near harvest size', detail: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.', severity: 'fyi' },
     w8: { headline: 'Harvest the cilantro soon', detail: 'Harvest soon. Once it bolts, leaves turn bitter, save the flowers for coriander seed.', severity: 'soon' },
   },
   parsley: {
@@ -317,7 +317,7 @@ const STAGE_TABLE: Partial<Record<CropKey, Record<PlantedBucket, StageEntry>>> =
   dill: {
     w0: { headline: 'Germinating', detail: 'Keep soil consistently moist until you see sprouts.', severity: 'low' },
     w2: { headline: 'Leafing out', detail: 'Thin crowded seedlings for airflow.', severity: 'low' },
-    w4: { headline: 'Near harvest size', detail: 'Start checking daily once warmer weather arrives; it bolts fast in heat.', severity: 'fyi' },
+    w4: { headline: 'Near harvest size', detail: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.', severity: 'fyi' },
     w8: { headline: 'Harvest the dill soon', detail: 'Harvest soon. Once it flowers, leaves turn sparse, save the heads for seed.', severity: 'soon' },
   },
   chives: {

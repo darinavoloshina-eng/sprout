@@ -177,8 +177,8 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
   lettuce: {
     w0: 'Keep consistently moist and thin crowded seedlings for airflow.',
     w2: 'Keep an eye on moisture. Shallow roots dry out fast.',
-    w4: 'Start checking daily, especially once warmer weather arrives.',
-    w8: 'Harvest soon. Older lettuce bolts fast once heat arrives.',
+    w4: 'Nearly ready: check every couple of days and pick as it sizes up.',
+    w8: 'Harvest soon. Older lettuce turns bitter and goes to seed, faster in warm weather.',
   },
   carrots: {
     w0: 'Keep the soil surface consistently moist until you see sprouts.',
@@ -261,7 +261,7 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
   spinach: {
     w0: 'Keep soil consistently moist until you see sprouts.',
     w2: 'Thin crowded seedlings for airflow and room to size up.',
-    w4: 'Start checking daily once warmer weather arrives; it bolts fast.',
+    w4: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.',
     w8: 'Harvest soon. Older spinach turns bitter and bolts once heat sets in.',
   },
   chard: {
@@ -369,7 +369,7 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
   arugula: {
     w0: 'Keep soil consistently moist until you see sprouts.',
     w2: 'Thin crowded seedlings for airflow and room to fill out.',
-    w4: 'Start checking daily once warmer weather arrives; it bolts fast.',
+    w4: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.',
     w8: 'Harvest soon. It turns sharp and peppery once it starts to bolt.',
   },
   collards: {
@@ -381,13 +381,13 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
   bokchoy: {
     w0: 'Keep soil consistently moist until you see sprouts.',
     w2: 'Thin crowded seedlings for airflow and room to fill out.',
-    w4: 'Start checking daily once warmer weather arrives; it bolts fast.',
+    w4: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.',
     w8: 'Harvest soon. It turns bitter fast once it starts to bolt.',
   },
   cilantro: {
     w0: 'Keep soil consistently moist until you see sprouts.',
     w2: 'Thin crowded seedlings for airflow.',
-    w4: 'Start checking daily once warmer weather arrives; it bolts fast in heat.',
+    w4: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.',
     w8: 'Harvest soon. Once it bolts, leaves turn bitter, save the flowers for coriander seed.',
   },
   parsley: {
@@ -423,7 +423,7 @@ export const NEXT_ACTION: Partial<Record<CropKey, Record<PlantedBucket, string>>
   dill: {
     w0: 'Keep soil consistently moist until you see sprouts.',
     w2: 'Thin crowded seedlings for airflow.',
-    w4: 'Start checking daily once warmer weather arrives; it bolts fast in heat.',
+    w4: 'Nearly ready: check every couple of days and pick as it sizes up. A warm spell can make it bolt, so pick sooner if one comes.',
     w8: 'Harvest soon. Once it flowers, leaves turn sparse, save the heads for seed.',
   },
   chives: {
