@@ -11,7 +11,7 @@
 import React, { useRef } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fonts, radius, space } from '../theme';
-import { AFFILIATE_DISCLOSURE, amazonSearchUrl } from '../affiliate';
+import { AFFILIATE_DISCLOSURE, amazonUrl } from '../affiliate';
 
 
 const SUPPLIES = [
@@ -20,30 +20,35 @@ const SUPPLIES = [
     title: 'Seed-starting mix',
     why: 'Light and fine, so tiny roots can push through. Not garden soil or regular potting soil.',
     query: 'seed starting mix',
+    asin: 'B0046VHU1G', // Espoma Organic Seed Starter
   },
   {
     icon: '🧊',
     title: 'Seed tray with a clear lid',
     why: 'Cells keep each seedling separate; the lid holds in moisture until they sprout.',
     query: 'seed starting tray with humidity dome',
+    asin: 'B08HHYTQ52', // MIXC trays with domes
   },
   {
     icon: '🔥',
     title: 'Heat mat',
     why: 'Gentle warmth from below. Most seeds sprout days sooner, peppers especially.',
     query: 'seedling heat mat',
+    asin: 'B08NB4PX9Y', // BN-LINK heat mat
   },
   {
     icon: '💡',
     title: 'Grow light',
     why: "A sunny window isn't bright enough. Without one, seedlings stretch tall and flop.",
     query: 'LED grow light for seedlings',
+    asin: 'B0FBRD4J18', // 4ft 6500K LED shop light
   },
   {
     icon: '⏲️',
     title: 'Plug-in timer',
     why: 'Runs the light 14 to 16 hours a day so you never have to remember.',
     query: 'outlet timer',
+    asin: 'B01LPSGBZS', // BN-LINK U47 mechanical timer
   },
 ];
 
@@ -107,7 +112,7 @@ export default function SeedStartingGuideScreen({ onBack, backLabel = 'Back', st
               <Text style={styles.supplyWhy}>{s.why}</Text>
             </View>
             <TouchableOpacity
-              onPress={() => Linking.openURL(amazonSearchUrl(s.query))}
+              onPress={() => Linking.openURL(amazonUrl(s))}
               style={styles.buyPill}
               accessibilityRole="button"
               accessibilityLabel={`Buy ${s.title} on Amazon`}

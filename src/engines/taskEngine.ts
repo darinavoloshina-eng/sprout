@@ -14,7 +14,7 @@ import { GardenProfile, FrostEstimate } from '../types';
 import { colors } from '../theme';
 import { bedCrops, cropIcon, cropIconBg, cropLabel } from '../cropMeta';
 import { SEASON_SHAPE } from '../plantStageContent';
-import { amazonSearchUrl } from '../affiliate';
+import { amazonProductUrl, amazonUrl } from '../affiliate';
 
 export type TaskCategory = 'tend' | 'harvest' | 'feed' | 'prune' | 'seed';
 
@@ -67,37 +67,33 @@ export interface DailyTask {
  * feeding reminders: same product as their feed task's Buy button. */
 export function fertilizerFor(crop: CropKey): { label: string; url: string } | null {
   if (!FEED_INFO[crop]) return null;
-  return { label: fertilizerGroup(crop).label, url: placeholderFertilizerBuyUrl(crop) };
+  return { label: fertilizerGroup(crop).label, url: fertilizerBuyUrl(crop) };
 }
 
-function placeholderFertilizerBuyUrl(crop: CropKey): string {
-  return amazonSearchUrl(fertilizerQuery(crop));
+function fertilizerBuyUrl(crop: CropKey): string {
+  return amazonUrl(fertilizerGroup(crop));
 }
 
-/** What to search for, by the kind of plant: "organic Lime tree
- * fertilizer" finds less than "organic citrus fertilizer". Swapped for
- * specific products (affiliate.ts amazonProductUrl) once those are chosen. */
-const FERTILIZER_GROUPS: { crops: CropKey[]; label: string; query: string }[] = [
-  { crops: ['lemon', 'lime', 'orange', 'kumquat'], label: 'an organic citrus fertilizer', query: 'organic citrus fertilizer' },
-  { crops: ['avocado'], label: 'an organic citrus & avocado fertilizer', query: 'organic citrus and avocado fertilizer' },
-  { crops: ['blueberries'], label: 'an organic fertilizer for acid-loving plants', query: 'organic fertilizer for blueberries and acid loving plants' },
-  { crops: ['strawberries', 'raspberries', 'blackberries'], label: 'an organic berry fertilizer', query: 'organic berry fertilizer' },
+/** The fertilizer for each kind of plant: a chosen product (asin), or a
+ * tagged search where none is chosen yet (grapes). */
+const FERTILIZER_GROUPS: { crops: CropKey[]; label: string; query: string; asin?: string }[] = [
+  { crops: ['lemon', 'lime', 'orange', 'kumquat'], label: 'an organic citrus fertilizer', query: 'organic citrus fertilizer', asin: 'B00YEUROQK' },
+  { crops: ['avocado'], label: 'an organic citrus & avocado fertilizer', query: 'organic citrus and avocado fertilizer', asin: 'B00YEUROQK' },
+  { crops: ['blueberries'], label: 'an organic fertilizer for acid-loving plants', query: 'organic fertilizer for blueberries and acid loving plants', asin: 'B07DJJSLMF' },
+  { crops: ['strawberries', 'raspberries', 'blackberries'], label: 'an organic berry fertilizer', query: 'organic berry fertilizer', asin: 'B07DJJSLMF' },
   { crops: ['grapes'], label: 'an organic grape vine fertilizer', query: 'organic grape vine fertilizer' },
-  { crops: ['apple', 'pear', 'plum', 'peach', 'cherry', 'figs', 'olive', 'pomegranate'], label: 'an organic fruit tree fertilizer', query: 'organic fruit tree fertilizer' },
+  { crops: ['apple', 'pear', 'plum', 'peach', 'cherry', 'figs', 'olive', 'pomegranate'], label: 'an organic fruit tree fertilizer', query: 'organic fruit tree fertilizer', asin: 'B00Q71JSSG' },
   { crops: ['tomatoes', 'tomatillos', 'peppers', 'eggplant', 'cucumbers', 'squash', 'zucchini', 'pumpkin', 'watermelon', 'cantaloupe', 'okra'],
-    label: 'an organic tomato & vegetable fertilizer', query: 'organic tomato and vegetable fertilizer' },
+    label: 'an organic tomato & vegetable fertilizer', query: 'organic tomato and vegetable fertilizer', asin: 'B07DH6HFBW' },
   { crops: ['corn', 'celery', 'onions', 'greenonions', 'leeks', 'broccoli', 'cauliflower', 'cabbage', 'brusselssprouts', 'kale', 'chard'],
-    label: 'organic fish emulsion', query: 'organic fish emulsion fertilizer' },
+    label: 'organic fish emulsion', query: 'organic fish emulsion fertilizer', asin: 'B0DQ2LNX35' },
 ];
-const DEFAULT_FERTILIZER = { label: 'an organic vegetable fertilizer', query: 'organic vegetable garden fertilizer' };
+const DEFAULT_FERTILIZER = { label: 'an organic vegetable fertilizer', query: 'organic vegetable garden fertilizer', asin: 'B08GYJR9VX' };
 
-function fertilizerGroup(crop: CropKey): { label: string; query: string } {
+function fertilizerGroup(crop: CropKey): { label: string; query: string; asin?: string } {
   return FERTILIZER_GROUPS.find((g) => g.crops.includes(crop)) ?? DEFAULT_FERTILIZER;
 }
 
-function fertilizerQuery(crop: CropKey): string {
-  return fertilizerGroup(crop).query;
-}
 
 /** One organic way to do each feed task, appended to its note. A lot of
  * people grow their own food partly to know exactly what goes on it, so
@@ -625,7 +621,7 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
           title: `Fertilize ${cropLabel(crop)}`,
           detail: feedDetail(crop, info.note),
           category: 'feed',
-          buyUrl: placeholderFertilizerBuyUrl(crop),
+          buyUrl: fertilizerBuyUrl(crop),
         });
         break;
       }
@@ -642,7 +638,7 @@ export function getFeedReminders(profile: GardenProfile, date: Date): DailyTask[
         title: `Fertilize ${cropLabel(crop)}`,
         detail: feedDetail(crop, info.note),
         category: 'feed',
-        buyUrl: placeholderFertilizerBuyUrl(crop),
+        buyUrl: fertilizerBuyUrl(crop),
       });
     }
   }
@@ -675,7 +671,7 @@ export function getNettingReminders(profile: GardenProfile, date: Date): DailyTa
       title: `Net your ${cropLabel(crop).toLowerCase()} against birds`,
       detail: 'Birds find ripening fruit fast, often the day before you would pick it. Drape bird netting over the plants now, before the fruit colors up, and pin the edges down so birds cannot get underneath.',
       category: 'tend',
-      buyUrl: amazonSearchUrl('bird netting for garden and fruit trees'),
+      buyUrl: amazonProductUrl('B0BZ7TNY6Q'), // RIFNY fine-mesh garden netting
     });
   }
   return tasks;

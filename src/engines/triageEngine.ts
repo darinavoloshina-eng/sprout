@@ -283,23 +283,24 @@ export const triageTree: Record<string, SymptomDefinition> = {
 export interface CauseProduct {
   label: string;
   query: string;
+  asin?: string;
 }
 
 const CAUSE_PRODUCTS: Record<string, CauseProduct> = {
-  Aphids: { label: 'insecticidal soap', query: 'organic insecticidal soap spray for plants' },
-  Mealybugs: { label: 'neem oil spray', query: 'organic neem oil spray for plants' },
-  Whiteflies: { label: 'yellow sticky traps', query: 'yellow sticky traps for whiteflies' },
-  'General pest pressure': { label: 'neem oil spray', query: 'organic neem oil spray for plants' },
-  'Pest feeding damage': { label: 'neem oil spray', query: 'organic neem oil spray for plants' },
-  'Slugs or snails': { label: 'iron phosphate slug bait', query: 'iron phosphate slug and snail bait organic' },
-  'Flea beetles': { label: 'row cover', query: 'floating row cover garden fabric' },
-  Caterpillars: { label: 'BT caterpillar spray', query: 'BT Bacillus thuringiensis caterpillar spray organic' },
-  'Fungal blight': { label: 'organic copper fungicide', query: 'organic copper fungicide spray' },
-  'Bacterial leaf spot': { label: 'organic copper fungicide', query: 'organic copper fungicide spray' },
-  'Powdery mildew': { label: 'mildew spray', query: 'organic powdery mildew fungicide spray' },
-  'Nitrogen deficiency': { label: 'organic fish fertilizer', query: 'organic fish emulsion fertilizer' },
-  'Nutrient deficiency': { label: 'organic all-purpose fertilizer', query: 'organic all purpose garden fertilizer' },
-  'Nutrient lockup (iron/magnesium)': { label: 'a soil pH test kit', query: 'soil pH test kit' },
+  Aphids: { label: 'insecticidal soap', query: 'organic insecticidal soap spray for plants', asin: 'B00192AO90' },
+  Mealybugs: { label: 'neem oil spray', query: 'organic neem oil spray for plants', asin: 'B007CRG4CW' },
+  Whiteflies: { label: 'yellow sticky traps', query: 'yellow sticky traps for whiteflies', asin: 'B0CNGBLV5N' },
+  'General pest pressure': { label: 'neem oil spray', query: 'organic neem oil spray for plants', asin: 'B007CRG4CW' },
+  'Pest feeding damage': { label: 'neem oil spray', query: 'organic neem oil spray for plants', asin: 'B007CRG4CW' },
+  'Slugs or snails': { label: 'iron phosphate slug bait', query: 'iron phosphate slug and snail bait organic', asin: 'B001ACRZFA' },
+  'Flea beetles': { label: 'row cover', query: 'floating row cover garden fabric', asin: 'B0BZ7TNY6Q' },
+  Caterpillars: { label: 'BT caterpillar spray', query: 'BT Bacillus thuringiensis caterpillar spray organic', asin: 'B01LYXXTZF' },
+  'Fungal blight': { label: 'organic copper fungicide', query: 'organic copper fungicide spray', asin: 'B00BSULSHA' },
+  'Bacterial leaf spot': { label: 'organic copper fungicide', query: 'organic copper fungicide spray', asin: 'B00BSULSHA' },
+  'Powdery mildew': { label: 'mildew spray', query: 'organic powdery mildew fungicide spray', asin: 'B000UJVDXY' },
+  'Nitrogen deficiency': { label: 'organic fish fertilizer', query: 'organic fish emulsion fertilizer', asin: 'B0DQ2LNX35' },
+  'Nutrient deficiency': { label: 'organic all-purpose fertilizer', query: 'organic all purpose garden fertilizer', asin: 'B08GYJR9VX' },
+  'Nutrient lockup (iron/magnesium)': { label: 'a soil pH test kit', query: 'soil pH test kit', asin: 'B01HQXF0PS' },
 };
 
 export function causeProduct(cause: TriageCause): CauseProduct | null {

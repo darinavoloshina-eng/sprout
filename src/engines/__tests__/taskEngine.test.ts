@@ -949,7 +949,7 @@ describe('getFeedReminders', () => {
     });
     const tasks = getFeedReminders(profile, new Date(2024, 4, 8));
     expect(tasks[0].buyUrl).toContain('amazon.com');
-    expect(tasks[0].buyUrl).toContain(encodeURIComponent('organic citrus fertilizer'));
+    expect(tasks[0].buyUrl).toContain('/dp/B00YEUROQK'); // Espoma Citrus-tone
     expect(tasks[0].buyUrl).toContain('tag=gardenwise-20');
   });
 
@@ -968,7 +968,7 @@ describe('getFeedReminders', () => {
     const due = new Date(2024, 5, 26); // 8 weeks after 05-01
     const tasks = getNettingReminders(profile, due);
     expect(tasks.map((t) => t.id)).toEqual(['net-cherry-2024']);
-    expect(tasks[0].buyUrl).toContain('bird%20netting');
+    expect(tasks[0].buyUrl).toContain('/dp/B0BZ7TNY6Q');
     expect(getNettingReminders({ ...profile, isPro: false }, due)).toEqual([]);
     expect(getTasksForDate(profile, due, new Date(2024, 0, 1)).some((t) => t.id === 'net-cherry-2024')).toBe(true);
   });

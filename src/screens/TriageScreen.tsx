@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { causeProduct, triageTree, TriageCause } from '../engines/triageEngine';
-import { amazonSearchUrl, COMMISSION_NOTE } from '../affiliate';
+import { amazonUrl, COMMISSION_NOTE } from '../affiliate';
 import { GardenProfile } from '../types';
 import { colors, radius, space } from '../theme';
 import { cropIcon, cropLabel } from '../cropMeta';
@@ -152,7 +152,7 @@ export default function TriageScreen({
               <View style={styles.buyRow}>
                 <TouchableOpacity
                   style={styles.buyPill}
-                  onPress={() => Linking.openURL(amazonSearchUrl(causeProduct(cause)!.query))}
+                  onPress={() => Linking.openURL(amazonUrl(causeProduct(cause)!))}
                   accessibilityRole="button"
                   accessibilityLabel={`Buy ${causeProduct(cause)!.label} on Amazon`}
                 >

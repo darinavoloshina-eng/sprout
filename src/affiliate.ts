@@ -19,3 +19,8 @@ export function amazonSearchUrl(query: string): string {
 export function amazonProductUrl(asin: string): string {
   return `https://www.amazon.com/dp/${asin}?tag=${AMAZON_TAG}`;
 }
+
+/** The chosen product when there is one, otherwise a tagged search. */
+export function amazonUrl(item: { asin?: string; query: string }): string {
+  return item.asin ? amazonProductUrl(item.asin) : amazonSearchUrl(item.query);
+}
