@@ -24,10 +24,12 @@
     "expo-image-picker": "~17.0.11",
     "expo-location": "~19.0.8",
     "expo-notifications": "~0.32.17",
+    "expo-store-review": "~9.0.9",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-purchases": "^10.9.1",
-    "react-native-svg": "15.12.1"
+    "react-native-svg": "15.12.1",
+    "react-native-view-shot": "4.0.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

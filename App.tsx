@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as StoreReview from 'expo-store-review';
+import { isReviewMoment } from './src/reviewPrompt';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import { useFonts, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
@@ -188,6 +190,24 @@ function plantDetailProps(profile: GardenProfile, crop: CropKey) {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('splash');
   const [profile, setProfile] = useState<GardenProfile | null>(null);
+
+  // Ask for a rating right after a happy moment (see reviewPrompt.ts),
+  // with a short pause so the harvest or checkmark lands first.
+  const prevProfileRef = useRef<GardenProfile | null>(null);
+  useEffect(() => {
+    const prev = prevProfileRef.current;
+    prevProfileRef.current = profile;
+    if (!profile || !isReviewMoment(prev, profile)) return;
+    const asked: GardenProfile = { ...profile, reviewAskedAt: new Date().toISOString() };
+    prevProfileRef.current = asked;
+    setProfile(asked);
+    saveProfile(asked).catch(() => {});
+    setTimeout(() => {
+      StoreReview.hasAction()
+        .then((ok) => (ok ? StoreReview.requestReview() : undefined))
+        .catch(() => {});
+    }, 1200);
+  }, [profile]);
   const [profileLoaded, setProfileLoaded] = useState(false);
   // The splash's own fade-in-and-hold timer, independent of profile/font
   // loading — see SplashScreen.tsx for why. The transition below waits on
