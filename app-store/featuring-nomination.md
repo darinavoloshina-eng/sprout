@@ -6,19 +6,17 @@ Seed-starting season: grow your own food
 ## Type
 App Enhancements
 
-## Description
+## Description (under 1,000 characters)
 
-GardenWise 1.1 turns the app into a step-by-step guide for anyone who wants to grow their own food, even if they have never grown a thing. We'd love to be considered for features around the start of the gardening year (January to March), when millions of people decide this is the year they grow their own vegetables and need to start seeds indoors.
+GardenWise 1.1 turns the app into a step-by-step guide for anyone who wants to grow their own food, even total beginners. We'd love to be considered for features at the start of the gardening year (January to March), when people decide to grow their own vegetables and start seeds indoors.
 
 What's new in 1.1:
-• Not sure what to grow? GardenWise suggests what grows well where you live, sorted by when to plant it.
-• Seed Starting 101: what you need and how to do it in five short steps, plus personal start-indoors, harden-off, and transplant dates for every crop, worked out from the real frost history at the user's exact location instead of a generic zone map.
-• A heads-up two weeks before each user's own seed-starting season begins, so beginners never miss their window.
-• 68 crops: vegetables, herbs, berries, and fruit trees, with spring and fall planting windows and better guidance for mild-winter regions.
-• Fertilizer suggestions on every plant that needs feeding, and Diagnose a plant, a quick step-by-step check when something looks wrong.
-• A simple watering plan that adjusts for rain, frost alerts that name which plants to cover, and a harvest log that adds up the season.
+• Suggestions for what grows well where you live, sorted by when to plant.
+• Seed Starting 101 in five short steps, with personal start-indoors, harden-off, and transplant dates from the real frost history at the user's exact location, not a zone map.
+• A heads-up two weeks before each user's seed-starting season.
+• 68 crops, spring and fall planting windows, fertilizer suggestions, and Diagnose a plant.
 
-Our goal is to make growing food feel doable for beginners: one clear next step at a time, timed to their own backyard, with reminders only on days there is a real job to do. GardenWise is free for up to four crops, needs no account, and keeps the user's garden on their device.
+Our goal: make growing food feel doable, one clear next step at a time, timed to the user's own backyard. Free for up to four crops, no account needed.
 
 ## Publish date
 Range: January 4, 2027 to March 31, 2027
