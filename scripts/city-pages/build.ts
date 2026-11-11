@@ -139,7 +139,7 @@ const blogPage = read('docs/blog/when-to-start-seeds-indoors.html');
 const HEAD_ASSETS = blogPage.slice(blogPage.indexOf('<link rel="icon"'), blogPage.indexOf('<script type="application/ld+json">'));
 const HEADER = blogPage.slice(blogPage.indexOf('<header class="site-header">'), blogPage.indexOf('</header>') + 9).replace(' aria-current="page"', '');
 const FOOTER = blogPage.slice(blogPage.indexOf('<footer class="site-footer">'), blogPage.indexOf('</body>'))
-  .replace('<a href="/blog/">Blog</a>', '<a href="/blog/">Blog</a> · <a href="/planting-calendar/">Planting calendars</a>')
+  .replace(/<a href="\/blog\/">Blog<\/a>(?! · <a href="\/planting-calendar\/">)/, '<a href="/blog/">Blog</a> · <a href="/planting-calendar/">Planting calendars</a>')
   .replace('<div class="copy affiliate">', '<div class="copy">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a></div>\n  <div class="copy affiliate">');
 
 function page(opts: { title: string; desc: string; url: string; jsonld: object[]; body: string }): string {
