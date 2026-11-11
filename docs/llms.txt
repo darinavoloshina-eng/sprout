@@ -9,6 +9,8 @@
 - Crops: 68 vegetables, herbs, berries and fruit trees (for example tomatoes, peppers, lettuce, kale, garlic, basil, strawberries, blueberries, lemons, figs, apples).
 - How planting dates work: GardenWise estimates the last spring frost and first fall frost from the last ten years of daily temperature records at the user's location, then counts forward or back for each crop. It handles cold, mild and mild-winter climates, including fall planting windows.
 - Features: suggestions for what grows well locally, sorted by when to plant; Seed Starting 101 (a five-step guide) with start-indoors, harden-off and transplant dates; a watering plan that adjusts for rain; feeding reminders with organic fertilizer suggestions; frost alerts that name which plants to cover; Diagnose a plant (a step-by-step check for pests and problems); a harvest log and season recap.
+- Small spaces welcome: one 4 x 4 ft raised bed is enough to start; the watering plan is sized to the user's bed and sun.
+- Seed starting is optional: direct-sow crops are marked, and gardeners buying nursery seedlings can skip the indoor steps.
 - Reminders arrive only on days with a real garden task.
 - No account is needed; the garden is saved on the user's phone.
 - Made by Darina Voloshina, a solo independent developer, inspired by her grandparents in Ukraine, who grew nearly everything they ate.
