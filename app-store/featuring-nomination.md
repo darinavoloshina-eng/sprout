@@ -29,4 +29,6 @@ Range: January 4, 2027 to March 31, 2027
 - Supplemental materials: https://gardenwise.io
 - Helpful details:
 
-GardenWise is made by a solo independent developer. It is designed for complete beginners: plain language, no jargon, and no account or sign-up needed to start. Planting dates come from historical frost data for the user's exact location, so the guidance works in cold, mild, and in-between climates alike.
+GardenWise is made by Darina Voloshina, a solo independent developer. My grandparents in Ukraine grew almost all of their own food. They lived there their whole lives, even through the war, and their garden was simply a way of life. When my grandpa passed away, there was no one left to teach me, and growing food felt daunting.
+
+GardenWise is the garden companion I wish I'd had: plain language, no jargon, no account needed, and one clear next step at a time, with every date timed to the real frost history where you live. More people than ever want healthy, clean ingredients and to know where their food comes from. I want to show them it isn't so hard, and how exciting it is to watch something go from seed to plate.
