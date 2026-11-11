@@ -29,6 +29,10 @@ Range: January 4, 2027 to March 31, 2027
 - Supplemental materials: https://gardenwise.io
 - Helpful details:
 
-GardenWise is made by Darina Voloshina, a solo independent developer. My grandparents in Ukraine grew almost all of their own food. They lived there their whole lives, even through the war, and their garden was simply a way of life. When my grandpa passed away, there was no one left to teach me, and growing food felt daunting.
+My grandparents in Ukraine grew nearly everything they ate. They lived there their whole lives, even through the war, and their garden was simply a way of life. When my grandfather passed away, I lost the person who could have taught me, and growing food on my own felt overwhelming.
 
-GardenWise is the garden companion I wish I'd had: plain language, no jargon, no account needed, and one clear next step at a time, with every date timed to the real frost history where you live. More people than ever want healthy, clean ingredients and to know where their food comes from. I want to show them it isn't so hard, and how exciting it is to watch something go from seed to plate.
+I built GardenWise to be the guide I never had. It turns growing food into one simple step at a time, timed to the exact place you live, so beginners can start with confidence instead of guesswork.
+
+More people than ever want fresh, clean food and to know where it comes from. GardenWise is my way of showing them it's within reach, and that few things are as rewarding as taking something from seed to plate.
+
+Darina Voloshina, founder and solo developer
