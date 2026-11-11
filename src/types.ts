@@ -54,6 +54,7 @@ export interface FrostEstimate {
   firstFrostMonthDay: string | null;
   isNorthernHemisphere: boolean;
   fetchedAt: string;
+  method?: number; // see FROST_METHOD in api/frost.ts
 }
 
 export interface GardenProfile {

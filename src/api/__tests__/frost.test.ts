@@ -161,3 +161,21 @@ describe('estimateFrostDates', () => {
     expect(result?.firstFrostMonthDay).toBe('01-20');
   });
 });
+
+describe('estimateFrostDates method', () => {
+  beforeEach(() => jest.useFakeTimers().setSystemTime(FIXED_NOW));
+  afterEach(() => jest.useRealTimers());
+
+  it('samples ten years and counts 33°F as a frost night', async () => {
+    const urls: string[] = [];
+    global.fetch = jest.fn(async (url: string) => {
+      urls.push(url);
+      const year = Number(url.match(/start_date=(\d+)-01-01/)?.[1]);
+      return { ok: true, json: async () => ({ daily: { time: [`${year}-04-02`], temperature_2m_min: [33] } }) } as Response;
+    }) as unknown as typeof fetch;
+    const result = await estimateFrostDates(39.74, -104.99);
+    expect(urls).toHaveLength(10);
+    expect(result?.lastFrostMonthDay).toBe('04-02');
+    expect(result?.method).toBe(2);
+  });
+});

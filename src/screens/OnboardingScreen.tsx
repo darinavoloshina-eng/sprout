@@ -58,7 +58,7 @@ import { CROP_CATEGORY, CropCategory, cropIcon, cropIconBg, cropLabel, FREE_CROP
 import { CropIcon } from '../components/ui';
 import { SuggestionsList } from '../components/Suggestions';
 import { suggestCrops, Suggestions } from '../engines/suggestions';
-import { estimateFrostDates } from '../api/frost';
+import { estimateFrostDates, FROST_METHOD } from '../api/frost';
 import { NEXT_ACTION, STAGE_HEADLINE } from '../plantStageContent';
 import { PRIVACY_POLICY_URL } from '../legal';
 
@@ -233,7 +233,8 @@ export default function OnboardingScreen({
     setFrostLoading(true);
     (async () => {
       const known =
-        existing?.frostDates && existing.location?.lat === location.lat && existing.location?.lon === location.lon
+        existing?.frostDates && (existing.frostDates.method ?? 1) >= FROST_METHOD &&
+        existing.location?.lat === location.lat && existing.location?.lon === location.lon
           ? existing.frostDates
           : null;
       const frost = known ?? (await estimateFrostDates(location.lat, location.lon).catch(() => null));

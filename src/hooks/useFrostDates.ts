@@ -11,9 +11,12 @@
 // tying the fetch to Home meant it never ran — and the estimate never
 // arrived — for anyone who reached those screens without Home mounting
 // first.
+//
+// Also re-fetches once when a saved estimate was made with an older method
+// (FROST_METHOD), keeping the old dates on screen until the new ones arrive.
 
 import { useEffect, useRef } from 'react';
-import { estimateFrostDates } from '../api/frost';
+import { estimateFrostDates, FROST_METHOD } from '../api/frost';
 import { saveProfile } from '../api/storage';
 import { GardenProfile } from '../types';
 
@@ -26,7 +29,7 @@ export function useFrostDates(
 
   useEffect(() => {
     const loc = profile?.location;
-    if (!loc || profile?.frostDates) return;
+    if (!loc || (profile?.frostDates && (profile.frostDates.method ?? 1) >= FROST_METHOD)) return;
     let cancelled = false;
     (async () => {
       const result = await estimateFrostDates(loc.lat, loc.lon);
