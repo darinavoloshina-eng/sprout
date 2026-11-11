@@ -1,0 +1,1081 @@
+{
+ "Birmingham,AL": {
+  "lastFrostMonthDay": "03-18",
+  "firstFrostMonthDay": "11-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:03.384Z",
+  "method": 2
+ },
+ "Huntsville,AL": {
+  "lastFrostMonthDay": "03-20",
+  "firstFrostMonthDay": "11-15",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:07.583Z",
+  "method": 2
+ },
+ "Montgomery,AL": {
+  "lastFrostMonthDay": "03-07",
+  "firstFrostMonthDay": "12-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:11.787Z",
+  "method": 2
+ },
+ "Anchorage,AK": {
+  "lastFrostMonthDay": "05-08",
+  "firstFrostMonthDay": "10-06",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:15.969Z",
+  "method": 2
+ },
+ "Phoenix,AZ": {
+  "lastFrostMonthDay": "02-01",
+  "firstFrostMonthDay": "01-07",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:20.159Z",
+  "method": 2
+ },
+ "Tucson,AZ": {
+  "lastFrostMonthDay": "02-16",
+  "firstFrostMonthDay": "12-22",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:24.366Z",
+  "method": 2
+ },
+ "Mesa,AZ": {
+  "lastFrostMonthDay": "02-04",
+  "firstFrostMonthDay": "12-26",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:28.558Z",
+  "method": 2
+ },
+ "Flagstaff,AZ": {
+  "lastFrostMonthDay": "05-13",
+  "firstFrostMonthDay": "10-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:32.760Z",
+  "method": 2
+ },
+ "Little Rock,AR": {
+  "lastFrostMonthDay": "03-16",
+  "firstFrostMonthDay": "11-19",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:36.954Z",
+  "method": 2
+ },
+ "Fayetteville,AR": {
+  "lastFrostMonthDay": "04-02",
+  "firstFrostMonthDay": "11-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:41.055Z",
+  "method": 2
+ },
+ "Sacramento,CA": {
+  "lastFrostMonthDay": "02-15",
+  "firstFrostMonthDay": "12-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:45.250Z",
+  "method": 2
+ },
+ "Fresno,CA": {
+  "lastFrostMonthDay": "02-16",
+  "firstFrostMonthDay": "12-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:49.110Z",
+  "method": 2
+ },
+ "San Jose,CA": {
+  "lastFrostMonthDay": "02-15",
+  "firstFrostMonthDay": "12-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:53.318Z",
+  "method": 2
+ },
+ "Oakland,CA": {
+  "lastFrostMonthDay": "01-31",
+  "firstFrostMonthDay": "01-16",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:24:57.210Z",
+  "method": 2
+ },
+ "Los Angeles,CA": {
+  "lastFrostMonthDay": "02-22",
+  "firstFrostMonthDay": "02-22",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:01.506Z",
+  "method": 2
+ },
+ "San Diego,CA": null,
+ "Bakersfield,CA": {
+  "lastFrostMonthDay": "02-13",
+  "firstFrostMonthDay": "12-24",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:09.512Z",
+  "method": 2
+ },
+ "Riverside,CA": {
+  "lastFrostMonthDay": "02-03",
+  "firstFrostMonthDay": "01-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:13.436Z",
+  "method": 2
+ },
+ "Santa Rosa,CA": {
+  "lastFrostMonthDay": "02-19",
+  "firstFrostMonthDay": "12-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:14.846Z",
+  "method": 2
+ },
+ "Redding,CA": {
+  "lastFrostMonthDay": "03-04",
+  "firstFrostMonthDay": "12-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:17.635Z",
+  "method": 2
+ },
+ "Denver,CO": {
+  "lastFrostMonthDay": "05-10",
+  "firstFrostMonthDay": "10-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:19.041Z",
+  "method": 2
+ },
+ "Colorado Springs,CO": {
+  "lastFrostMonthDay": "05-09",
+  "firstFrostMonthDay": "10-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:21.529Z",
+  "method": 2
+ },
+ "Fort Collins,CO": {
+  "lastFrostMonthDay": "05-10",
+  "firstFrostMonthDay": "10-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:25.764Z",
+  "method": 2
+ },
+ "Boulder,CO": {
+  "lastFrostMonthDay": "05-12",
+  "firstFrostMonthDay": "10-10",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:29.632Z",
+  "method": 2
+ },
+ "Hartford,CT": {
+  "lastFrostMonthDay": "04-23",
+  "firstFrostMonthDay": "11-03",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:33.844Z",
+  "method": 2
+ },
+ "New Haven,CT": {
+  "lastFrostMonthDay": "04-16",
+  "firstFrostMonthDay": "11-03",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:35.261Z",
+  "method": 2
+ },
+ "Wilmington,DE": {
+  "lastFrostMonthDay": "04-12",
+  "firstFrostMonthDay": "11-13",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:37.728Z",
+  "method": 2
+ },
+ "Washington,DC": {
+  "lastFrostMonthDay": "04-09",
+  "firstFrostMonthDay": "11-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:41.928Z",
+  "method": 2
+ },
+ "Jacksonville,FL": {
+  "lastFrostMonthDay": "01-30",
+  "firstFrostMonthDay": "01-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:45.881Z",
+  "method": 2
+ },
+ "Tallahassee,FL": {
+  "lastFrostMonthDay": "02-11",
+  "firstFrostMonthDay": "12-18",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:47.285Z",
+  "method": 2
+ },
+ "Orlando,FL": {
+  "lastFrostMonthDay": "01-30",
+  "firstFrostMonthDay": "01-10",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:50.084Z",
+  "method": 2
+ },
+ "Tampa,FL": {
+  "lastFrostMonthDay": "01-18",
+  "firstFrostMonthDay": "01-18",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:53.931Z",
+  "method": 2
+ },
+ "Gainesville,FL": {
+  "lastFrostMonthDay": "01-19",
+  "firstFrostMonthDay": "12-16",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:25:58.133Z",
+  "method": 2
+ },
+ "Atlanta,GA": {
+  "lastFrostMonthDay": "03-15",
+  "firstFrostMonthDay": "11-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:02.131Z",
+  "method": 2
+ },
+ "Savannah,GA": {
+  "lastFrostMonthDay": "02-22",
+  "firstFrostMonthDay": "12-07",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:06.320Z",
+  "method": 2
+ },
+ "Athens,GA": {
+  "lastFrostMonthDay": "03-20",
+  "firstFrostMonthDay": "11-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:10.187Z",
+  "method": 2
+ },
+ "Augusta,GA": {
+  "lastFrostMonthDay": "03-13",
+  "firstFrostMonthDay": "11-22",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:14.396Z",
+  "method": 2
+ },
+ "Boise,ID": {
+  "lastFrostMonthDay": "04-24",
+  "firstFrostMonthDay": "10-21",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:18.246Z",
+  "method": 2
+ },
+ "Idaho Falls,ID": {
+  "lastFrostMonthDay": "05-21",
+  "firstFrostMonthDay": "10-02",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:22.464Z",
+  "method": 2
+ },
+ "Chicago,IL": {
+  "lastFrostMonthDay": "04-19",
+  "firstFrostMonthDay": "11-06",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:26.437Z",
+  "method": 2
+ },
+ "Springfield,IL": {
+  "lastFrostMonthDay": "04-14",
+  "firstFrostMonthDay": "10-30",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:30.653Z",
+  "method": 2
+ },
+ "Peoria,IL": {
+  "lastFrostMonthDay": "04-21",
+  "firstFrostMonthDay": "11-04",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:34.450Z",
+  "method": 2
+ },
+ "Indianapolis,IN": {
+  "lastFrostMonthDay": "04-28",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:38.646Z",
+  "method": 2
+ },
+ "Fort Wayne,IN": {
+  "lastFrostMonthDay": "04-27",
+  "firstFrostMonthDay": "10-27",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:42.551Z",
+  "method": 2
+ },
+ "Des Moines,IA": {
+  "lastFrostMonthDay": "04-22",
+  "firstFrostMonthDay": "10-20",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:46.747Z",
+  "method": 2
+ },
+ "Cedar Rapids,IA": {
+  "lastFrostMonthDay": "04-21",
+  "firstFrostMonthDay": "10-21",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:50.655Z",
+  "method": 2
+ },
+ "Wichita,KS": {
+  "lastFrostMonthDay": "04-02",
+  "firstFrostMonthDay": "10-31",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:26:54.849Z",
+  "method": 2
+ },
+ "Topeka,KS": {
+  "lastFrostMonthDay": "04-10",
+  "firstFrostMonthDay": "10-28",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:54.897Z",
+  "method": 2
+ },
+ "Louisville,KY": {
+  "lastFrostMonthDay": "04-15",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:01.729Z",
+  "method": 2
+ },
+ "Lexington,KY": {
+  "lastFrostMonthDay": "04-15",
+  "firstFrostMonthDay": "11-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:08.807Z",
+  "method": 2
+ },
+ "New Orleans,LA": {
+  "lastFrostMonthDay": "01-29",
+  "firstFrostMonthDay": "01-04",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:15.838Z",
+  "method": 2
+ },
+ "Baton Rouge,LA": {
+  "lastFrostMonthDay": "02-25",
+  "firstFrostMonthDay": "12-14",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:22.961Z",
+  "method": 2
+ },
+ "Shreveport,LA": {
+  "lastFrostMonthDay": "02-24",
+  "firstFrostMonthDay": "12-06",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:29.917Z",
+  "method": 2
+ },
+ "Portland,ME": {
+  "lastFrostMonthDay": "04-23",
+  "firstFrostMonthDay": "11-03",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:41.146Z",
+  "method": 2
+ },
+ "Bangor,ME": {
+  "lastFrostMonthDay": "04-25",
+  "firstFrostMonthDay": "10-27",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:48.169Z",
+  "method": 2
+ },
+ "Baltimore,MD": {
+  "lastFrostMonthDay": "04-07",
+  "firstFrostMonthDay": "11-10",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:40:55.051Z",
+  "method": 2
+ },
+ "Frederick,MD": {
+  "lastFrostMonthDay": "04-19",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:41:11.568Z",
+  "method": 2
+ },
+ "Boston,MA": {
+  "lastFrostMonthDay": "04-18",
+  "firstFrostMonthDay": "11-03",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:41:28.080Z",
+  "method": 2
+ },
+ "Worcester,MA": {
+  "lastFrostMonthDay": "04-24",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:41:35.035Z",
+  "method": 2
+ },
+ "Springfield,MA": {
+  "lastFrostMonthDay": "04-22",
+  "firstFrostMonthDay": "11-03",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:41:51.544Z",
+  "method": 2
+ },
+ "Detroit,MI": {
+  "lastFrostMonthDay": "04-28",
+  "firstFrostMonthDay": "10-31",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:41:58.450Z",
+  "method": 2
+ },
+ "Grand Rapids,MI": {
+  "lastFrostMonthDay": "05-05",
+  "firstFrostMonthDay": "10-27",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:42:14.955Z",
+  "method": 2
+ },
+ "Ann Arbor,MI": {
+  "lastFrostMonthDay": "04-30",
+  "firstFrostMonthDay": "10-27",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:42:26.188Z",
+  "method": 2
+ },
+ "Lansing,MI": {
+  "lastFrostMonthDay": "05-02",
+  "firstFrostMonthDay": "10-28",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:42:37.483Z",
+  "method": 2
+ },
+ "Minneapolis,MN": {
+  "lastFrostMonthDay": "05-01",
+  "firstFrostMonthDay": "10-20",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:42:54.001Z",
+  "method": 2
+ },
+ "Saint Paul,MN": {
+  "lastFrostMonthDay": "04-29",
+  "firstFrostMonthDay": "10-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:43:00.944Z",
+  "method": 2
+ },
+ "Duluth,MN": {
+  "lastFrostMonthDay": "05-04",
+  "firstFrostMonthDay": "10-23",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:43:07.881Z",
+  "method": 2
+ },
+ "Rochester,MN": {
+  "lastFrostMonthDay": "05-03",
+  "firstFrostMonthDay": "10-13",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:43:24.386Z",
+  "method": 2
+ },
+ "Jackson,MS": {
+  "lastFrostMonthDay": "03-09",
+  "firstFrostMonthDay": "11-19",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:43:31.527Z",
+  "method": 2
+ },
+ "Kansas City,MO": {
+  "lastFrostMonthDay": "04-16",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:43:48.037Z",
+  "method": 2
+ },
+ "Saint Louis,MO": {
+  "lastFrostMonthDay": "04-13",
+  "firstFrostMonthDay": "11-02",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:43:54.956Z",
+  "method": 2
+ },
+ "Springfield,MO": {
+  "lastFrostMonthDay": "04-12",
+  "firstFrostMonthDay": "11-03",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:44:01.857Z",
+  "method": 2
+ },
+ "Billings,MT": {
+  "lastFrostMonthDay": "05-10",
+  "firstFrostMonthDay": "10-11",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:44:08.666Z",
+  "method": 2
+ },
+ "Missoula,MT": {
+  "lastFrostMonthDay": "05-03",
+  "firstFrostMonthDay": "10-15",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:33:47.726Z",
+  "method": 2
+ },
+ "Bozeman,MT": {
+  "lastFrostMonthDay": "06-08",
+  "firstFrostMonthDay": "10-10",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:33:52.624Z",
+  "method": 2
+ },
+ "Omaha,NE": {
+  "lastFrostMonthDay": "04-18",
+  "firstFrostMonthDay": "10-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:33:55.944Z",
+  "method": 2
+ },
+ "Lincoln,NE": {
+  "lastFrostMonthDay": "04-17",
+  "firstFrostMonthDay": "10-21",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:00.260Z",
+  "method": 2
+ },
+ "Las Vegas,NV": {
+  "lastFrostMonthDay": "02-13",
+  "firstFrostMonthDay": "12-06",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:06.237Z",
+  "method": 2
+ },
+ "Reno,NV": {
+  "lastFrostMonthDay": "04-30",
+  "firstFrostMonthDay": "10-22",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:10.579Z",
+  "method": 2
+ },
+ "Manchester,NH": {
+  "lastFrostMonthDay": "04-26",
+  "firstFrostMonthDay": "10-29",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:12.908Z",
+  "method": 2
+ },
+ "Concord,NH": {
+  "lastFrostMonthDay": "05-04",
+  "firstFrostMonthDay": "10-19",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:17.034Z",
+  "method": 2
+ },
+ "Newark,NJ": {
+  "lastFrostMonthDay": "04-13",
+  "firstFrostMonthDay": "11-15",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:19.004Z",
+  "method": 2
+ },
+ "Trenton,NJ": {
+  "lastFrostMonthDay": "04-19",
+  "firstFrostMonthDay": "11-11",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:24.067Z",
+  "method": 2
+ },
+ "Albuquerque,NM": {
+  "lastFrostMonthDay": "04-05",
+  "firstFrostMonthDay": "11-06",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:28.045Z",
+  "method": 2
+ },
+ "Santa Fe,NM": {
+  "lastFrostMonthDay": "04-26",
+  "firstFrostMonthDay": "10-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:32.322Z",
+  "method": 2
+ },
+ "Las Cruces,NM": {
+  "lastFrostMonthDay": "03-24",
+  "firstFrostMonthDay": "11-11",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:36.956Z",
+  "method": 2
+ },
+ "New York,NY": {
+  "lastFrostMonthDay": "04-13",
+  "firstFrostMonthDay": "11-13",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:39.911Z",
+  "method": 2
+ },
+ "Buffalo,NY": {
+  "lastFrostMonthDay": "04-22",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:44.589Z",
+  "method": 2
+ },
+ "Rochester,NY": {
+  "lastFrostMonthDay": "04-30",
+  "firstFrostMonthDay": "11-04",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:48.736Z",
+  "method": 2
+ },
+ "Syracuse,NY": {
+  "lastFrostMonthDay": "04-30",
+  "firstFrostMonthDay": "10-31",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:52.939Z",
+  "method": 2
+ },
+ "Albany,NY": {
+  "lastFrostMonthDay": "04-26",
+  "firstFrostMonthDay": "10-30",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:34:56.656Z",
+  "method": 2
+ },
+ "Charlotte,NC": {
+  "lastFrostMonthDay": "03-29",
+  "firstFrostMonthDay": "11-11",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:01.290Z",
+  "method": 2
+ },
+ "Raleigh,NC": {
+  "lastFrostMonthDay": "03-24",
+  "firstFrostMonthDay": "11-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:05.407Z",
+  "method": 2
+ },
+ "Durham,NC": {
+  "lastFrostMonthDay": "03-21",
+  "firstFrostMonthDay": "11-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:10.809Z",
+  "method": 2
+ },
+ "Greensboro,NC": {
+  "lastFrostMonthDay": "03-27",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:13.439Z",
+  "method": 2
+ },
+ "Asheville,NC": {
+  "lastFrostMonthDay": "04-24",
+  "firstFrostMonthDay": "10-24",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:18.256Z",
+  "method": 2
+ },
+ "Wilmington,NC": {
+  "lastFrostMonthDay": "03-11",
+  "firstFrostMonthDay": "11-28",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:22.654Z",
+  "method": 2
+ },
+ "Fargo,ND": {
+  "lastFrostMonthDay": "05-05",
+  "firstFrostMonthDay": "10-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:28.891Z",
+  "method": 2
+ },
+ "Bismarck,ND": {
+  "lastFrostMonthDay": "05-08",
+  "firstFrostMonthDay": "10-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:33.174Z",
+  "method": 2
+ },
+ "Columbus,OH": {
+  "lastFrostMonthDay": "04-24",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:35.525Z",
+  "method": 2
+ },
+ "Cleveland,OH": {
+  "lastFrostMonthDay": "04-20",
+  "firstFrostMonthDay": "11-13",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:40.196Z",
+  "method": 2
+ },
+ "Cincinnati,OH": {
+  "lastFrostMonthDay": "04-25",
+  "firstFrostMonthDay": "11-04",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:44.261Z",
+  "method": 2
+ },
+ "Toledo,OH": {
+  "lastFrostMonthDay": "04-27",
+  "firstFrostMonthDay": "11-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:48.497Z",
+  "method": 2
+ },
+ "Dayton,OH": {
+  "lastFrostMonthDay": "04-28",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:52.565Z",
+  "method": 2
+ },
+ "Oklahoma City,OK": {
+  "lastFrostMonthDay": "03-29",
+  "firstFrostMonthDay": "11-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:35:56.853Z",
+  "method": 2
+ },
+ "Tulsa,OK": {
+  "lastFrostMonthDay": "03-28",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:01.250Z",
+  "method": 2
+ },
+ "Portland,OR": {
+  "lastFrostMonthDay": "03-27",
+  "firstFrostMonthDay": "11-22",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:05.348Z",
+  "method": 2
+ },
+ "Eugene,OR": {
+  "lastFrostMonthDay": "04-19",
+  "firstFrostMonthDay": "10-26",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:10.567Z",
+  "method": 2
+ },
+ "Salem,OR": {
+  "lastFrostMonthDay": "04-06",
+  "firstFrostMonthDay": "11-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:14.582Z",
+  "method": 2
+ },
+ "Bend,OR": {
+  "lastFrostMonthDay": "05-21",
+  "firstFrostMonthDay": "10-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:18.321Z",
+  "method": 2
+ },
+ "Medford,OR": {
+  "lastFrostMonthDay": "04-18",
+  "firstFrostMonthDay": "11-02",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:23.375Z",
+  "method": 2
+ },
+ "Philadelphia,PA": {
+  "lastFrostMonthDay": "04-13",
+  "firstFrostMonthDay": "11-11",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:28.855Z",
+  "method": 2
+ },
+ "Pittsburgh,PA": {
+  "lastFrostMonthDay": "04-23",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:31.783Z",
+  "method": 2
+ },
+ "Harrisburg,PA": {
+  "lastFrostMonthDay": "04-14",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:35.509Z",
+  "method": 2
+ },
+ "Allentown,PA": {
+  "lastFrostMonthDay": "04-21",
+  "firstFrostMonthDay": "10-29",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:41.270Z",
+  "method": 2
+ },
+ "Lancaster,PA": {
+  "lastFrostMonthDay": "04-11",
+  "firstFrostMonthDay": "11-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:44.763Z",
+  "method": 2
+ },
+ "Providence,RI": {
+  "lastFrostMonthDay": "04-18",
+  "firstFrostMonthDay": "11-02",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:50.396Z",
+  "method": 2
+ },
+ "Charleston,SC": {
+  "lastFrostMonthDay": "02-10",
+  "firstFrostMonthDay": "12-06",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:54.338Z",
+  "method": 2
+ },
+ "Columbia,SC": {
+  "lastFrostMonthDay": "03-14",
+  "firstFrostMonthDay": "11-21",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:36:58.914Z",
+  "method": 2
+ },
+ "Greenville,SC": {
+  "lastFrostMonthDay": "03-30",
+  "firstFrostMonthDay": "11-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:03.217Z",
+  "method": 2
+ },
+ "Sioux Falls,SD": {
+  "lastFrostMonthDay": "04-29",
+  "firstFrostMonthDay": "10-13",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:07.808Z",
+  "method": 2
+ },
+ "Rapid City,SD": {
+  "lastFrostMonthDay": "05-06",
+  "firstFrostMonthDay": "10-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:11.149Z",
+  "method": 2
+ },
+ "Nashville,TN": {
+  "lastFrostMonthDay": "04-07",
+  "firstFrostMonthDay": "11-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:15.296Z",
+  "method": 2
+ },
+ "Memphis,TN": {
+  "lastFrostMonthDay": "03-24",
+  "firstFrostMonthDay": "11-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:19.532Z",
+  "method": 2
+ },
+ "Knoxville,TN": {
+  "lastFrostMonthDay": "04-08",
+  "firstFrostMonthDay": "11-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:24.187Z",
+  "method": 2
+ },
+ "Chattanooga,TN": {
+  "lastFrostMonthDay": "04-01",
+  "firstFrostMonthDay": "11-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:27.860Z",
+  "method": 2
+ },
+ "Houston,TX": {
+  "lastFrostMonthDay": "02-06",
+  "firstFrostMonthDay": "12-14",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:32.057Z",
+  "method": 2
+ },
+ "Dallas,TX": {
+  "lastFrostMonthDay": "02-28",
+  "firstFrostMonthDay": "11-20",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:36.419Z",
+  "method": 2
+ },
+ "Austin,TX": {
+  "lastFrostMonthDay": "02-25",
+  "firstFrostMonthDay": "12-11",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:40.447Z",
+  "method": 2
+ },
+ "San Antonio,TX": {
+  "lastFrostMonthDay": "02-19",
+  "firstFrostMonthDay": "12-14",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:44.786Z",
+  "method": 2
+ },
+ "Fort Worth,TX": {
+  "lastFrostMonthDay": "03-02",
+  "firstFrostMonthDay": "11-18",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:49.045Z",
+  "method": 2
+ },
+ "El Paso,TX": {
+  "lastFrostMonthDay": "03-20",
+  "firstFrostMonthDay": "11-16",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:53.025Z",
+  "method": 2
+ },
+ "Lubbock,TX": {
+  "lastFrostMonthDay": "04-02",
+  "firstFrostMonthDay": "10-31",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:37:57.824Z",
+  "method": 2
+ },
+ "Amarillo,TX": {
+  "lastFrostMonthDay": "04-06",
+  "firstFrostMonthDay": "11-07",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:01.944Z",
+  "method": 2
+ },
+ "Waco,TX": {
+  "lastFrostMonthDay": "02-13",
+  "firstFrostMonthDay": "11-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:06.177Z",
+  "method": 2
+ },
+ "Salt Lake City,UT": {
+  "lastFrostMonthDay": "05-04",
+  "firstFrostMonthDay": "10-14",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:09.801Z",
+  "method": 2
+ },
+ "Provo,UT": {
+  "lastFrostMonthDay": "05-03",
+  "firstFrostMonthDay": "10-24",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:14.521Z",
+  "method": 2
+ },
+ "Saint George,UT": {
+  "lastFrostMonthDay": "03-14",
+  "firstFrostMonthDay": "11-20",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:18.513Z",
+  "method": 2
+ },
+ "Burlington,VT": {
+  "lastFrostMonthDay": "05-01",
+  "firstFrostMonthDay": "10-29",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:22.691Z",
+  "method": 2
+ },
+ "Richmond,VA": {
+  "lastFrostMonthDay": "04-06",
+  "firstFrostMonthDay": "11-13",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:26.693Z",
+  "method": 2
+ },
+ "Virginia Beach,VA": {
+  "lastFrostMonthDay": "03-16",
+  "firstFrostMonthDay": "12-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:30.777Z",
+  "method": 2
+ },
+ "Roanoke,VA": {
+  "lastFrostMonthDay": "04-12",
+  "firstFrostMonthDay": "11-04",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:35.520Z",
+  "method": 2
+ },
+ "Charlottesville,VA": {
+  "lastFrostMonthDay": "04-14",
+  "firstFrostMonthDay": "11-09",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:39.431Z",
+  "method": 2
+ },
+ "Seattle,WA": {
+  "lastFrostMonthDay": "03-21",
+  "firstFrostMonthDay": "11-23",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:43.366Z",
+  "method": 2
+ },
+ "Spokane,WA": {
+  "lastFrostMonthDay": "04-21",
+  "firstFrostMonthDay": "10-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:47.743Z",
+  "method": 2
+ },
+ "Tacoma,WA": {
+  "lastFrostMonthDay": "04-07",
+  "firstFrostMonthDay": "11-01",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:51.934Z",
+  "method": 2
+ },
+ "Olympia,WA": {
+  "lastFrostMonthDay": "04-02",
+  "firstFrostMonthDay": "11-17",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:54.034Z",
+  "method": 2
+ },
+ "Yakima,WA": {
+  "lastFrostMonthDay": "04-11",
+  "firstFrostMonthDay": "10-15",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:38:58.205Z",
+  "method": 2
+ },
+ "Charleston,WV": {
+  "lastFrostMonthDay": "04-15",
+  "firstFrostMonthDay": "11-05",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:02.297Z",
+  "method": 2
+ },
+ "Morgantown,WV": {
+  "lastFrostMonthDay": "04-18",
+  "firstFrostMonthDay": "11-02",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:06.529Z",
+  "method": 2
+ },
+ "Milwaukee,WI": {
+  "lastFrostMonthDay": "05-03",
+  "firstFrostMonthDay": "10-21",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:10.616Z",
+  "method": 2
+ },
+ "Madison,WI": {
+  "lastFrostMonthDay": "04-29",
+  "firstFrostMonthDay": "10-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:14.817Z",
+  "method": 2
+ },
+ "Green Bay,WI": {
+  "lastFrostMonthDay": "05-04",
+  "firstFrostMonthDay": "10-25",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:19.017Z",
+  "method": 2
+ },
+ "Cheyenne,WY": {
+  "lastFrostMonthDay": "05-12",
+  "firstFrostMonthDay": "10-12",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:23.365Z",
+  "method": 2
+ },
+ "Casper,WY": {
+  "lastFrostMonthDay": "05-11",
+  "firstFrostMonthDay": "10-08",
+  "isNorthernHemisphere": true,
+  "fetchedAt": "2026-11-11T18:39:27.552Z",
+  "method": 2
+ }
+}

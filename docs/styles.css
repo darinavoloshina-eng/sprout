@@ -585,3 +585,33 @@ article.post-body ol li { margin-bottom: 10px; }
     animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;
   }
 }
+
+/* ---------- planting calendars (city pages) ---------- */
+.frost-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 4px 0 24px; }
+.frost-facts div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.frost-facts span { display: block; font-size: 12.5px; color: var(--ink-soft); }
+.frost-facts strong { display: block; margin-top: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 20px; color: var(--pine); }
+.table-note { font-size: 13.5px; color: var(--ink-soft); }
+article.post-body .city-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 10px; }
+article.post-body .city-list li { margin: 0; }
+.city-list a { display: inline-block; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--pine); text-decoration: none; font-size: 14.5px; }
+.city-list a:hover { border-color: var(--moss); }
+@media (max-width: 520px) {
+  .frost-facts { gap: 6px; }
+  .frost-facts div { padding: 10px 10px; }
+  .frost-facts strong { font-size: 16px; }
+}
+.city-table td:nth-child(2), .city-table td:nth-child(3) { white-space: nowrap; }
+
+/* slim download bar above the city planting table */
+a.cta-slim { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 28px 0 8px; padding: 14px 16px 14px 20px;
+  background: var(--hero-bg); border-radius: 14px; color: var(--hero-ink); text-decoration: none; font-size: 15px; line-height: 1.45; }
+a.cta-slim strong { color: var(--hero-mustard); }
+.cta-slim-btn { flex-shrink: 0; background: var(--hero-mustard); color: var(--pine); font-weight: 700; font-size: 14.5px; padding: 10px 18px; border-radius: 999px; white-space: nowrap; }
+a.cta-slim:hover .cta-slim-btn { filter: brightness(1.05); }
+@media (max-width: 520px) { a.cta-slim { flex-direction: column; align-items: stretch; text-align: left; } .cta-slim-btn { text-align: center; } }
+@media (max-width: 520px) {
+  .city-table { font-size: 13px; }
+  .city-table th, .city-table td { padding: 9px 6px; }
+  .city-table th:first-child, .city-table td:first-child { padding-left: 8px; }
+}
