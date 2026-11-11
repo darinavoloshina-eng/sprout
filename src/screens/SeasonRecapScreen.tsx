@@ -48,14 +48,16 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
     ? Math.max(
         1,
         Math.round(
-          (Date.now() - new Date(harvests[0].dateISO).getTime()) / 86400000
+          (Date.now() - Math.min(...harvests.map((h) => new Date(h.dateISO).getTime()))) / 86400000
         )
       )
     : null;
 
   const summaryLines = [
     totalLbs > 0 ? `I grew ${formatWeightLbs(totalLbs, units)} of food this year with GardenWise.` : null,
-    taskCount > 0 ? `${taskCount} garden tasks done, longest streak ${longestStreak} days.` : null,
+    taskCount > 0
+      ? `${taskCount} garden ${taskCount === 1 ? 'task' : 'tasks'} done, longest streak ${longestStreak} ${longestStreak === 1 ? 'day' : 'days'}.`
+      : null,
   ].filter(Boolean);
 
   const shotRef = useRef<View>(null);
@@ -113,14 +115,14 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
             {daysLogging ? (
               <View style={styles.numberRow}>
                 <Text style={styles.numberValue}>{daysLogging}</Text>
-                <Text style={styles.numberLabel}>days from first pick to now</Text>
+                <Text style={styles.numberLabel}>{daysLogging === 1 ? 'day' : 'days'} from first pick to now</Text>
               </View>
             ) : null}
             {taskCount > 0 ? (
               <View style={styles.numberRow}>
                 <Text style={styles.numberValue}>{taskCount}</Text>
                 <Text style={styles.numberLabel}>
-                  tasks finished{longestStreak > 0 ? `, longest streak ${longestStreak} days` : ''}
+                  {taskCount === 1 ? 'task' : 'tasks'} finished{longestStreak > 0 ? `, longest streak ${longestStreak} ${longestStreak === 1 ? 'day' : 'days'}` : ''}
                 </Text>
               </View>
             ) : null}
@@ -133,7 +135,7 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
           ) : null}
         </View>
           <View style={styles.brandRow}>
-            <OwlMark size={22} />
+            <OwlMark size={30} />
             <Text style={styles.brandText}>GardenWise · Grow your own food</Text>
           </View>
         </View>
