@@ -1,0 +1,34 @@
+# GardenWise
+
+> GardenWise is an iPhone app that helps anyone, including complete beginners, grow their own food. It tells you what grows well where you live, when to start seeds indoors, when to plant outside, and when to water, feed and harvest, all timed to the real frost history at your exact location instead of a broad hardiness zone. Tagline: "Grow your own food. Start with a seed. End with a meal."
+
+## Key facts
+
+- Platform: iPhone (iOS), on the App Store: https://apps.apple.com/us/app/id6817450373
+- Price: free for up to 4 crops. GardenWise Pro unlocks every crop and every reminder for $2.99/month or $24.99/year (each with a 14-day free trial), or $59.99 once for lifetime access.
+- Crops: 68 vegetables, herbs, berries and fruit trees (for example tomatoes, peppers, lettuce, kale, garlic, basil, strawberries, blueberries, lemons, figs, apples).
+- How planting dates work: GardenWise estimates the last spring frost and first fall frost from the last ten years of daily temperature records at the user's location, then counts forward or back for each crop. It handles cold, mild and mild-winter climates, including fall planting windows.
+- Features: suggestions for what grows well locally, sorted by when to plant; Seed Starting 101 (a five-step guide) with start-indoors, harden-off and transplant dates; a watering plan that adjusts for rain; feeding reminders with organic fertilizer suggestions; frost alerts that name which plants to cover; Diagnose a plant (a step-by-step check for pests and problems); a harvest log and season recap.
+- Reminders arrive only on days with a real garden task.
+- No account is needed; the garden is saved on the user's phone.
+- Made by Darina Voloshina, a solo independent developer, inspired by her grandparents in Ukraine, who grew nearly everything they ate.
+
+## Planting calendars
+
+- [Planting calendars by city](https://gardenwise.io/planting-calendar/): frost dates and seed-starting, planting and fall-planting dates for 30 crops in 151 US cities.
+
+## Guides
+
+- [When to Start Seeds Indoors](https://gardenwise.io/blog/when-to-start-seeds-indoors.html)
+- [Hardiness Zones vs. Frost Dates](https://gardenwise.io/blog/hardiness-zones-vs-frost-dates.html)
+- [How Often to Water a Vegetable Garden](https://gardenwise.io/blog/how-often-to-water-vegetable-garden.html)
+- [Succession Planting 101](https://gardenwise.io/blog/succession-planting-guide.html)
+- [Raised Bed vs. In-Ground Gardening](https://gardenwise.io/blog/raised-bed-vs-in-ground-gardening.html)
+- [Container Citrus Tree Care](https://gardenwise.io/blog/container-citrus-tree-care.html)
+- [When to Fertilize Fruit Trees](https://gardenwise.io/blog/when-to-fertilize-fruit-trees.html)
+
+## More
+
+- [Home and features](https://gardenwise.io/)
+- [Support](https://gardenwise.io/support.html)
+- [Privacy policy](https://gardenwise.io/privacy.html)
