@@ -873,6 +873,10 @@ export function coolSeasonFirstFrostMonthDay(frostDates: FrostEstimate | null | 
 // lasts: garlic needs a cold spell to form cloves, so a mild-winter place
 // still plants it in mid-to-late fall, not just before a February frost.
 const FALL_TIMED_BY_COLD = new Set<CropKey>(['garlic']);
+// ...but never later than this: three weeks after a December first frost
+// (Austin, Raleigh) would mean planting garlic in the new year, when
+// Southern guides say to have it in by late November.
+const COLD_TIMED_LATEST = { north: '11-25', south: '05-25' } as const;
 
 function cappedFirstFrost(frostDates: FrostEstimate | null | undefined): string | null {
   if (!frostDates) return null;
@@ -925,6 +929,17 @@ function candidatesFor(crop: CropKey, frostDates: FrostEstimate | null | undefin
   // crop can keep going in until a few weeks before that real frost.
   const capped = effectiveFirstFrostMonthDay(frostDates);
   addCandidates('fall', info.fall, capped);
+  if (FALL_TIMED_BY_COLD.has(crop)) {
+    const latestMD = COLD_TIMED_LATEST[frostDates?.isNorthernHemisphere === false ? 'south' : 'north'];
+    for (const c of candidates) {
+      if (c.season !== 'fall') continue;
+      // The latest date in the same season as this frost (same year, or the
+      // year before when the frost itself is already into the new year).
+      let latest = parseMonthDay(latestMD, c.frostDate.getFullYear());
+      if (latest.getTime() > addWeeks(c.frostDate, 26).getTime()) latest = parseMonthDay(latestMD, c.frostDate.getFullYear() - 1);
+      if (c.outdoorDate.getTime() > latest.getTime()) c.outdoorDate = latest;
+    }
+  }
   const real = coolSeasonFirstFrostMonthDay(frostDates);
   if (info.fall && real && capped && real !== capped && !FALL_TIMED_BY_COLD.has(crop)) {
     for (const c of candidates) {

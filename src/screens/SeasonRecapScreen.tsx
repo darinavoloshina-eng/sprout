@@ -8,13 +8,15 @@
 // there's no photo capture or task-causality tracking to back them —
 // they're shown only when real data exists to support them (see the
 // conditional sections below), the same pattern used everywhere else in
-// this rebuild. Share uses React Native's built-in Share API for a real
-// text summary — there's no image-export pipeline (no media-library/view-
-// shot dependency in this project) to back a real "Save to Photos," so
-// that button was dropped rather than quietly doing the same thing as
-// Share under a different label.
+// this rebuild. Share sends a picture of the card (react-native-view-shot)
+// plus a short summary and the App Store link, so every share can bring
+// someone new to the app; it falls back to text alone if the picture
+// can't be made.
 
-import React from 'react';
+import React, { useRef } from 'react';
+import { captureRef } from 'react-native-view-shot';
+import { OwlMark } from '../components/OwlMark';
+import { APP_STORE_URL } from '../appLinks';
 import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GardenProfile } from '../types';
 import { colors, fonts, radius, space } from '../theme';
@@ -46,21 +48,32 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
     ? Math.max(
         1,
         Math.round(
-          (Date.now() - new Date(harvests[0].dateISO).getTime()) / 86400000
+          (Date.now() - Math.min(...harvests.map((h) => new Date(h.dateISO).getTime()))) / 86400000
         )
       )
     : null;
 
   const summaryLines = [
     totalLbs > 0 ? `I grew ${formatWeightLbs(totalLbs, units)} of food this year with GardenWise.` : null,
-    taskCount > 0 ? `${taskCount} garden tasks done, longest streak ${longestStreak} days.` : null,
+    taskCount > 0
+      ? `${taskCount} garden ${taskCount === 1 ? 'task' : 'tasks'} done, longest streak ${longestStreak} ${longestStreak === 1 ? 'day' : 'days'}.`
+      : null,
   ].filter(Boolean);
 
+  const shotRef = useRef<View>(null);
+
   async function share() {
+    const message = `${summaryLines.join(' ') || 'My garden season with GardenWise.'} Grow your own food: ${APP_STORE_URL}`;
+    let uri: string | null = null;
     try {
-      await Share.share({ message: summaryLines.join(' ') || 'My garden season with GardenWise.' });
+      uri = await captureRef(shotRef, { format: 'png', quality: 1, result: 'tmpfile' });
     } catch {
-      // User cancelled the share sheet — nothing to do.
+      uri = null;
+    }
+    try {
+      await Share.share(uri ? { url: uri, message } : { message });
+    } catch {
+      // Share sheet failed to open; nothing more to do.
     }
   }
 
@@ -74,6 +87,7 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
           <Text style={styles.seasonLabel}>{year} season</Text>
         </View>
 
+        <View ref={shotRef} collapsable={false} style={styles.shot}>
         <View style={styles.card}>
           <View style={styles.cardHeadRow}>
             <Text style={styles.cardEyebrow}>{profile.location?.label ?? 'Your garden'}</Text>
@@ -101,14 +115,14 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
             {daysLogging ? (
               <View style={styles.numberRow}>
                 <Text style={styles.numberValue}>{daysLogging}</Text>
-                <Text style={styles.numberLabel}>days from first pick to now</Text>
+                <Text style={styles.numberLabel}>{daysLogging === 1 ? 'day' : 'days'} from first pick to now</Text>
               </View>
             ) : null}
             {taskCount > 0 ? (
               <View style={styles.numberRow}>
                 <Text style={styles.numberValue}>{taskCount}</Text>
                 <Text style={styles.numberLabel}>
-                  tasks finished{longestStreak > 0 ? `, longest streak ${longestStreak} days` : ''}
+                  {taskCount === 1 ? 'task' : 'tasks'} finished{longestStreak > 0 ? `, longest streak ${longestStreak} ${longestStreak === 1 ? 'day' : 'days'}` : ''}
                 </Text>
               </View>
             ) : null}
@@ -119,6 +133,11 @@ export default function SeasonRecapScreen({ profile, onClose }: SeasonRecapScree
               Log a harvest or finish a task to start building this season's recap.
             </Text>
           ) : null}
+        </View>
+          <View style={styles.brandRow}>
+            <OwlMark size={30} />
+            <Text style={styles.brandText}>GardenWise · Grow your own food</Text>
+          </View>
         </View>
 
         <Text style={styles.footerNote}>
@@ -149,6 +168,11 @@ const styles = StyleSheet.create({
   },
   closeText: { fontFamily: fonts.body, fontSize: 15, color: colors.pineFoot },
   seasonLabel: { fontFamily: fonts.bodySemiBold, fontSize: 11.5, color: colors.pineFoot },
+  // The area captured for sharing: the card on the pine background with
+  // the brand line under it. Negative margin keeps the on-screen layout.
+  shot: { backgroundColor: colors.pine, padding: 14, margin: -14 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14 },
+  brandText: { fontFamily: fonts.bodySemiBold, fontSize: 12, color: colors.pineFoot },
   card: { backgroundColor: colors.card, borderRadius: 22, padding: 20 },
   cardHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 },
   cardEyebrow: {

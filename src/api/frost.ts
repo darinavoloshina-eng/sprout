@@ -3,9 +3,17 @@
 // (Open-Meteo's archive API — same key-free provider as weather.ts), not a
 // calendar-month guess. A month-based "it's January, must be cold-start"
 // heuristic would be wrong for the Southern Hemisphere and for any
-// non-temperate climate; this instead looks at the last 3 years of actual
+// non-temperate climate; this instead looks at the last 10 years of actual
 // temperature history at the user's coordinates and picks the search
 // window (spring vs. fall) based on which hemisphere they're actually in.
+//
+// Ten years, not three: three let a couple of warm springs pull Denver's
+// last frost two weeks early. And 34°F, not 32°F: the archive is a grid
+// average over a few miles, which runs a little warmer than the coldest
+// spots where frost actually forms, so 32°F dates came out 1-3 weeks too
+// optimistic against published averages. 34°F lines up best across the
+// cities checked (Denver, Hartford, Chicago, Atlanta, Sacramento), and
+// erring early on frost is the safe side for tender plants.
 //
 // Some places genuinely don't get a hard frost some years (San Francisco
 // is a real example) — when that happens the year is simply skipped rather
@@ -24,14 +32,18 @@
 // averaged directly — averageFromAnchor works in "days since the window's
 // start" instead, which counts through the boundary correctly.
 
-const FROST_THRESHOLD_F = 32;
-const YEARS_SAMPLED = 3;
+const FROST_THRESHOLD_F = 34;
+const YEARS_SAMPLED = 10;
+/** Bumped whenever the estimate changes enough that saved ones should be
+ * re-fetched (see useFrostDates). 2: 10 years at 34°F. */
+export const FROST_METHOD = 2;
 
 export interface FrostEstimate {
   lastFrostMonthDay: string; // "MM-DD" — average estimated last frost of the cold season
   firstFrostMonthDay: string | null; // "MM-DD" — average estimated first frost of the next cold season; null if no reliable one found
   isNorthernHemisphere: boolean; // which search windows were used — plantingGuide.ts needs this too, to know which side of the year its own fall-season reference date falls on
   fetchedAt: string;
+  method?: number; // FROST_METHOD the estimate was made with; missing means the original 3-year/32°F one
 }
 
 function dayOfYear(dateStr: string): number {
@@ -109,7 +121,7 @@ export async function estimateFrostDates(lat: number, lon: number): Promise<Fros
   const fallWindowDays = 182;
 
   const currentYear = new Date().getFullYear();
-  const years = [1, 2, 3].slice(0, YEARS_SAMPLED).map((n) => currentYear - n);
+  const years = Array.from({ length: YEARS_SAMPLED }, (_, i) => currentYear - 1 - i);
 
   const lastFrostDays: number[] = [];
   const firstFrostOffsets: number[] = [];
@@ -174,5 +186,6 @@ export async function estimateFrostDates(lat: number, lon: number): Promise<Fros
       firstFrostOffsets.length > 0 ? averageMonthDayFromAnchor(firstFrostOffsets, firstFrostAnchor!) : null,
     isNorthernHemisphere: isNorthern,
     fetchedAt: new Date().toISOString(),
+    method: FROST_METHOD,
   };
 }

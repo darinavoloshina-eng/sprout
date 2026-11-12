@@ -2,7 +2,7 @@
   "expo": {
     "name": "GardenWise",
     "slug": "gardenwise",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
@@ -12,7 +12,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "GardenWise uses your location to fetch local rainfall and temperature so your watering schedule matches your garden. You can type your address instead."
       },
-      "buildNumber": "15"
+      "buildNumber": "18"
     },
     "plugins": [
       [

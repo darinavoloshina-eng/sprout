@@ -54,6 +54,7 @@ export interface FrostEstimate {
   firstFrostMonthDay: string | null;
   isNorthernHemisphere: boolean;
   fetchedAt: string;
+  method?: number; // see FROST_METHOD in api/frost.ts
 }
 
 export interface GardenProfile {
@@ -149,6 +150,8 @@ export interface GardenProfile {
   // avoid sending a lifetime owner to "Manage subscription", since there
   // is no subscription for Apple's subscription-settings page to show.
   isLifetime?: boolean;
+  /** When we last asked for an App Store rating (see reviewPrompt.ts). */
+  reviewAskedAt?: string;
 }
 
 export const CURRENT_SCHEMA_VERSION = 1;

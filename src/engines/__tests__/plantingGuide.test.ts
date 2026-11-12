@@ -119,7 +119,8 @@ describe('plantingGuidanceFor', () => {
       // date via the generic fall-frost reference rather than no guidance
       // at all, since it has no spring window to fall back to.
       const frostDates = makeFrostDates('04-15', null);
-      const capTarget = new Date(2024, 11, 6); // 3 weeks after the Nov 15 generic reference
+      // 3 weeks after the Nov 15 generic reference is Dec 6, held to the Nov 25 latest.
+      const capTarget = new Date(2024, 10, 25);
       const guidance = plantingGuidanceFor('garlic', frostDates, new Date(2024, 3, 1));
       expect(guidance.detail).toContain('Plant cloves directly in the ground');
       expect(guidance.detail).toContain(capTarget.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }));
@@ -189,9 +190,20 @@ describe('plantingGuidanceFor', () => {
       expect(arugula.isPastDue).toBe(true);
     });
 
+    it('times garlic 3 weeks after a cold place\'s first frost', () => {
+      const frostDates = makeFrostDates('05-10', '10-08');
+      const guidance = plantingGuidanceFor('garlic', frostDates, new Date(2024, 8, 1));
+      expect(guidance.headline).toBe('Plant Garlic around October 29');
+    });
+
+    it('never puts garlic later than late November, even after a December first frost', () => {
+      const guidance = plantingGuidanceFor('garlic', makeFrostDates('02-25', '12-11'), new Date(2024, 8, 1));
+      expect(guidance.headline).toBe('Plant Garlic around November 25');
+    });
+
     it('gives garlic a real fall target date once a first-frost estimate exists', () => {
       const frostDates = makeFrostDates('04-15', '11-15');
-      const target = new Date(2024, 11, 6); // 3 weeks after Nov 15
+      const target = new Date(2024, 10, 25); // 3 weeks after Nov 15 is Dec 6, held to Nov 25
       const guidance = plantingGuidanceFor('garlic', frostDates, new Date(2024, 9, 1));
       expect(guidance.headline).toBe(`Plant Garlic around ${target.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`);
       expect(guidance.isPastDue).toBe(false);
