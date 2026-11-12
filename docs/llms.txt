@@ -5,7 +5,7 @@
 ## Key facts
 
 - Platform: iPhone (iOS), on the App Store: https://apps.apple.com/us/app/id6817450373
-- Price: free for up to 4 crops. GardenWise Pro unlocks every crop and every reminder for $2.99/month or $24.99/year (each with a 14-day free trial), or $59.99 once for lifetime access.
+- Price: free for up to 4 crops, with every feature included. GardenWise Pro removes the crop limit for $2.99/month or $24.99/year (each with a 14-day free trial), or $59.99 once for lifetime access.
 - Crops: 68 vegetables, herbs, berries and fruit trees (for example tomatoes, peppers, lettuce, kale, garlic, basil, strawberries, blueberries, lemons, figs, apples).
 - How planting dates work: GardenWise estimates the last spring frost and first fall frost from the last ten years of daily temperature records at the user's location, then counts forward or back for each crop. It handles cold, mild and mild-winter climates, including fall planting windows.
 - Features: suggestions for what grows well locally, sorted by when to plant; Seed Starting 101 (a five-step guide) with start-indoors, harden-off and transplant dates; a watering plan that adjusts for rain; feeding reminders with organic fertilizer suggestions; frost alerts that name which plants to cover; Diagnose a plant (a step-by-step check for pests and problems); a harvest log and season recap.

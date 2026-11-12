@@ -62,9 +62,9 @@ REMINDERS THAT DON'T NAG
 • Nothing due? No notification
 
 FREE AND PRO
-GardenWise is free for up to four crops, with suggestions for what to grow, a watering plan, real frost-date planting windows, and seed-starting dates and guide.
+GardenWise is free for up to four crops, with every feature included: suggestions for what to grow, planting and seed-starting dates, a watering plan, reminders to feed, protect, and harvest, Diagnose a plant, and your harvest log.
 
-GardenWise Pro unlocks every crop (including apples, citrus, figs, olives, and avocado), grow-more tips for feeding, pruning, and picking, reminders for every job, frost and harvest alerts, and year-over-year comparison. Pro is available monthly or yearly, each starting with a 14-day free trial, or as a one-time lifetime purchase.
+GardenWise Pro removes the four-crop limit, so you can grow everything you want, including apples, citrus, figs, olives, and avocado. Pro is available monthly or yearly, each starting with a 14-day free trial, or as a one-time lifetime purchase.
 
 After the free trial, subscriptions are charged to your Apple ID account and renew automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple ID settings.
 
@@ -77,7 +77,7 @@ Thanks for reviewing GardenWise.
 
 No account or login is needed. On first launch, pick a few crops, then set a location: "Use my location" asks for When In Use permission, or type a city name or ZIP code instead. Both paths work, and the app is fully usable without granting location.
 
-Pro: tap the "Try Pro free for 14 days" banner in Settings (or any PRO-tagged feature) to reach the purchase screen. It offers a monthly and a yearly subscription and a one-time Lifetime purchase, plus Restore.
+Pro: tap the "Try Pro free for 14 days" banner in Settings (or the banner that appears when you try to add a fifth crop) to reach the purchase screen. It offers a monthly and a yearly subscription and a one-time Lifetime purchase, plus Restore.
 
 Email: email is optional. "Email updates" and "Weekly garden email" in Settings are separate opt-ins.
 
