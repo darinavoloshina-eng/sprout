@@ -20,6 +20,7 @@ const CROPS: CropKey[] = ['tomatoes', 'peppers', 'eggplant', 'cucumbers', 'zucch
   'broccoli', 'cabbage', 'cauliflower', 'carrots', 'beets', 'radishes', 'onions', 'garlic', 'basil', 'cilantro', 'strawberries'];
 
 const frostData: Record<string, FrostEstimate | null> = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'frost.json'), 'utf8'));
+const geoData: Record<string, { lat: number; lon: number }> = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'geo.json'), 'utf8'));
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const md = (d: Date) => `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 const mdShort = (d: Date) => `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}`;
@@ -42,7 +43,10 @@ function rowsFor(fd: FrostEstimate): CropRow[] {
 const cities: City[] = [];
 const skipped: string[] = [];
 for (const [name, st] of CITIES) {
-  const fd = frostData[`${name},${st}`];
+  const saved = frostData[`${name},${st}`];
+  // Older saved estimates have no latitude; the city's own coordinates do.
+  const lat = geoData[`${name},${st}`]?.lat;
+  const fd = saved && saved.latitude == null && lat != null ? { ...saved, latitude: lat } : saved;
   // Frost-free most years: frost-anchored dates would mislead.
   // Frost-free most years (no frost, only a very early last frost, or a
   // "first" and "last" frost that are really the same rare cold morning):
@@ -140,7 +144,7 @@ const HEAD_ASSETS = blogPage.slice(blogPage.indexOf('<link rel="icon"'), blogPag
 const HEADER = blogPage.slice(blogPage.indexOf('<header class="site-header">'), blogPage.indexOf('</header>') + 9).replace(' aria-current="page"', '');
 const FOOTER = blogPage.slice(blogPage.indexOf('<footer class="site-footer">'), blogPage.indexOf('</body>'))
   .replace(/<a href="\/blog\/">Blog<\/a>(?! · <a href="\/planting-calendar\/">)/, '<a href="/blog/">Blog</a> · <a href="/planting-calendar/">Planting calendars</a>')
-  .replace('<div class="copy affiliate">', '<div class="copy">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a></div>\n  <div class="copy affiliate">');
+  .replace('<div class="copy">As an Amazon', '<div class="copy">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a></div>\n    <div class="copy">As an Amazon');
 
 function page(opts: { title: string; desc: string; url: string; jsonld: object[]; body: string }): string {
   return `<!doctype html>
